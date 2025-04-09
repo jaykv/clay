@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proxy Routes Manager</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .card {
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .btn-secondary {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+    .btn-danger {
+      background-color: #F44336;
+      color: white;
+    }
+    .routes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .route-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      border-left: 4px solid #4CAF50;
+    }
+    .route-info {
+      flex: 1;
+    }
+    .route-path {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .route-target {
+      color: #666;
+      margin-bottom: 5px;
+      word-break: break-all;
+    }
+    .route-description {
+      font-size: 14px;
+      color: #888;
+    }
+    .route-actions {
+      display: flex;
+      gap: 5px;
+    }
+    .error-message {
+      color: #F44336;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1>Proxy Routes Manager</h1>
+  
+  <div class="container">
+    <div class="card">
+      <h2>Add New Route</h2>
+      <form id="route-form">
+        <div class="form-group">
+          <label for="path">Path</label>
+          <input type="text" id="path" name="path" placeholder="e.g., hello or api/v1" required>
+          <div id="path-error" class="error-message"></div>
+        </div>
+        <div class="form-group">
+          <label for="target">Target URL</label>
+          <input type="text" id="target" name="target" placeholder="e.g., https://example.com" required>
+          <div id="target-error" class="error-message"></div>
+        </div>
+        <div class="form-group">
+          <label for="description">Description (optional)</label>
+          <textarea id="description" name="description" placeholder="Describe what this route is for"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="reset" class="btn-secondary">Clear</button>
+          <button type="submit" class="btn-primary">Save Route</button>
+        </div>
+      </form>
+    </div>
+    
+    <div class="card">
+      <h2>Configured Routes</h2>
+      <p>Routes are used to proxy requests from <code>http://localhost:3000/proxy/{path}</code> to the target URL.</p>
+      <div id="routes-list" class="routes-list">
+        <div class="loading">Loading routes...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Load routes on page load
+    document.addEventListener('DOMContentLoaded', loadRoutes);
+
+    // Form submission
+    document.getElementById('route-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Clear previous errors
+      document.getElementById('path-error').textContent = '';
+      document.getElementById('target-error').textContent = '';
+      
+      const path = document.getElementById('path').value.trim();
+      const target = document.getElementById('target').value.trim();
+      const description = document.getElementById('description').value.trim();
+      
+      // Validate inputs
+      let hasError = false;
+      
+      if (!path) {
+        document.getElementById('path-error').textContent = 'Path is required';
+        hasError = true;
+      } else if (!/^[a-zA-Z0-9_\-\/]+$/.test(path)) {
+        document.getElementById('path-error').textContent = 'Path can only contain alphanumeric characters, underscores, hyphens, and slashes';
+        hasError = true;
+      }
+      
+      if (!target) {
+        document.getElementById('target-error').textContent = 'Target URL is required';
+        hasError = true;
+      } else {
+        try {
+          new URL(target);
+        } catch (e) {
+          document.getElementById('target-error').textContent = 'Target must be a valid URL';
+          hasError = true;
+        }
+      }
+      
+      if (hasError) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/proxy/routes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ path, target, description })
+        });
+        
+        if (response.ok) {
+          // Reset form and reload routes
+          document.getElementById('route-form').reset();
+          loadRoutes();
+        } else {
+          const data = await response.json();
+          alert('Error: ' + (data.error || 'Failed to add route'));
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+
+    // Load routes from the server
+    async function loadRoutes() {
+      const routesList = document.getElementById('routes-list');
+      routesList.innerHTML = '<div class="loading">Loading routes...</div>';
+      
+      try {
+        const response = await fetch('/api/proxy/routes');
+        
+        if (response.ok) {
+          const routes = await response.json();
+          renderRoutes(routes);
+        } else {
+          routesList.innerHTML = '<div class="error-state">Failed to load routes</div>';
+        }
+      } catch (error) {
+        routesList.innerHTML = `<div class="error-state">Error: ${error.message}</div>`;
+      }
+    }
+
+    // Render routes in the UI
+    function renderRoutes(routes) {
+      const routesList = document.getElementById('routes-list');
+      
+      if (routes.length === 0) {
+        routesList.innerHTML = '<div class="empty-state">No routes configured yet.</div>';
+        return;
+      }
+      
+      // Sort routes by path
+      routes.sort((a, b) => a.path.localeCompare(b.path));
+      
+      let html = '';
+      for (const route of routes) {
+        html += `
+          <div class="route-item">
+            <div class="route-info">
+              <div class="route-path">${route.path}</div>
+              <div class="route-target">${route.target}</div>
+              ${route.description ? `<div class="route-description">${route.description}</div>` : ''}
+            </div>
+            <div class="route-actions">
+              <button class="btn-danger delete-route" data-path="${route.path}">Delete</button>
+            </div>
+          </div>
+        `;
+      }
+      
+      routesList.innerHTML = html;
+      
+      // Add event listeners to delete buttons
+      document.querySelectorAll('.delete-route').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const path = btn.dataset.path;
+          
+          if (confirm(`Are you sure you want to delete the route '${path}'?`)) {
+            await deleteRoute(path);
+          }
+        });
+      });
+    }
+
+    // Delete a route
+    async function deleteRoute(path) {
+      try {
+        const response = await fetch(`/api/proxy/routes/${encodeURIComponent(path)}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          loadRoutes();
+        } else {
+          const data = await response.json();
+          alert('Error: ' + (data.error || 'Failed to delete route'));
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>

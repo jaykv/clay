@@ -1,0 +1,151 @@
+import React, { useState, useEffect } from 'react';
+import Card from '@/components/ui/Card';
+import { getTraceStats, TraceStats } from '@/lib/api/traces';
+
+// Using TraceStats interface imported from api/traces
+
+const PerformanceMetrics: React.FC = () => {
+  const [stats, setStats] = useState<TraceStats | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getTraceStats();
+      setStats(data);
+    } catch (err) {
+      setError('Failed to load performance metrics. Make sure the proxy server is running.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+    // Set up polling every 5 seconds
+    const interval = setInterval(loadStats, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading && !stats) {
+    return (
+      <Card title="Performance Metrics">
+        <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+          <svg className="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading metrics...
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card title="Performance Metrics">
+        <div className="py-4 text-center text-red-500 dark:text-red-400">
+          <p>{error}</p>
+          <button
+            onClick={loadStats}
+            className="mt-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Performance Metrics">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Requests</h3>
+          <p className="mt-1 text-2xl font-semibold">{stats?.total || 0}</p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Success Rate</h3>
+          <p className="mt-1 text-2xl font-semibold">{stats?.successRate.toFixed(1) || 0}%</p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg Response Time</h3>
+          <p className="mt-1 text-2xl font-semibold">{stats?.avgResponseTime.toFixed(2) || 0} ms</p>
+        </div>
+      </div>
+
+      {stats?.truncated && (stats.truncated.bodies > 0 || stats.truncated.responses > 0) && (
+        <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <h3 className="text-sm font-medium text-amber-800 dark:text-amber-400 mb-1">Data Truncation Notice</h3>
+          <p className="text-xs text-amber-700 dark:text-amber-500">
+            Some request/response data was too large and has been truncated:
+          </p>
+          <ul className="text-xs text-amber-700 dark:text-amber-500 mt-1 list-disc list-inside">
+            {stats.truncated.bodies > 0 && (
+              <li>{stats.truncated.bodies} request {stats.truncated.bodies === 1 ? 'body' : 'bodies'} truncated</li>
+            )}
+            {stats.truncated.responses > 0 && (
+              <li>{stats.truncated.responses} response {stats.truncated.responses === 1 ? 'body' : 'bodies'} truncated</li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {stats && (
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Requests by Method</h3>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+              {Object.entries(stats.methodCounts).length > 0 ? (
+                <div className="space-y-2">
+                  {Object.entries(stats.methodCounts).map(([method, count]) => (
+                    <div key={method} className="flex justify-between">
+                      <span className="font-mono">{method}</span>
+                      <span className="font-semibold">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 dark:text-gray-400">No data available</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Requests by Status</h3>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+              {Object.entries(stats.statusCounts).length > 0 ? (
+                <div className="space-y-2">
+                  {Object.entries(stats.statusCounts).map(([status, count]) => (
+                    <div key={status} className="flex justify-between">
+                      <span className="font-mono">{status}</span>
+                      <span className="font-semibold">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 dark:text-gray-400">No data available</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4 text-right">
+        <button
+          onClick={loadStats}
+          className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+        >
+          Refresh
+        </button>
+      </div>
+    </Card>
+  );
+};
+
+export default PerformanceMetrics;

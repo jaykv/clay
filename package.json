@@ -1,0 +1,121 @@
+{
+  "name": "clay",
+  "displayName": "Clay",
+  "description": "VSCode extension with proxy server, MCP server, and MCP registry for AI development",
+  "version": "0.1.0",
+  "publisher": "clay",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/clay"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "clay.startProxyServer",
+        "title": "Clay: Start Proxy Server"
+      },
+      {
+        "command": "clay.stopProxyServer",
+        "title": "Clay: Stop Proxy Server"
+      },
+      {
+        "command": "clay.showDashboard",
+        "title": "Clay: Show Tracing Dashboard"
+      },
+      {
+        "command": "clay.startMCPServer",
+        "title": "Clay: Start MCP Server"
+      },
+      {
+        "command": "clay.stopMCPServer",
+        "title": "Clay: Stop MCP Server"
+      },
+      {
+        "command": "clay.registerMCPServer",
+        "title": "Clay: Register MCP Server"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "clay",
+          "title": "Clay",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "clay": [
+        {
+          "id": "clay-servers",
+          "name": "Servers"
+        },
+        {
+          "id": "clay-registry",
+          "name": "MCP Registry"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile-all",
+    "compile": "webpack && tsc -p src/server/tsconfig.json",
+    "compile:prod": "cross-env NODE_ENV=production webpack && tsc -p src/server/tsconfig.json",
+    "watch": "webpack --watch",
+    "package": "npm run compile-all",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "start-proxy": "node dist/server/proxy/index.js",
+    "start-mcp": "node dist/server/mcp/index.js",
+    "start-registry": "node dist/server/registry/index.js",
+    "dev-proxy": "ts-node src/server/proxy/index.ts",
+    "dev-mcp": "ts-node src/server/mcp/index.ts",
+    "dev-registry": "ts-node src/server/registry/index.ts",
+    "build-webview": "cd webview-ui && npm run build",
+    "dev-webview": "cd webview-ui && npm run dev",
+    "compile-all": "npm run compile:prod && npm run build-webview",
+    "vsce:package": "npm run compile-all && npx @vscode/vsce package",
+    "vsce:publish": "npx @vscode/vsce publish"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
+    "@typescript-eslint/parser": "^5.59.1",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^3.3.2",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.39.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "terser-webpack-plugin": "^5.3.10",
+    "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4",
+    "webpack": "^5.81.0",
+    "webpack-cli": "^5.0.2"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.2.0",
+    "@modelcontextprotocol/sdk": "^1.9.0",
+    "@types/node-fetch": "^2.6.12",
+    "express": "^4.18.2",
+    "hono": "^4.0.0",
+    "node-fetch": "^2.7.0",
+    "zod": "^3.22.4"
+  }
+}

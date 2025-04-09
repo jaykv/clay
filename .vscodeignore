@@ -1,0 +1,34 @@
+.vscode/**
+.vscode-test/**
+node_modules/**
+.gitignore
+.yarnrc
+webpack.config.js
+.eslintrc.json
+tsconfig.json
+server/tsconfig.json
+**/*.ts
+**/*.map
+!dist/**/*
+!dist/server/**/*
+test-extension.js
+.github/**
+
+# Webview UI source files (exclude everything except dist)
+webview-ui/src/**
+webview-ui/public/**
+webview-ui/node_modules/**
+webview-ui/package.json
+webview-ui/package-lock.json
+webview-ui/tsconfig.json
+webview-ui/tsconfig.node.json
+webview-ui/vite.config.ts
+webview-ui/postcss.config.js
+webview-ui/tailwind.config.js
+webview-ui/.eslintrc.cjs
+webview-ui/index.html
+
+# Include webview UI build output
+!webview-ui/dist/**
+
+webview-ui-next/**
