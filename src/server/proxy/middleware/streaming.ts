@@ -13,7 +13,7 @@ const sseClients: Map<string, SSEClient> = new Map();
 
 // Generate a unique client ID
 function generateClientId(): string {
-  return Math.random().toString(36).substring(2, 15) + 
+  return Math.random().toString(36).substring(2, 15) +
          Math.random().toString(36).substring(2, 15);
 }
 
@@ -23,7 +23,7 @@ export function sendEventToClient(clientId: string, event: string, data: any): b
   if (!client) {
     return false;
   }
-  
+
   try {
     const eventId = Date.now().toString();
     const message = `id: ${eventId}\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -52,28 +52,36 @@ export function getActiveConnectionsCount(): number {
 export const sseMiddleware: MiddlewareHandler = async (c: Context, next: Next) => {
   // Check if this is an SSE request
   const acceptHeader = c.req.header('Accept');
+  const path = c.req.path;
+
+  // Skip SSE handling for proxy requests
+  if (path.startsWith('/proxy/')) {
+    return next();
+  }
+
+  // Check if this is an SSE request for non-proxy paths
   if (acceptHeader !== 'text/event-stream') {
     return next();
   }
-  
+
   // Set SSE headers
   c.header('Content-Type', 'text/event-stream');
   c.header('Cache-Control', 'no-cache');
   c.header('Connection', 'keep-alive');
-  
+
   // Create a new client ID
   const clientId = generateClientId();
-  
+
   // Create a readable stream for SSE
   const stream = new ReadableStream({
     start(controller) {
       // Store the client
       sseClients.set(clientId, { id: clientId, controller });
-      
+
       // Send initial connection event
       const connectEvent = `id: 0\nevent: connect\ndata: {"clientId":"${clientId}"}\n\n`;
       controller.enqueue(new TextEncoder().encode(connectEvent));
-      
+
       logger.info(`SSE client connected: ${clientId}`);
     },
     cancel() {
@@ -82,7 +90,7 @@ export const sseMiddleware: MiddlewareHandler = async (c: Context, next: Next) =
       logger.info(`SSE client disconnected: ${clientId}`);
     }
   });
-  
+
   // Return the stream as the response
   return new Response(stream, {
     headers: c.res.headers
@@ -97,41 +105,41 @@ export function registerSSERoutes(app: any) {
       id,
       connectedAt: parseInt(sseClients.get(id)?.lastEventId || '0') || Date.now()
     }));
-    
+
     return c.json({
       count: connections.length,
       connections
     });
   });
-  
+
   // Send an event to a specific client
   app.post('/api/sse/send/:clientId', async (c: Context) => {
     const clientId = c.req.param('clientId');
     const body = await c.req.json();
-    
+
     if (!body.event || !body.data) {
       return c.json({ error: 'Missing event or data' }, 400);
     }
-    
+
     const success = sendEventToClient(clientId, body.event, body.data);
-    
+
     if (!success) {
       return c.json({ error: 'Client not found' }, 404);
     }
-    
+
     return c.json({ success: true });
   });
-  
+
   // Broadcast an event to all clients
   app.post('/api/sse/broadcast', async (c: Context) => {
     const body = await c.req.json();
-    
+
     if (!body.event || !body.data) {
       return c.json({ error: 'Missing event or data' }, 400);
     }
-    
+
     broadcastEvent(body.event, body.data);
-    
+
     return c.json({
       success: true,
       clientCount: sseClients.size

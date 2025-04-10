@@ -176,25 +176,49 @@ export class ProxyServer {
 
         logger.info(`Proxying request: ${requestPath} -> ${targetUrl.toString()}`);
 
-        // Special handling for Gemini streaming requests
-        const isGeminiStreaming = requestPath.includes('gemini') && requestPath.includes('streamGenerateContent');
+        // Special handling for streaming requests
+        // Check for SSE requests (Accept: text/event-stream)
+        const acceptHeader = c.req.header('accept') || '';
+        const isStreaming = acceptHeader.includes('text/event-stream');
 
-        if (isGeminiStreaming) {
-          // For Gemini streaming, use fetch directly instead of Hono's proxy
+        logger.info(`Request streaming status: ${isStreaming ? 'Streaming' : 'Non-streaming'}`);
+
+        if (isStreaming) {
+          // For streaming requests, use fetch directly instead of Hono's proxy to preserve the stream
           try {
-            // Get the request body
-            const body = await c.req.json();
+            // Prepare headers for the forwarded request
+            const headers: Record<string, string> = {
+              ...c.req.header(),
+              'X-Forwarded-Host': c.req.header('host') || '',
+              'X-Forwarded-For': c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip') || ''
+            };
 
-            // Forward the request to Gemini
-            const response = await fetch(targetUrl.toString(), {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Forwarded-Host': c.req.header('host') || '',
-                'X-Forwarded-For': c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip') || ''
-              },
-              body: JSON.stringify(body)
-            });
+            // Get the request method
+            const method = c.req.method;
+
+            // Prepare fetch options
+            const fetchOptions: RequestInit = {
+              method,
+              headers
+            };
+
+            // Add body for methods that support it
+            if (['POST', 'PUT', 'PATCH'].includes(method)) {
+              const contentType = c.req.header('content-type') || '';
+
+              if (contentType.includes('application/json')) {
+                // For JSON requests, parse and stringify the body
+                const body = await c.req.json();
+                fetchOptions.body = JSON.stringify(body);
+              } else {
+                // For other content types, pass the raw body
+                const body = await c.req.text();
+                fetchOptions.body = body;
+              }
+            }
+
+            // Forward the request
+            const response = await fetch(targetUrl.toString(), fetchOptions);
 
             // Return the response directly without processing
             return new Response(response.body, {
@@ -203,9 +227,9 @@ export class ProxyServer {
               headers: response.headers
             });
           } catch (error) {
-            logger.error('Gemini streaming proxy error:', error);
+            logger.error('Streaming proxy error:', error);
             return c.json({
-              error: 'Failed to proxy Gemini streaming request',
+              error: 'Failed to proxy streaming request',
               details: (error as Error).message
             }, 502);
           }

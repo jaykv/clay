@@ -126,9 +126,18 @@ export const tracingMiddleware: MiddlewareHandler = async (c: Context, next: Nex
     try {
       // Check if this is a streaming response
       const contentType = c.res.headers.get('content-type') || '';
-      const isStreaming = contentType.includes('text/event-stream') ||
-                         path.includes('/streamGenerateContent') ||
-                         path.includes('/stream');
+      const acceptHeader = c.req.header('accept') || '';
+
+      // Detect streaming responses based on various indicators
+      const isStreamingContentType = contentType.includes('text/event-stream');
+      const isSSERequest = acceptHeader.includes('text/event-stream');
+
+      const isStreaming = isStreamingContentType || isSSERequest;
+
+      // Log streaming detection details for debugging
+      if (isStreaming) {
+        logger.debug(`Streaming response detected for ${traceId} (ContentType: ${isStreamingContentType}, SSE: ${isSSERequest})`);
+      }
 
       if (isStreaming) {
         // For streaming responses, don't try to read the body
