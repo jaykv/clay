@@ -8,13 +8,16 @@ const dependencies = [
   'fsevents',
   'glob',
   'js-yaml',
-  'hono',
-  '@hono/node-server',
   '@modelcontextprotocol/sdk',
   'node-fetch',
   'zod',
   'express',
-  'readdirp'
+  'readdirp',
+  'fastify',
+  '@fastify/cors',
+  '@fastify/http-proxy',
+  '@fastify/sensible',
+  '@fastify/static'
 ];
 
 // Create a temporary package.json for installing only the required dependencies

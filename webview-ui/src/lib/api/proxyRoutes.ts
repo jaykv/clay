@@ -22,7 +22,8 @@ export async function getProxyRoutes(): Promise<ProxyRoute[]> {
     if (!response.ok) {
       throw new Error(`Failed to fetch proxy routes: ${response.statusText}`);
     }
-    return await response.json();
+    const data = await response.json();
+    return data.routes || [];
   } catch (error) {
     console.error('Error fetching proxy routes:', error);
     throw error;
@@ -49,7 +50,8 @@ export async function addProxyRoute(route: ProxyRoute): Promise<ProxyRoute> {
       throw new Error(errorData.error || `Failed to add proxy route: ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data.route || data;
   } catch (error) {
     console.error('Error adding proxy route:', error);
     throw error;

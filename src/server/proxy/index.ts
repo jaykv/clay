@@ -1,78 +1,8 @@
-import { serve } from '@hono/node-server';
-import { ProxyServer } from './server';
-import { logger } from '../utils/logger';
-import { getConfig } from '../utils/config';
+// Re-export from fastify-index.ts
+import { startServer, stopServer } from './fastify-index';
 
-// Store server instance for stopping later
-let serverInstance: ReturnType<typeof serve> | null = null;
-let proxyServer: ProxyServer | null = null;
-
-/**
- * Start the proxy server
- * @returns The server instance
- */
-export function startServer() {
-  if (serverInstance) {
-    logger.info('Proxy server is already running');
-    return serverInstance;
-  }
-
-  try {
-    const config = getConfig().proxy;
-    proxyServer = new ProxyServer();
-    const app = proxyServer.getApp();
-
-    logger.info(`Starting proxy server on http://${config.host}:${config.port}`);
-
-    serverInstance = serve({
-      fetch: app.fetch,
-      port: config.port,
-      hostname: config.host
-    });
-
-    logger.info(`Proxy server is running on http://${config.host}:${config.port}`);
-    logger.info(`Dashboard is ${config.dashboardEnabled ? 'enabled' : 'disabled'}`);
-
-    // If MCP is enabled, log that it's available on the same server
-    if (config.mcpEnabled) {
-      logger.info(`MCP server is available at http://${config.host}:${config.port}/mcp`);
-    }
-
-    return serverInstance;
-  } catch (error) {
-    logger.error('Failed to start proxy server:', error);
-    throw error;
-  }
-}
-
-/**
- * Stop the proxy server
- */
-export function stopServer() {
-  if (!serverInstance) {
-    logger.info('Proxy server is not running');
-    return;
-  }
-
-  try {
-    logger.info('Shutting down proxy server...');
-
-    // Shutdown proxy server resources
-    if (proxyServer) {
-      proxyServer.shutdown();
-      proxyServer = null;
-    }
-
-    // Close the server
-    serverInstance.close();
-    serverInstance = null;
-
-    logger.info('Proxy server stopped');
-  } catch (error) {
-    logger.error('Failed to stop proxy server:', error);
-    throw error;
-  }
-}
+// Export for backward compatibility
+export { startServer, stopServer };
 
 // Start the server if this file is run directly
 if (require.main === module) {

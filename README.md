@@ -6,7 +6,7 @@ A VSCode extension that provides AI-related tools and services for developers.
 
 ### 1. Proxy Server with Tracing Dashboard
 
-The extension includes a high-performance proxy server built with Hono.js that can:
+The extension includes a high-performance proxy server built with Fastify that can:
 
 - Intercept and trace all AI-related requests
 - Provide detailed logs and metrics through a visual dashboard
@@ -126,9 +126,9 @@ npm run vsce:package
 
 - `/extension` - VSCode extension code
 - `/server` - Server implementations
-  - `/proxy` - Hono-based proxy server with tracing
+  - `/proxy` - Fastify-based proxy server with tracing
   - `/mcp` - MCP server implementation
-  - `/registry` - MCP registry implementation
+  - `/augment` - Augment Context Engine implementation
 - `/server/utils` - Shared utilities
 
 ## License

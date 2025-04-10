@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
-import { getTraces, clearTraces, TraceData, PaginationData } from '@/lib/api/traces';
+import { getTraces, clearTraces, OtelSpan, TraceData, PaginationData, otelSpanToTraceData } from '@/lib/api/traces';
 
-// Using the TraceData interface imported from api/traces
+// Using the OtelSpan interface imported from api/traces
 
 const TracesList: React.FC = () => {
-  const [traces, setTraces] = useState<TraceData[]>([]);
+  const [traces, setTraces] = useState<OtelSpan[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({ total: 0, page: 1, limit: 50, pages: 0 });
   const [loading, setLoading] = useState(false);
   const [, setError] = useState<string | null>(null);
   const [selectedTrace, setSelectedTrace] = useState<string | null>(null);
+
+  // Convert OtelSpan to TraceData for display
+  const convertedTraces = traces.map(otelSpanToTraceData);
 
   const loadTraces = async (page = pagination.page, limit = pagination.limit) => {
     try {
@@ -47,8 +50,11 @@ const TracesList: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString();
+  const formatDate = (date: Date | number) => {
+    if (date instanceof Date) {
+      return date.toLocaleTimeString();
+    }
+    return new Date(date).toLocaleTimeString();
   };
 
   const getStatusColor = (status?: number) => {
@@ -63,7 +69,7 @@ const TracesList: React.FC = () => {
     <div className="h-full flex flex-col">
       <h4 className="text-sm font-medium mb-2">Trace Details</h4>
       <div className="flex-1 overflow-auto">
-        <pre className="bg-gray-100 dark:bg-gray-900 p-3 rounded text-xs h-full overflow-x-auto whitespace-pre-wrap break-words">
+        <pre className="bg-gray-100 dark:bg-gray-900 p-3 rounded text-xs h-full overflow-auto whitespace-pre-wrap break-words">
           {JSON.stringify(trace, null, 2)}
         </pre>
       </div>
@@ -150,7 +156,7 @@ const TracesList: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                  {traces.map((trace) => (
+                  {convertedTraces.map((trace, index) => (
                     <tr
                       key={trace.id}
                       className={`hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer ${selectedTrace === trace.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
@@ -168,7 +174,7 @@ const TracesList: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 overflow-hidden">
-                        {formatDate(trace.startTime)}
+                        {formatDate(traces[index].startTime)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 overflow-hidden">
                         {trace.duration ? `${trace.duration.toFixed(2)} ms` : 'N/A'}
@@ -221,7 +227,9 @@ const TracesList: React.FC = () => {
         <div className={`md:w-1/2 flex-shrink-0 transition-all duration-200 ${selectedTrace ? 'opacity-100' : 'opacity-0 md:block hidden'}`}>
           {selectedTrace && (
             <div className="h-full border rounded-lg bg-gray-50 dark:bg-gray-800 p-4 overflow-hidden">
-              <TraceDetails trace={traces.find(t => t.id === selectedTrace)!} />
+              <TraceDetails
+                trace={convertedTraces.find(t => t.id === selectedTrace)!}
+              />
             </div>
           )}
         </div>
