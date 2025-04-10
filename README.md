@@ -34,9 +34,9 @@ The extension includes an MCP registry that:
 
 1. Install the extension from the VSCode marketplace
 2. Open the command palette (Ctrl+Shift+P / Cmd+Shift+P)
-3. Run "Clay: Start Proxy Server" to start the proxy server
+3. Run "Clay: Start Proxy Server" to start the proxy server (includes MCP server by default)
 4. Run "Clay: Show Tracing Dashboard" to open the dashboard
-5. Run "Clay: Start MCP Server" to start the MCP server
+5. Alternatively, run "Clay: Start MCP Server" to start just the MCP server
 
 ## Usage
 
@@ -50,10 +50,12 @@ The proxy server runs on `http://localhost:3000` by default and provides:
 
 ### MCP Server
 
-The MCP server runs on `http://localhost:3001` by default and provides:
+The MCP server is integrated into the proxy server and is available at `http://localhost:3000/mcp` by default. It provides:
 
 - `/mcp/sse` - SSE endpoint for MCP connections
 - `/mcp/messages` - Endpoint for MCP clients to send messages
+
+You can also run the MCP server as a standalone service on `http://localhost:3001` if needed.
 
 ### Registry
 

@@ -5,6 +5,7 @@ export interface ProxyConfig {
   host: string;
   logLevel: LogLevel;
   dashboardEnabled: boolean;
+  mcpEnabled: boolean;
 }
 
 export interface MCPConfig {
@@ -30,7 +31,8 @@ const defaultConfig: Config = {
     port: 3000,
     host: 'localhost',
     logLevel: LogLevel.INFO,
-    dashboardEnabled: true
+    dashboardEnabled: true,
+    mcpEnabled: true
   },
   mcp: {
     port: 3001,

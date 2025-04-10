@@ -9,13 +9,21 @@ import { tracingMiddleware, registerTracingRoutes } from './middleware/tracing';
 import { sseMiddleware, registerSSERoutes } from './middleware/streaming';
 import { findMatchingRoute } from './routes';
 import { createProxyRoutesAPI } from './api';
+import { MCPHonoServerManager } from '../mcp/hono-server';
 
 export class ProxyServer {
   private app: Hono;
   private config = getConfig().proxy;
+  private mcpManager: MCPHonoServerManager | null = null;
 
   constructor() {
     this.app = new Hono();
+
+    // Initialize MCP server if enabled
+    if (this.config.mcpEnabled) {
+      this.mcpManager = new MCPHonoServerManager();
+    }
+
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -62,12 +70,17 @@ export class ProxyServer {
     // Mount the proxy routes API
     this.app.route('', createProxyRoutesAPI());
 
+    // Set up MCP routes if enabled
+    if (this.config.mcpEnabled) {
+      this.setupMCPRoutes();
+    }
+
     // Serve static assets from the webview-ui/dist directory
     const webviewDistPath = path.resolve(__dirname, '..', 'webview-ui', 'dist');
 
     console.log(__dirname);
     console.log(webviewDistPath);
-    
+
     // Check if the webview-ui/dist directory exists
     if (fs.existsSync(webviewDistPath)) {
       logger.info(`Serving dashboard from ${webviewDistPath}`);
@@ -163,15 +176,50 @@ export class ProxyServer {
 
         logger.info(`Proxying request: ${requestPath} -> ${targetUrl.toString()}`);
 
-        // Use Hono's proxy helper to forward the request
-        return await proxy(targetUrl.toString(), {
-          ...c.req,
-          headers: {
-            ...c.req.header(),
-            'X-Forwarded-Host': c.req.header('host') || '',
-            'X-Forwarded-For': c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip') || ''
+        // Special handling for Gemini streaming requests
+        const isGeminiStreaming = requestPath.includes('gemini') && requestPath.includes('streamGenerateContent');
+
+        if (isGeminiStreaming) {
+          // For Gemini streaming, use fetch directly instead of Hono's proxy
+          try {
+            // Get the request body
+            const body = await c.req.json();
+
+            // Forward the request to Gemini
+            const response = await fetch(targetUrl.toString(), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Forwarded-Host': c.req.header('host') || '',
+                'X-Forwarded-For': c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip') || ''
+              },
+              body: JSON.stringify(body)
+            });
+
+            // Return the response directly without processing
+            return new Response(response.body, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers
+            });
+          } catch (error) {
+            logger.error('Gemini streaming proxy error:', error);
+            return c.json({
+              error: 'Failed to proxy Gemini streaming request',
+              details: (error as Error).message
+            }, 502);
           }
-        });
+        } else {
+          // Use Hono's proxy helper for non-streaming requests
+          return await proxy(targetUrl.toString(), {
+            ...c.req,
+            headers: {
+              ...c.req.header(),
+              'X-Forwarded-Host': c.req.header('host') || '',
+              'X-Forwarded-For': c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip') || ''
+            }
+          });
+        }
       } catch (error) {
         logger.error('Proxy error:', error);
         return c.json({
@@ -244,6 +292,47 @@ export class ProxyServer {
 
   public getApp() {
     return this.app;
+  }
+
+  /**
+   * Set up MCP server routes
+   */
+  private setupMCPRoutes() {
+    if (!this.mcpManager) {
+      logger.info('MCP server is disabled, skipping route registration');
+      return;
+    }
+
+    // SSE endpoint for MCP connections
+    this.app.get('/mcp/sse', async (c) => {
+      if (this.mcpManager) {
+        return await this.mcpManager.handleSSEConnection(c.req.raw);
+      }
+      return c.json({ error: 'MCP server not initialized' }, 500);
+    });
+
+    // Message endpoint for MCP clients to send messages
+    this.app.post('/mcp/messages', async (c) => {
+      if (this.mcpManager) {
+        return await this.mcpManager.handlePostMessage(c.req.raw);
+      }
+      return c.json({ error: 'MCP server not initialized' }, 500);
+    });
+
+    // Health check endpoint for MCP
+    this.app.get('/mcp/health', (c) => {
+      return c.json({ status: 'ok', service: 'mcp' });
+    });
+
+    logger.info('MCP routes registered on the proxy server');
+  }
+
+  /**
+   * Get the MCP server manager
+   * @returns MCPHonoServerManager instance or null if disabled
+   */
+  public getMCPManager() {
+    return this.mcpManager;
   }
 }
 

@@ -122,40 +122,57 @@ export const tracingMiddleware: MiddlewareHandler = async (c: Context, next: Nex
     trace.duration = trace.endTime - startTime;
     trace.status = c.res.status;
 
-    // Try to capture response body
+    // Try to capture response body, but skip for streaming responses
     try {
-      const resClone = c.res.clone();
-      const contentType = resClone.headers.get('content-type') || '';
+      // Check if this is a streaming response
+      const contentType = c.res.headers.get('content-type') || '';
+      const isStreaming = contentType.includes('text/event-stream') ||
+                         path.includes('/streamGenerateContent') ||
+                         path.includes('/stream');
 
-      if (contentType.includes('application/json')) {
+      if (isStreaming) {
+        // For streaming responses, don't try to read the body
+        trace.response = '[Streaming response - body not captured]';
+        logger.debug(`Streaming response detected for ${traceId}, skipping body capture`);
+      } else {
+        // For non-streaming responses, try to clone and read the body
         try {
-          // Get response as text first to check size
-          const responseText = await resClone.text();
+          const resClone = c.res.clone();
+          const contentType = resClone.headers.get('content-type') || '';
 
-          // Check if response is too large
-          if (responseText.length > MAX_RESPONSE_SIZE) {
-            trace.response = responseText.substring(0, MAX_RESPONSE_SIZE) + '... [truncated]';
-            trace.responseTruncated = true;
-            logger.debug(`Response body truncated for ${traceId}, original size: ${responseText.length} bytes`);
-          } else {
-            // Parse as JSON if not too large
+          if (contentType.includes('application/json')) {
             try {
-              trace.response = JSON.parse(responseText);
+              // Get response as text first to check size
+              const responseText = await resClone.text();
+
+              // Check if response is too large
+              if (responseText.length > MAX_RESPONSE_SIZE) {
+                trace.response = responseText.substring(0, MAX_RESPONSE_SIZE) + '... [truncated]';
+                trace.responseTruncated = true;
+                logger.debug(`Response body truncated for ${traceId}, original size: ${responseText.length} bytes`);
+              } else {
+                // Parse as JSON if not too large
+                try {
+                  trace.response = JSON.parse(responseText);
+                } catch (e) {
+                  trace.response = responseText;
+                }
+              }
             } catch (e) {
+              logger.debug('Failed to process JSON response', e);
+            }
+          } else if (contentType.includes('text/')) {
+            const responseText = await resClone.text();
+            if (responseText.length > MAX_RESPONSE_SIZE) {
+              trace.response = responseText.substring(0, MAX_RESPONSE_SIZE) + '... [truncated]';
+              trace.responseTruncated = true;
+              logger.debug(`Response body truncated for ${traceId}, original size: ${responseText.length} bytes`);
+            } else {
               trace.response = responseText;
             }
           }
-        } catch (e) {
-          logger.debug('Failed to process JSON response', e);
-        }
-      } else if (contentType.includes('text/')) {
-        const responseText = await resClone.text();
-        if (responseText.length > MAX_RESPONSE_SIZE) {
-          trace.response = responseText.substring(0, MAX_RESPONSE_SIZE) + '... [truncated]';
-          trace.responseTruncated = true;
-          logger.debug(`Response body truncated for ${traceId}, original size: ${responseText.length} bytes`);
-        } else {
-          trace.response = responseText;
+        } catch (error) {
+          logger.debug('Failed to capture response body', error);
         }
       }
     } catch (error) {

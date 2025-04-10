@@ -32,6 +32,11 @@ export function startServer() {
     logger.info(`Proxy server is running on http://${config.host}:${config.port}`);
     logger.info(`Dashboard is ${config.dashboardEnabled ? 'enabled' : 'disabled'}`);
 
+    // If MCP is enabled, log that it's available on the same server
+    if (config.mcpEnabled) {
+      logger.info(`MCP server is available at http://${config.host}:${config.port}/mcp`);
+    }
+
     return serverInstance;
   } catch (error) {
     logger.error('Failed to start proxy server:', error);
