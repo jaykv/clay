@@ -63,7 +63,7 @@ const TracesList: React.FC = () => {
     <div className="h-full flex flex-col">
       <h4 className="text-sm font-medium mb-2">Trace Details</h4>
       <div className="flex-1 overflow-auto">
-        <pre className="bg-gray-100 dark:bg-gray-900 p-3 rounded text-xs h-full">
+        <pre className="bg-gray-100 dark:bg-gray-900 p-3 rounded text-xs h-full overflow-x-auto whitespace-pre-wrap break-words">
           {JSON.stringify(trace, null, 2)}
         </pre>
       </div>
@@ -120,31 +120,31 @@ const TracesList: React.FC = () => {
         </div>
       )}
 
-      <div className="flex gap-4 h-[calc(100vh-300px)]">
+      <div className="flex flex-col md:flex-row gap-4 h-[calc(100vh-300px)]">
         {/* Left pane: Traces list */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-hidden flex flex-col min-w-0">
           {traces.length === 0 ? (
             <div className="py-8 text-center text-gray-500 dark:text-gray-400">
               No traces recorded yet.
             </div>
           ) : (
             <div className="overflow-auto flex-1">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <table className="min-w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Method
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="w-[40%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Path
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="w-[20%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Time
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Duration
                     </th>
                   </tr>
@@ -156,21 +156,21 @@ const TracesList: React.FC = () => {
                       className={`hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer ${selectedTrace === trace.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                       onClick={() => setSelectedTrace(selectedTrace === trace.id ? null : trace.id)}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium overflow-hidden">
                         <span className="font-mono">{trace.method}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        <span className="font-mono truncate max-w-xs inline-block">{trace.path}</span>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 overflow-hidden">
+                        <span className="font-mono truncate block overflow-hidden text-ellipsis" title={trace.path}>{trace.path}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm overflow-hidden">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(trace.status)}`}>
                           {trace.status || 'N/A'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 overflow-hidden">
                         {formatDate(trace.startTime)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 overflow-hidden">
                         {trace.duration ? `${trace.duration.toFixed(2)} ms` : 'N/A'}
                       </td>
                     </tr>
@@ -218,7 +218,7 @@ const TracesList: React.FC = () => {
         </div>
 
         {/* Right pane: Trace details */}
-        <div className={`w-1/2 transition-all duration-200 ${selectedTrace ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`md:w-1/2 flex-shrink-0 transition-all duration-200 ${selectedTrace ? 'opacity-100' : 'opacity-0 md:block hidden'}`}>
           {selectedTrace && (
             <div className="h-full border rounded-lg bg-gray-50 dark:bg-gray-800 p-4 overflow-hidden">
               <TraceDetails trace={traces.find(t => t.id === selectedTrace)!} />

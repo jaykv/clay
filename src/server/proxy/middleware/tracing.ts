@@ -60,12 +60,18 @@ export function clearTraces(): void {
 
 // Middleware for tracing requests and responses
 export const tracingMiddleware: MiddlewareHandler = async (c: Context, next: Next) => {
+  const path = c.req.path;
+
+  // Skip tracing for trace API endpoints to prevent recursion
+  if (path.startsWith('/api/traces')) {
+    return await next();
+  }
+
   const traceId = generateTraceId();
   const startTime = Date.now();
 
   // Extract request data
   const method = c.req.method;
-  const path = c.req.path;
   const query = Object.fromEntries(new URL(c.req.url).searchParams.entries());
 
   // Extract headers
