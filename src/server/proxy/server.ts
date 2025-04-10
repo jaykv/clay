@@ -10,11 +10,13 @@ import { sseMiddleware, registerSSERoutes } from './middleware/streaming';
 import { findMatchingRoute } from './routes';
 import { createProxyRoutesAPI } from './api';
 import { MCPHonoServerManager } from '../mcp/hono-server';
+import { augmentEngine } from '../augment';
 
 export class ProxyServer {
   private app: Hono;
   private config = getConfig().proxy;
   private mcpManager: MCPHonoServerManager | null = null;
+  private augmentInitialized = false;
 
   constructor() {
     this.app = new Hono();
@@ -22,6 +24,11 @@ export class ProxyServer {
     // Initialize MCP server if enabled
     if (this.config.mcpEnabled) {
       this.mcpManager = new MCPHonoServerManager();
+    }
+
+    // Initialize Augment Context Engine if enabled
+    if (getConfig().augment.enabled) {
+      this.initializeAugmentContextEngine();
     }
 
     this.setupMiddleware();
@@ -46,6 +53,32 @@ export class ProxyServer {
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
       }, 500);
     });
+  }
+
+  /**
+   * Initialize the Augment Context Engine
+   */
+  private async initializeAugmentContextEngine() {
+    try {
+      if (this.augmentInitialized) {
+        logger.info('Augment Context Engine already initialized');
+        return;
+      }
+
+      logger.info('Initializing Augment Context Engine');
+
+      // Check if the engine is already initialized (might have been initialized by the VS Code extension)
+      if (!augmentEngine.isInitialized()) {
+        await augmentEngine.initialize();
+      } else {
+        logger.info('Augment Context Engine was already initialized by the VS Code extension');
+      }
+
+      this.augmentInitialized = true;
+      logger.info('Augment Context Engine initialized successfully');
+    } catch (error) {
+      logger.error('Failed to initialize Augment Context Engine:', error);
+    }
   }
 
   private setupRoutes() {
@@ -316,6 +349,24 @@ export class ProxyServer {
 
   public getApp() {
     return this.app;
+  }
+
+  /**
+   * Shutdown the server and clean up resources
+   */
+  public shutdown(): void {
+    logger.info('Shutting down proxy server resources');
+
+    // Shutdown Augment Context Engine if initialized
+    if (this.augmentInitialized) {
+      try {
+        augmentEngine.shutdown();
+        this.augmentInitialized = false;
+        logger.info('Augment Context Engine shut down successfully');
+      } catch (error) {
+        logger.error('Error shutting down Augment Context Engine:', error);
+      }
+    }
   }
 
   /**

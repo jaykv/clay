@@ -5,6 +5,7 @@ import { getConfig } from '../utils/config';
 
 // Store server instance for stopping later
 let serverInstance: ReturnType<typeof serve> | null = null;
+let proxyServer: ProxyServer | null = null;
 
 /**
  * Start the proxy server
@@ -18,8 +19,8 @@ export function startServer() {
 
   try {
     const config = getConfig().proxy;
-    const server = new ProxyServer();
-    const app = server.getApp();
+    proxyServer = new ProxyServer();
+    const app = proxyServer.getApp();
 
     logger.info(`Starting proxy server on http://${config.host}:${config.port}`);
 
@@ -55,8 +56,17 @@ export function stopServer() {
 
   try {
     logger.info('Shutting down proxy server...');
+
+    // Shutdown proxy server resources
+    if (proxyServer) {
+      proxyServer.shutdown();
+      proxyServer = null;
+    }
+
+    // Close the server
     serverInstance.close();
     serverInstance = null;
+
     logger.info('Proxy server stopped');
   } catch (error) {
     logger.error('Failed to stop proxy server:', error);

@@ -14,7 +14,10 @@ const config = {
     libraryTarget: 'commonjs2'
   },
   externals: {
-    vscode: 'commonjs vscode'
+    vscode: 'commonjs vscode',
+    // Exclude native modules and problematic modules
+    fsevents: 'commonjs fsevents',
+    chokidar: 'commonjs chokidar'
   },
   resolve: {
     extensions: ['.ts', '.js']
@@ -64,6 +67,15 @@ const config = {
     modules: false,
     chunks: false,
   },
+  // Ignore warnings for optional dependencies
+  ignoreWarnings: [
+    {
+      module: /fsevents/,
+    },
+    {
+      module: /chokidar/,
+    }
+  ],
 };
 
 module.exports = config;

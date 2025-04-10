@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { registerCommands, serverStatusEmitter } from './commands';
 import { EnhancedWebviewProvider } from './webview/EnhancedWebviewProvider';
+import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log('Clay extension is now active');
@@ -39,6 +40,26 @@ export async function activate(context: vscode.ExtensionContext) {
       });
     })
   );
+
+  // Register open Augment Context Engine command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('clay.openAugmentEngine', () => {
+      // First show the dashboard if it's not already visible
+      EnhancedWebviewProvider.createOrShow(context.extensionUri);
+
+      // Then send a message to switch to the Augment tab
+      EnhancedWebviewProvider.postMessage({
+        command: 'switchTab',
+        tab: 'augment'
+      });
+    })
+  );
+
+  // Initialize the Augment Context Engine for VS Code
+  initializeAugmentContextEngineForVSCode(context);
+
+  // Register Augment Context Engine commands in package.json
+  // These are already registered in the initializeAugmentContextEngineForVSCode function
 }
 
 export function deactivate() {

@@ -5,6 +5,7 @@ import ServerStatus from '@/components/servers/ServerStatus';
 import PerformanceMetrics from '@/components/metrics/PerformanceMetrics';
 import TracesList from '@/components/traces/TracesList';
 import ProxyRoutes from './ProxyRoutes';
+import AugmentContextEngine from '@/components/augment/AugmentContextEngine';
 import { postMessage } from '@/utils/vscode';
 
 const Dashboard: React.FC = () => {
@@ -67,7 +68,7 @@ const Dashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg overflow-x-auto">
           <button
             className={`px-3 py-1 text-sm rounded ${activeTab === 'overview' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
             onClick={() => setActiveTab('overview')}
@@ -91,6 +92,12 @@ const Dashboard: React.FC = () => {
             onClick={() => setActiveTab('traces')}
           >
             Traces
+          </button>
+          <button
+            className={`px-3 py-1 text-sm rounded ${activeTab === 'augment' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            onClick={() => setActiveTab('augment')}
+          >
+            Augment
           </button>
         </div>
       </div>
@@ -138,6 +145,24 @@ const Dashboard: React.FC = () => {
               </Button>
             </div>
           </Card>
+
+          <Card title="Augment Context Engine">
+            <p className="mb-4">
+              Access powerful code intelligence features to help you navigate and understand your codebase.
+            </p>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+              <div>
+                <h3 className="font-medium">Augment Context Engine</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Search your codebase, navigate to symbol definitions, find references, and more.
+                </p>
+              </div>
+              <Button onClick={() => setActiveTab('augment')}>
+                Open Augment
+              </Button>
+            </div>
+          </Card>
         </>
       )}
 
@@ -146,6 +171,8 @@ const Dashboard: React.FC = () => {
       {activeTab === 'metrics' && <PerformanceMetrics />}
 
       {activeTab === 'traces' && <TracesList />}
+
+      {activeTab === 'augment' && <AugmentContextEngine />}
     </div>
   );
 };

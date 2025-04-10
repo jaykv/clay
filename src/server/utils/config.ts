@@ -20,10 +20,20 @@ export interface RegistryConfig {
   host: string;
 }
 
+export interface AugmentConfig {
+  enabled: boolean;
+  indexPath: string;
+  include: string[];
+  exclude: string[];
+  maxFileSize: number; // in bytes
+  realtimeUpdates: boolean;
+}
+
 export interface Config {
   proxy: ProxyConfig;
   mcp: MCPConfig;
   registry: RegistryConfig;
+  augment: AugmentConfig;
 }
 
 const defaultConfig: Config = {
@@ -43,6 +53,21 @@ const defaultConfig: Config = {
   registry: {
     port: 3002,
     host: 'localhost'
+  },
+  augment: {
+    enabled: true,
+    indexPath: '.clay/index',
+    include: [
+      '**/*.{js,ts,jsx,tsx,py,java,c,cpp,go,rs}'
+    ],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.git/**'
+    ],
+    maxFileSize: 1000000, // 1MB
+    realtimeUpdates: true
   }
 };
 
@@ -67,6 +92,10 @@ export function updateConfig(newConfig: Partial<Config>): void {
     registry: {
       ...config.registry,
       ...(newConfig.registry || {})
+    },
+    augment: {
+      ...config.augment,
+      ...(newConfig.augment || {})
     }
   };
 }

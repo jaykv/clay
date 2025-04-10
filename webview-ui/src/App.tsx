@@ -24,6 +24,11 @@ const NavigationHandler: React.FC = () => {
           navigate(message.route);
         }
       }
+
+      // Handle direct tab switching
+      if (message.command === 'switchTab' && message.tab) {
+        window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: message.tab } }));
+      }
     };
 
     window.addEventListener('message', messageHandler);

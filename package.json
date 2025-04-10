@@ -41,6 +41,30 @@
       {
         "command": "clay.registerMCPServer",
         "title": "Clay: Register MCP Server"
+      },
+      {
+        "command": "clay.openRoutesManager",
+        "title": "Clay: Open Proxy Routes Manager"
+      },
+      {
+        "command": "clay.openAugmentEngine",
+        "title": "Clay: Open Augment Context Engine"
+      },
+      {
+        "command": "clay.searchCodebase",
+        "title": "Clay: Search Codebase"
+      },
+      {
+        "command": "clay.getSymbolDefinition",
+        "title": "Clay: Go to Symbol Definition"
+      },
+      {
+        "command": "clay.findReferences",
+        "title": "Clay: Find References"
+      },
+      {
+        "command": "clay.reindexCodebase",
+        "title": "Clay: Reindex Codebase"
       }
     ],
     "viewsContainers": {
@@ -63,7 +87,42 @@
           "name": "MCP Registry"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "clay.searchCodebase",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "editorFocus"
+      },
+      {
+        "command": "clay.getSymbolDefinition",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g",
+        "when": "editorFocus"
+      },
+      {
+        "command": "clay.findReferences",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorFocus"
+      },
+      {
+        "command": "clay.reindexCodebase",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i"
+      },
+      {
+        "command": "clay.openAugmentEngine",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a"
+      },
+      {
+        "command": "clay.showDashboard",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile-all",
@@ -85,8 +144,9 @@
     "build-webview": "cd webview-ui && npm run build",
     "dev-webview": "cd webview-ui && npm run dev",
     "compile-all": "npm run compile:prod && npm run build-webview",
-    "vsce:package": "npm run compile-all && npx @vscode/vsce package",
-    "vsce:publish": "npx @vscode/vsce publish"
+    "copy-deps": "node copy-dependencies.js",
+    "vsce:package": "npm run compile-all && npm run copy-deps && npx @vscode/vsce package --no-dependencies",
+    "vsce:publish": "npm run compile-all && npm run copy-deps && npx @vscode/vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
@@ -114,7 +174,9 @@
     "@hono/node-server": "^1.2.0",
     "@modelcontextprotocol/sdk": "^1.9.0",
     "@types/node-fetch": "^2.6.12",
+    "chokidar": "^3.5.3",
     "express": "^4.18.2",
+    "glob": "^10.3.10",
     "hono": "^4.0.0",
     "js-yaml": "^4.1.0",
     "node-fetch": "^2.7.0",

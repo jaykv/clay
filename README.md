@@ -38,6 +38,17 @@ The extension includes an MCP registry that:
 4. Run "Clay: Show Tracing Dashboard" to open the dashboard
 5. Alternatively, run "Clay: Start MCP Server" to start just the MCP server
 
+## Keyboard Shortcuts
+
+This extension provides the following keyboard shortcuts:
+
+* `Ctrl+Shift+D` / `Cmd+Shift+D` (Mac): Show Tracing Dashboard
+* `Ctrl+Shift+A` / `Cmd+Shift+A` (Mac): Open Augment Context Engine
+* `Ctrl+Shift+F` / `Cmd+Shift+F` (Mac): Search Codebase
+* `Ctrl+Shift+G` / `Cmd+Shift+G` (Mac): Go to Symbol Definition
+* `Ctrl+Shift+R` / `Cmd+Shift+R` (Mac): Find References
+* `Ctrl+Shift+I` / `Cmd+Shift+I` (Mac): Reindex Codebase
+
 ## Usage
 
 ### Proxy Server
@@ -62,6 +73,17 @@ You can also run the MCP server as a standalone service on `http://localhost:300
 The registry server runs on `http://localhost:3002` by default and provides:
 
 - `/api/servers` - API for managing registered MCP servers
+
+### Augment Context Engine
+
+The Augment Context Engine provides powerful code intelligence features to help you navigate and understand your codebase:
+
+- **Search Codebase** (`Ctrl+Shift+F` / `Cmd+Shift+F`): Search your entire codebase for specific code patterns, functions, or text
+- **Go to Symbol Definition** (`Ctrl+Shift+G` / `Cmd+Shift+G`): Navigate to the definition of a symbol
+- **Find References** (`Ctrl+Shift+R` / `Cmd+Shift+R`): Find all references to a symbol across your codebase
+- **Reindex Codebase** (`Ctrl+Shift+I` / `Cmd+Shift+I`): Manually trigger reindexing of your codebase
+
+The Augment Context Engine is also available as an MCP tool for AI extensions, allowing AI assistants to access your codebase context.
 
 ## Development
 

@@ -25,6 +25,11 @@ export type VSCodeCommand =
   | { command: 'openRoutesManager' }
   | { command: 'navigate', route: string }
   | { command: 'getServerStatus' }
+  | { command: 'switchTab', tab: string }
+  | { command: 'clay.searchCodebase' }
+  | { command: 'clay.getSymbolDefinition' }
+  | { command: 'clay.findReferences' }
+  | { command: 'clay.reindexCodebase' }
   | { command: string }; // Allow for dynamic command strings
 
 /**

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
 import { FetchSSEServerTransport } from './fetch-sse-transport';
+import { registerAugmentMCP } from '../augment/mcp';
+import { augmentEngine } from '../augment';
 
 /**
  * MCP Server Manager for Hono integration
@@ -21,7 +23,12 @@ export class MCPHonoServerManager {
     this.setupResources();
     this.setupTools();
     this.setupPrompts();
-    
+
+    // Register Augment Context Engine with MCP
+    if (getConfig().augment.enabled) {
+      this.setupAugmentContextEngine();
+    }
+
     logger.info(`MCP Hono Server Manager initialized with name: ${this.config.name}, version: ${this.config.version}`);
   }
 
@@ -132,6 +139,25 @@ export class MCPHonoServerManager {
   }
 
   /**
+   * Setup Augment Context Engine integration
+   */
+  private async setupAugmentContextEngine() {
+    try {
+      logger.info('Setting up Augment Context Engine for MCP');
+
+      // Initialize the Augment Context Engine
+      await augmentEngine.initialize();
+
+      // Register Augment Context Engine MCP components
+      registerAugmentMCP(this.server);
+
+      logger.info('Augment Context Engine setup completed');
+    } catch (error) {
+      logger.error('Failed to setup Augment Context Engine:', error);
+    }
+  }
+
+  /**
    * Handle SSE connection for MCP
    * @param request Fetch Request
    * @returns Response
@@ -140,13 +166,13 @@ export class MCPHonoServerManager {
     try {
       const url = new URL(request.url);
       const messagesEndpoint = `${url.protocol}//${url.host}/mcp/messages`;
-      
+
       const transport = new FetchSSEServerTransport(messagesEndpoint);
       this.transports[transport.sessionId] = transport;
-      
+
       // Connect the transport to the MCP server
       this.server.connect(transport);
-      
+
       // Handle the SSE request
       return await transport.handleSSERequest(request);
     } catch (error) {
@@ -164,16 +190,16 @@ export class MCPHonoServerManager {
     try {
       const url = new URL(request.url);
       const sessionId = url.searchParams.get('sessionId');
-      
+
       if (!sessionId) {
         return new Response('Missing sessionId parameter', { status: 400 });
       }
-      
+
       const transport = this.transports[sessionId];
       if (!transport) {
         return new Response('No transport found for sessionId', { status: 400 });
       }
-      
+
       // Handle the POST message
       return await transport.handlePostMessage(request);
     } catch (error) {
