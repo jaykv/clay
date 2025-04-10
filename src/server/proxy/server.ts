@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
 import { tracingMiddleware, registerTracingRoutes } from './middleware/tracing';
+import { responseTransformerMiddleware } from './middleware/response-transformer';
 import { sseMiddleware, registerSSERoutes } from './middleware/streaming';
 import { findMatchingRoute } from './routes';
 import { createProxyRoutesAPI } from './api';
@@ -38,6 +39,9 @@ export class ProxyServer {
   private setupMiddleware() {
     // Enable CORS
     this.app.use('*', cors());
+
+    // Add response transformer middleware (must come before tracing)
+    this.app.use('*', responseTransformerMiddleware);
 
     // Add tracing middleware
     this.app.use('*', tracingMiddleware);

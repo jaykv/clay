@@ -3,7 +3,6 @@ import { logger } from '../../utils/logger';
 
 // Constants for limiting trace data size
 const MAX_BODY_SIZE = 100 * 1024; // 100KB
-const MAX_RESPONSE_SIZE = 100 * 1024; // 100KB
 
 export interface TraceData {
   id: string;
@@ -128,70 +127,89 @@ export const tracingMiddleware: MiddlewareHandler = async (c: Context, next: Nex
     trace.duration = trace.endTime - startTime;
     trace.status = c.res.status;
 
-    // Try to capture response body, but skip for streaming responses
+    // Get the captured response body from the context (set by responseTransformerMiddleware)
     try {
-      // Check if this is a streaming response
-      const contentType = c.res.headers.get('content-type') || '';
-      const acceptHeader = c.req.header('accept') || '';
+      const capturedResponse = c.get('capturedResponseBody');
 
-      // Detect streaming responses based on various indicators
-      const isStreamingContentType = contentType.includes('text/event-stream');
-      const isSSERequest = acceptHeader.includes('text/event-stream');
+      if (capturedResponse) {
+        // We have captured response data from the transformer middleware
+        if (capturedResponse.isStreaming) {
+          // For streaming responses, use the partial content that was captured
+          logger.debug(`Using captured streaming response data for ${traceId}`);
 
-      const isStreaming = isStreamingContentType || isSSERequest || c.req.path.includes("gemini");
+          // For streaming responses, we just use the placeholder content
+          trace.response = capturedResponse.content || '[Streaming response - body not captured]';
+        } else {
+          // For non-streaming responses, use the full captured content
+          logger.debug(`Using captured non-streaming response data for ${traceId}`);
 
-      // Log streaming detection details for debugging
-      if (isStreaming) {
-        logger.debug(`Streaming response detected for ${traceId} (ContentType: ${isStreamingContentType}, SSE: ${isSSERequest})`);
-      }
+          const contentType = c.res.headers.get('content-type') || '';
+          const responseText = capturedResponse.content;
 
-      if (isStreaming) {
-        // For streaming responses, don't try to read the body
-        trace.response = '[Streaming response - body not captured]';
-        logger.debug(`Streaming response detected for ${traceId}, skipping body capture`);
-      } else {
-        // For non-streaming responses, try to clone and read the body
-        try {
-          const resClone = c.res.clone();
-          const contentType = resClone.headers.get('content-type') || '';
-
-          if (contentType.includes('application/json')) {
+          if (contentType.includes('application/json') && responseText &&
+              responseText !== '[Failed to capture response body]') {
             try {
-              // Get response as text first to check size
-              const responseText = await resClone.text();
-
-              // Check if response is too large
-              if (responseText.length > MAX_RESPONSE_SIZE) {
-                trace.response = responseText.substring(0, MAX_RESPONSE_SIZE) + '... [truncated]';
-                trace.responseTruncated = true;
-                logger.debug(`Response body truncated for ${traceId}, original size: ${responseText.length} bytes`);
-              } else {
-                // Parse as JSON if not too large
-                try {
-                  trace.response = JSON.parse(responseText);
-                } catch (e) {
-                  trace.response = responseText;
-                }
-              }
+              trace.response = JSON.parse(responseText);
             } catch (e) {
-              logger.debug('Failed to process JSON response', e);
-            }
-          } else if (contentType.includes('text/')) {
-            const responseText = await resClone.text();
-            if (responseText.length > MAX_RESPONSE_SIZE) {
-              trace.response = responseText.substring(0, MAX_RESPONSE_SIZE) + '... [truncated]';
-              trace.responseTruncated = true;
-              logger.debug(`Response body truncated for ${traceId}, original size: ${responseText.length} bytes`);
-            } else {
               trace.response = responseText;
             }
+          } else {
+            trace.response = responseText;
           }
-        } catch (error) {
-          logger.debug('Failed to capture response body', error);
+
+          if (capturedResponse.isTruncated) {
+            trace.responseTruncated = true;
+            logger.debug(`Response body truncated for ${traceId}`);
+          }
+
+          // Log the captured response for debugging
+          logger.debug(`Captured response for ${traceId}: ${responseText ? responseText.substring(0, 100) : 'empty'}`);
+        }
+      } else {
+        // No captured response data available
+        // This could happen if the responseTransformerMiddleware wasn't used
+        // or if there was an error in capturing the response
+        logger.debug(`No captured response data available for ${traceId}`);
+
+        // Check if this is a streaming response
+        const contentType = c.res.headers.get('content-type') || '';
+        const acceptHeader = c.req.header('accept') || '';
+        const isStreaming = contentType.includes('text/event-stream') ||
+                           acceptHeader.includes('text/event-stream') ||
+                           c.req.path.includes('gemini');
+
+        if (isStreaming) {
+          trace.response = '[Streaming response - body not captured]';
+        } else {
+          // Try to capture the response body directly as a fallback
+          try {
+            const resClone = c.res.clone();
+            const bodyText = await resClone.text();
+
+            if (bodyText && bodyText.length > 0) {
+              if (contentType.includes('application/json')) {
+                try {
+                  trace.response = JSON.parse(bodyText);
+                } catch (e) {
+                  trace.response = bodyText;
+                }
+              } else {
+                trace.response = bodyText;
+              }
+
+              logger.debug(`Fallback response capture for ${traceId}: ${bodyText.substring(0, 100)}`);
+            } else {
+              trace.response = '[Empty response body]';
+            }
+          } catch (e) {
+            logger.debug(`Fallback response capture failed for ${traceId}:`, e);
+            trace.response = '[Response body not captured]';
+          }
         }
       }
     } catch (error) {
-      logger.debug('Failed to capture response body', error);
+      logger.debug(`Failed to process captured response for ${traceId}:`, error);
+      trace.response = '[Error processing response]';
     }
   } catch (error) {
     // Handle errors
