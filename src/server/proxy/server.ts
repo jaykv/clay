@@ -212,7 +212,7 @@ export class ProxyServer {
         // Special handling for streaming requests
         // Check for SSE requests (Accept: text/event-stream)
         const acceptHeader = c.req.header('accept') || '';
-        const isStreaming = acceptHeader.includes('text/event-stream');
+        const isStreaming = acceptHeader.includes('text/event-stream') || c.req.path.includes("gemini");
 
         logger.info(`Request streaming status: ${isStreaming ? 'Streaming' : 'Non-streaming'}`);
 
@@ -230,7 +230,8 @@ export class ProxyServer {
             const method = c.req.method;
 
             // Prepare fetch options
-            const fetchOptions: RequestInit = {
+            // Use any type to allow for the duplex property which is not in the standard RequestInit type
+            const fetchOptions: RequestInit & { duplex?: 'half' } = {
               method,
               headers
             };
@@ -240,17 +241,39 @@ export class ProxyServer {
               const contentType = c.req.header('content-type') || '';
 
               if (contentType.includes('application/json')) {
-                // For JSON requests, parse and stringify the body
-                const body = await c.req.json();
-                fetchOptions.body = JSON.stringify(body);
+                try {
+                  // For JSON requests, get the body directly
+                  // This works because we're in a streaming context where we need the raw body
+                  const bodyText = await c.req.text();
+                  fetchOptions.body = bodyText;
+                } catch (error) {
+                  logger.error('Error getting request body:', error);
+                  return c.json({
+                    error: 'Failed to process request body',
+                    details: (error as Error).message
+                  }, 400);
+                }
               } else {
-                // For other content types, pass the raw body
-                const body = await c.req.text();
-                fetchOptions.body = body;
+                try {
+                  // For other content types, get the raw body as text
+                  const bodyText = await c.req.text();
+                  fetchOptions.body = bodyText;
+                } catch (error) {
+                  logger.error('Error getting request body:', error);
+                  return c.json({
+                    error: 'Failed to process request body',
+                    details: (error as Error).message
+                  }, 400);
+                }
               }
             }
 
             // Forward the request
+            // Add duplex option for streaming requests if not already set
+            if (!fetchOptions.duplex && ['POST', 'PUT', 'PATCH'].includes(method)) {
+              fetchOptions.duplex = 'half';
+            }
+
             const response = await fetch(targetUrl.toString(), fetchOptions);
 
             // Return the response directly without processing

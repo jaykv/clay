@@ -138,7 +138,7 @@ export const tracingMiddleware: MiddlewareHandler = async (c: Context, next: Nex
       const isStreamingContentType = contentType.includes('text/event-stream');
       const isSSERequest = acceptHeader.includes('text/event-stream');
 
-      const isStreaming = isStreamingContentType || isSSERequest;
+      const isStreaming = isStreamingContentType || isSSERequest || c.req.path.includes("gemini");
 
       // Log streaming detection details for debugging
       if (isStreaming) {
