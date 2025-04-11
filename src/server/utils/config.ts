@@ -4,7 +4,7 @@ export interface ProxyConfig {
   port: number;
   host: string;
   logLevel: LogLevel;
-  dashboardEnabled: boolean;
+  gatewayEnabled: boolean;
   mcpEnabled: boolean;
 }
 
@@ -41,7 +41,7 @@ const defaultConfig: Config = {
     port: 3000,
     host: 'localhost',
     logLevel: LogLevel.INFO,
-    dashboardEnabled: true,
+    gatewayEnabled: true,
     mcpEnabled: true
   },
   mcp: {

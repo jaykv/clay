@@ -12,11 +12,11 @@ interface HtmlCache {
 }
 
 /**
- * Manages the webview panel for the Clay Dashboard with optimized loading
+ * Manages the webview panel for the Clay Gateway with optimized loading
  * and improved CSS handling
  */
 export class EnhancedWebviewProvider {
-  public static readonly viewType = 'clayDashboard';
+  public static readonly viewType = 'clayGateway';
   private static panel: vscode.WebviewPanel | undefined;
   private static extensionUri: vscode.Uri;
   private static htmlCache: HtmlCache | null = null;
@@ -67,7 +67,7 @@ export class EnhancedWebviewProvider {
     // Otherwise, create a new panel
     const panel = vscode.window.createWebviewPanel(
       this.viewType,
-      'Clay Dashboard',
+      'Clay Gateway',
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -235,7 +235,7 @@ export class EnhancedWebviewProvider {
       // Add CSP
       const nonce = this.getNonce();
       indexHtml = indexHtml.replace(/<head>/, `<head>
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; connect-src 'self' http://localhost:* https://localhost:*; ">`);
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*; ">`);
 
       // Add nonce to scripts
       indexHtml = indexHtml.replace(/<script/g, `<script nonce="${nonce}"`);

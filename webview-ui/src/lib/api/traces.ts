@@ -1,4 +1,5 @@
 // API client for the traces
+import { wsClient } from './websocket';
 
 // OpenTelemetry span interface (simplified for our needs)
 export interface OtelSpan {
@@ -174,11 +175,6 @@ export interface TracesResponse {
   pagination: PaginationData;
 }
 
-// Use relative URLs when accessed directly via the proxy server
-// or absolute URLs when in VS Code webview
-const API_BASE_URL = typeof window.acquireVsCodeApi === 'function'
-  ? 'http://localhost:3000'
-  : '';
 
 /**
  * Get traces with pagination
@@ -188,12 +184,49 @@ const API_BASE_URL = typeof window.acquireVsCodeApi === 'function'
  */
 export async function getTraces(page = 1, limit = 50): Promise<TracesResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/traces?page=${page}&limit=${limit}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch traces: ${response.statusText}`);
+    // Check if WebSocket is connected
+    if (!wsClient.isConnected()) {
+      // Fall back to HTTP if WebSocket is not connected
+      console.log('WebSocket not connected, falling back to HTTP');
+      const response = await fetch(`/api/traces?page=${page}&limit=${limit}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch traces: ${response.statusText}`);
+      }
+      return await response.json();
     }
-    const data = await response.json();
-    return data;
+
+    // Use WebSocket
+    return new Promise((resolve, reject) => {
+      // Set up a one-time listener for the traces response
+      const handleTracesResponse = (message: any) => {
+        wsClient.off('traces', handleTracesResponse);
+        resolve(message.data);
+      };
+
+      // Set up error handling
+      const handleError = (message: any) => {
+        if (message.message && message.message.includes('traces')) {
+          wsClient.off('error', handleError);
+          reject(new Error(message.message));
+        }
+      };
+
+      // Register listeners
+      wsClient.on('traces', handleTracesResponse);
+      wsClient.on('error', handleError);
+
+      // Request traces
+      wsClient.getTraces(page, limit);
+
+      // Set a timeout to prevent hanging (reduced from 2000ms to 1000ms)
+      setTimeout(() => {
+        wsClient.off('traces', handleTracesResponse);
+        wsClient.off('error', handleError);
+        console.warn('Timeout waiting for traces response, but data might arrive later');
+        // Don't reject, just log a warning - the data might arrive later
+        // and the component will update when it does
+      }, 1000);
+    });
   } catch (error) {
     console.error('Error fetching traces:', error);
     throw error;
@@ -206,16 +239,35 @@ export async function getTraces(page = 1, limit = 50): Promise<TracesResponse> {
  * @returns Promise with the trace data
  */
 export async function getTraceById(id: string): Promise<OtelSpan> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/traces/${id}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch trace: ${response.statusText}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching trace ${id}:`, error);
-    throw error;
-  }
+  return new Promise((resolve, reject) => {
+    // Set up a one-time listener for the trace response
+    const handleTraceResponse = (message: any) => {
+      wsClient.off('trace', handleTraceResponse);
+      resolve(message.data);
+    };
+
+    // Set up error handling
+    const handleError = (message: any) => {
+      if (message.message && message.message.includes('trace')) {
+        wsClient.off('error', handleError);
+        reject(new Error(message.message));
+      }
+    };
+
+    // Register listeners
+    wsClient.on('trace', handleTraceResponse);
+    wsClient.on('error', handleError);
+
+    // Request trace
+    wsClient.getTrace(id);
+
+    // Set a timeout to prevent hanging
+    setTimeout(() => {
+      wsClient.off('trace', handleTraceResponse);
+      wsClient.off('error', handleError);
+      reject(new Error(`Timeout waiting for trace ${id}`));
+    }, 5000);
+  });
 }
 
 /**
@@ -223,18 +275,35 @@ export async function getTraceById(id: string): Promise<OtelSpan> {
  * @returns Promise with the success status
  */
 export async function clearTraces(): Promise<{ success: boolean }> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/traces/clear`, {
-      method: 'POST',
-    });
-    if (!response.ok) {
-      throw new Error(`Failed to clear traces: ${response.statusText}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error clearing traces:', error);
-    throw error;
-  }
+  return new Promise((resolve, reject) => {
+    // Set up a one-time listener for the clear response
+    const handleClearResponse = (_message: any) => {
+      wsClient.off('tracesCleared', handleClearResponse);
+      resolve({ success: true });
+    };
+
+    // Set up error handling
+    const handleError = (message: any) => {
+      if (message.message && message.message.includes('clear')) {
+        wsClient.off('error', handleError);
+        reject(new Error(message.message));
+      }
+    };
+
+    // Register listeners
+    wsClient.on('tracesCleared', handleClearResponse);
+    wsClient.on('error', handleError);
+
+    // Request to clear traces
+    wsClient.clearTraces();
+
+    // Set a timeout to prevent hanging
+    setTimeout(() => {
+      wsClient.off('tracesCleared', handleClearResponse);
+      wsClient.off('error', handleError);
+      reject(new Error('Timeout waiting for traces to clear'));
+    }, 5000);
+  });
 }
 
 /**
@@ -243,11 +312,49 @@ export async function clearTraces(): Promise<{ success: boolean }> {
  */
 export async function getTraceStats(): Promise<TraceStats> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/traces/stats`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch trace stats: ${response.statusText}`);
+    // Check if WebSocket is connected
+    if (!wsClient.isConnected()) {
+      // Fall back to HTTP if WebSocket is not connected
+      console.log('WebSocket not connected, falling back to HTTP');
+      const response = await fetch(`/api/traces/stats`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch trace stats: ${response.statusText}`);
+      }
+      return await response.json();
     }
-    return await response.json();
+
+    // Use WebSocket
+    return new Promise((resolve, reject) => {
+      // Set up a one-time listener for the stats response
+      const handleStatsResponse = (message: any) => {
+        wsClient.off('stats', handleStatsResponse);
+        resolve(message.data);
+      };
+
+      // Set up error handling
+      const handleError = (message: any) => {
+        if (message.message && message.message.includes('stats')) {
+          wsClient.off('error', handleError);
+          reject(new Error(message.message));
+        }
+      };
+
+      // Register listeners
+      wsClient.on('stats', handleStatsResponse);
+      wsClient.on('error', handleError);
+
+      // Request stats
+      wsClient.getStats();
+
+      // Set a timeout to prevent hanging (reduced from 2000ms to 1000ms)
+      setTimeout(() => {
+        wsClient.off('stats', handleStatsResponse);
+        wsClient.off('error', handleError);
+        console.warn('Timeout waiting for trace stats, but data might arrive later');
+        // Don't reject, just log a warning - the data might arrive later
+        // and the component will update when it does
+      }, 1000);
+    });
   } catch (error) {
     console.error('Error fetching trace stats:', error);
     throw error;

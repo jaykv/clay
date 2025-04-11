@@ -9,9 +9,9 @@ export async function activate(context: vscode.ExtensionContext) {
   // Register commands
   registerCommands(context);
 
-  // Register dashboard provider
+  // Register gateway provider
   context.subscriptions.push(
-    vscode.commands.registerCommand('clay.showDashboard', () => {
+    vscode.commands.registerCommand('clay.showGateway', () => {
       EnhancedWebviewProvider.createOrShow(context.extensionUri);
     })
   );

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Card from '@/components/ui/Card';
 import { getTraces, clearTraces, OtelSpan, TraceData, PaginationData, otelSpanToTraceData } from '@/lib/api/traces';
+import { wsClient, ConnectionStatus } from '@/lib/api/websocket';
 
 // Using the OtelSpan interface imported from api/traces
 
@@ -10,24 +11,39 @@ const TracesList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [, setError] = useState<string | null>(null);
   const [selectedTrace, setSelectedTrace] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 
   // Convert OtelSpan to TraceData for display
   const convertedTraces = traces.map(otelSpanToTraceData);
 
-  const loadTraces = async (page = pagination.page, limit = pagination.limit) => {
+  const loadTraces = useCallback(async (page = pagination.page, limit = pagination.limit) => {
     try {
       setLoading(true);
       setError(null);
+
+      // Set a timeout to show loading state for at least 500ms
+      // This prevents flickering if data loads very quickly
+      const loadingTimer = setTimeout(() => {}, 500);
+
       const data = await getTraces(page, limit);
       setTraces(data.traces);
       setPagination(data.pagination);
+
+      clearTimeout(loadingTimer);
     } catch (err) {
-      setError('Failed to load traces. Make sure the proxy server is running.');
+      // Only show error if we don't have any traces yet
+      if (traces.length === 0) {
+        setError('Failed to load traces. Make sure the proxy server is running.');
+      }
       console.error(err);
     } finally {
-      setLoading(false);
+      // Add a small delay before hiding the loading indicator
+      // to prevent UI flickering
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
     }
-  };
+  }, [pagination.page, pagination.limit, traces.length]);
 
   const handleClearTraces = async () => {
     try {
@@ -43,12 +59,61 @@ const TracesList: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    loadTraces();
-    // Set up polling every 5 seconds
-    const interval = setInterval(loadTraces, 5000);
-    return () => clearInterval(interval);
+  // Handle new traces coming in via WebSocket
+  const handleNewTrace = useCallback((message: any) => {
+    if (message.data) {
+      // Add the new trace to the beginning of the array
+      setTraces(prevTraces => [message.data, ...prevTraces.slice(0, 49)]);
+
+      // Update pagination total
+      setPagination(prev => ({
+        ...prev,
+        total: prev.total + 1
+      }));
+
+      // Clear any errors when we get data
+      setError(null);
+    }
   }, []);
+
+  // Handle traces update via WebSocket
+  const handleTracesUpdate = useCallback((message: any) => {
+    if (message.data) {
+      setTraces(message.data.traces);
+      setPagination(message.data.pagination);
+      setLoading(false);
+      setError(null); // Clear any errors when we get data
+    }
+  }, []);
+
+  // Initialize WebSocket connection and listeners
+  useEffect(() => {
+    // Set up status listener
+    wsClient.onStatusChange(setConnectionStatus);
+
+    // Set up WebSocket listeners
+    wsClient.on('newTrace', handleNewTrace);
+    wsClient.on('traces', handleTracesUpdate);
+
+    // Initial load of traces
+    loadTraces();
+
+    // Set up polling for traces if WebSocket is not connected
+    const interval = setInterval(() => {
+      if (wsClient.getStatus() !== 'connected') {
+        console.log('WebSocket not connected, polling for traces');
+        loadTraces();
+      }
+    }, 10000); // Poll every 10 seconds if WebSocket is not connected
+
+    return () => {
+      // Clean up listeners when component unmounts
+      wsClient.offStatusChange(setConnectionStatus);
+      wsClient.off('newTrace', handleNewTrace);
+      wsClient.off('traces', handleTracesUpdate);
+      clearInterval(interval);
+    };
+  }, [loadTraces, handleNewTrace, handleTracesUpdate]);
 
   const formatDate = (date: Date | number) => {
     if (date instanceof Date) {
@@ -103,7 +168,11 @@ const TracesList: React.FC = () => {
   return (
     <Card title="Request Traces">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">Recent Requests</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-medium">Recent Requests</h3>
+          <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+          <span className="text-xs text-gray-500">{connectionStatus}</span>
+        </div>
         <div className="space-x-2">
           <button
             onClick={() => loadTraces()}

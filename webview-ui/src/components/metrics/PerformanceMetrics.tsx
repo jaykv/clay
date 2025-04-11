@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Card from '@/components/ui/Card';
 import { getTraceStats, TraceStats } from '@/lib/api/traces';
+import { wsClient, ConnectionStatus } from '@/lib/api/websocket';
 
 // Using TraceStats interface imported from api/traces
 
@@ -8,27 +9,73 @@ const PerformanceMetrics: React.FC = () => {
   const [stats, setStats] = useState<TraceStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Set a timeout to show loading state for at least 500ms
+      // This prevents flickering if data loads very quickly
+      const loadingTimer = setTimeout(() => {}, 500);
+
       const data = await getTraceStats();
       setStats(data);
+
+      clearTimeout(loadingTimer);
     } catch (err) {
-      setError('Failed to load performance metrics. Make sure the proxy server is running.');
+      // Only show error if we don't have any stats yet
+      if (!stats) {
+        setError('Failed to load performance metrics. Make sure the proxy server is running.');
+      }
       console.error(err);
     } finally {
-      setLoading(false);
+      // Add a small delay before hiding the loading indicator
+      // to prevent UI flickering
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
     }
-  };
+  }, [stats]);
+
+  // Handle stats updates via WebSocket
+  const handleStatsUpdate = useCallback((message: any) => {
+    if (message.data) {
+      setStats(message.data);
+      setLoading(false);
+      setError(null); // Clear any errors when we get data
+    }
+  }, []);
 
   useEffect(() => {
+    // Set up status listener
+    wsClient.onStatusChange(setConnectionStatus);
+
+    // Set up stats listener
+    wsClient.on('stats', handleStatsUpdate);
+
+    // Initial load of stats
     loadStats();
-    // Set up polling every 5 seconds
-    const interval = setInterval(loadStats, 5000);
-    return () => clearInterval(interval);
-  }, []);
+
+    // Request stats every 5 seconds if connected, or load via HTTP if not
+    const interval = setInterval(() => {
+      if (wsClient.isConnected()) {
+        wsClient.getStats();
+      } else {
+        // Fall back to HTTP if WebSocket is not connected
+        console.log('WebSocket not connected, loading stats via HTTP');
+        loadStats();
+      }
+    }, 5000);
+
+    return () => {
+      // Clean up listeners when component unmounts
+      wsClient.offStatusChange(setConnectionStatus);
+      wsClient.off('stats', handleStatsUpdate);
+      clearInterval(interval);
+    };
+  }, [loadStats, handleStatsUpdate]);
 
   if (loading && !stats) {
     return (
@@ -62,6 +109,11 @@ const PerformanceMetrics: React.FC = () => {
 
   return (
     <Card title="Performance Metrics">
+      <div className="flex items-center gap-2 mb-4">
+        <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+        <span className="text-xs text-gray-500">{connectionStatus}</span>
+        {error && <span className="text-xs text-red-500 ml-2">{error}</span>}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Requests</h3>

@@ -12,6 +12,7 @@ import { registerProxyRoutesAPI } from './fastify-api';
 import { augmentEngine } from '../augment';
 import otelPlugin from './middleware/fastify-otel-plugin';
 import { ssePlugin } from './middleware/fastify-sse';
+import { registerWebSocketRoutes, broadcastNewTrace } from '../gateway/websocket';
 // Import MCPServerManager from Express implementation
 import { MCPServerManager } from '../mcp/server';
 
@@ -98,6 +99,13 @@ export class FastifyProxyServer {
    * Set up routes
    */
   private setupRoutes() {
+    // Register WebSocket routes for real-time communication
+    if (this.config.gatewayEnabled) {
+      registerWebSocketRoutes(this.server);
+      logger.info('WebSocket routes registered for gateway');
+    }
+
+
     // Health check endpoint
     this.server.get('/health', async (request, reply) => {
       return { status: 'ok' };
@@ -108,8 +116,8 @@ export class FastifyProxyServer {
       return { version: '1.0.0' };
     });
 
-    // Register tracing routes for the dashboard
-    if (this.config.dashboardEnabled) {
+    // Register tracing routes for the gateway
+    if (this.config.gatewayEnabled) {
       this.registerTracingRoutes();
     }
 
@@ -125,45 +133,110 @@ export class FastifyProxyServer {
     }
 
     // Serve static assets from the webview-ui/dist directory
-    const webviewDistPath = path.resolve(__dirname, '..', 'webview-ui', 'dist');
+    // Check multiple possible paths for the webview-ui/dist directory
+    const possiblePaths = [
+      path.resolve(__dirname, '..', 'webview-ui', 'dist'),          // For direct server execution
+      path.resolve(__dirname, '..', '..', '..', 'webview-ui', 'dist'), // For VS Code extension
+      path.resolve(__dirname, '..', '..', 'webview-ui', 'dist')      // Another possible path
+    ];
+
+    // Find the first path that exists
+    let webviewDistPath = '';
+    for (const possiblePath of possiblePaths) {
+      if (fs.existsSync(possiblePath)) {
+        webviewDistPath = possiblePath;
+        logger.info(`Found webview-ui dist at: ${webviewDistPath}`);
+        break;
+      }
+    }
+
+    if (!webviewDistPath) {
+      logger.error('Could not find webview-ui dist directory. Checked paths:');
+      possiblePaths.forEach(p => logger.error(` - ${p}`));
+      webviewDistPath = path.resolve(__dirname, '..', '..', '..', 'webview-ui', 'dist'); // Default path
+    }
 
     // Check if the webview-ui/dist directory exists
     if (fs.existsSync(webviewDistPath)) {
-      logger.info(`Serving dashboard from ${webviewDistPath}`);
+      logger.info(`Serving gateway from ${webviewDistPath}`);
 
       // Register static file plugin
       this.server.register(fastifyStatic, {
         root: webviewDistPath,
         prefix: '/',
         decorateReply: false, // Don't decorate reply with sendFile
+        index: false, // Disable automatic serving of index.html
+        list: false, // Disable directory listing
+        wildcard: false, // Disable wildcard serving
+        serve: true, // Enable serving files
+        cacheControl: true, // Enable cache control
+        maxAge: 86400000, // 1 day in milliseconds
+        lastModified: true, // Enable last modified headers
+        etag: true, // Enable etag headers
       });
 
-      // Serve the dashboard at the root path
+      // Log the static file plugin configuration
+      logger.info('Static file plugin registered with configuration:');
+      logger.info(` - Root: ${webviewDistPath}`);
+      logger.info(` - Prefix: /`);
+      logger.info(` - Index: false (handled manually)`);
+
+      // Register another static file plugin specifically for assets
+      this.server.register(fastifyStatic, {
+        root: path.join(webviewDistPath, 'assets'),
+        prefix: '/assets/',
+        decorateReply: false,
+        index: false,
+      });
+      logger.info(`Assets directory registered at: ${path.join(webviewDistPath, 'assets')}`);
+
+      // List the assets directory if it exists
+      const assetsPath = path.join(webviewDistPath, 'assets');
+      if (fs.existsSync(assetsPath)) {
+        const assetFiles = fs.readdirSync(assetsPath);
+        logger.info(`Assets files: ${assetFiles.join(', ')}`);
+      } else {
+        logger.warn(`Assets directory not found at: ${assetsPath}`);
+      }
+
+      // Serve the gateway at the root path
       this.server.get('/', async (request, reply) => {
         try {
           const indexPath = path.join(webviewDistPath, 'index.html');
+          logger.info(`Attempting to serve index.html from: ${indexPath}`);
+
           if (fs.existsSync(indexPath)) {
+            logger.info('index.html found, serving content');
             const content = fs.readFileSync(indexPath, 'utf-8');
             reply.type('text/html').send(content);
           } else {
             logger.error(`index.html not found at ${indexPath}`);
-            reply.status(404).send('Dashboard index.html not found');
+            // List directory contents to help debug
+            if (fs.existsSync(webviewDistPath)) {
+              const files = fs.readdirSync(webviewDistPath);
+              logger.info(`Files in ${webviewDistPath}: ${files.join(', ')}`);
+            }
+            reply.status(404).send('Gateway index.html not found');
           }
         } catch (error) {
-          logger.error(`Failed to serve dashboard: ${error}`);
-          reply.status(500).send('Failed to load dashboard. Make sure webview-ui is built.');
+          logger.error(`Failed to serve gateway: ${error}`);
+          reply.status(500).send('Failed to load gateway. Make sure webview-ui is built.');
         }
       });
 
       // Catch-all route for SPA - must be last after all other routes
-      // This ensures that client-side routing works for the dashboard
+      // This ensures that client-side routing works for the gateway
       this.server.setNotFoundHandler((request, reply) => {
+        logger.info(`Not found handler for: ${request.url}`);
+
         // Skip API routes and other special paths
         const url = new URL(request.url, 'http://localhost');
         if (url.pathname.startsWith('/api/') ||
             url.pathname.startsWith('/proxy/') ||
             url.pathname === '/health' ||
-            url.pathname.startsWith('/assets/')) {
+            url.pathname.startsWith('/assets/') ||
+            url.pathname.startsWith('/ws')) {
+          logger.info(`Skipping SPA handling for API route: ${url.pathname}`);
           reply.status(404).send({ error: 'Not found' });
           return;
         }
@@ -171,15 +244,19 @@ export class FastifyProxyServer {
         // Serve the index.html for client-side routing
         try {
           const indexPath = path.join(webviewDistPath, 'index.html');
+          logger.info(`Attempting to serve SPA index.html from: ${indexPath} for route: ${url.pathname}`);
+
           if (fs.existsSync(indexPath)) {
+            logger.info(`SPA index.html found, serving for route: ${url.pathname}`);
             const content = fs.readFileSync(indexPath, 'utf-8');
             reply.type('text/html').send(content);
           } else {
-            reply.status(404).send('Dashboard index.html not found');
+            logger.error(`SPA index.html not found at ${indexPath}`);
+            reply.status(404).send('Gateway index.html not found');
           }
         } catch (error) {
-          logger.error(`Failed to serve dashboard for route ${request.url}:`, error);
-          reply.status(500).send('Failed to load dashboard');
+          logger.error(`Failed to serve gateway for route ${request.url}:`, error);
+          reply.status(500).send('Failed to load gateway');
         }
       });
     }
@@ -238,7 +315,7 @@ export class FastifyProxyServer {
   }
 
   /**
-   * Register tracing routes for the dashboard
+   * Register tracing routes for the gateway
    */
   private registerTracingRoutes() {
     // Tracing routes are registered in the OpenTelemetry plugin
@@ -276,7 +353,7 @@ export class FastifyProxyServer {
         host: this.config.host
       });
       logger.info(`Fastify proxy server is running on http://${this.config.host}:${this.config.port}`);
-      logger.info(`Dashboard is ${this.config.dashboardEnabled ? 'enabled' : 'disabled'}`);
+      logger.info(`Gateway is ${this.config.gatewayEnabled ? 'enabled' : 'disabled'}`);
 
       // If MCP is enabled, log that it's available on the same server
       if (this.config.mcpEnabled) {

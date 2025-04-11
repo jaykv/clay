@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } fro
 import fastifyPlugin from 'fastify-plugin';
 import { initOpenTelemetry, getTraces, getTraceById, clearTraces, getTraceStats, generateTraceId, addTrace } from '../../utils/telemetry';
 import { logger } from '../../utils/logger';
+import { broadcastNewTrace } from '../../gateway/websocket';
 
 // Extend FastifyRequest to include trace property
 declare module 'fastify' {
@@ -116,6 +117,9 @@ const otelPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         // Add the trace to storage
         addTrace(trace);
 
+        // Broadcast the trace to all connected WebSocket clients
+        broadcastNewTrace(trace);
+
         // Log the trace
         logger.info(
           `${request.method} ${request.url} ${trace.status || 'ERR'} ${trace.duration}ms [${trace.id}]`
@@ -140,6 +144,9 @@ const otelPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
         // Add the trace to storage
         addTrace(trace);
+
+        // Broadcast the trace to all connected WebSocket clients
+        broadcastNewTrace(trace);
 
         // Log the error
         logger.error(
