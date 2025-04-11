@@ -1,7 +1,7 @@
 {
   "name": "clay",
   "displayName": "Clay",
-  "description": "VSCode extension with proxy server, MCP server, and MCP registry for AI development",
+  "description": "VSCode extension with gateway server, MCP server, and MCP registry for AI development",
   "version": "0.1.0",
   "publisher": "clay",
   "repository": {
@@ -19,12 +19,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "clay.startProxyServer",
-        "title": "Clay: Start Proxy Server"
+        "command": "clay.startGatewayServer",
+        "title": "Clay: Start Gateway Server"
       },
       {
-        "command": "clay.stopProxyServer",
-        "title": "Clay: Stop Proxy Server"
+        "command": "clay.stopGatewayServer",
+        "title": "Clay: Stop Gateway Server"
       },
       {
         "command": "clay.showGateway",
@@ -44,7 +44,7 @@
       },
       {
         "command": "clay.openRoutesManager",
-        "title": "Clay: Open Proxy Routes Manager"
+        "title": "Clay: Open Gateway Routes Manager"
       },
       {
         "command": "clay.openAugmentEngine",
@@ -135,14 +135,12 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "start-proxy": "node dist/server/proxy/index.js",
-    "start-gateway": "npm run compile-all && npm run start-proxy",
+    "start-gateway": "node dist/server/gateway/index.js",
     "start-mcp": "node dist/server/mcp/index.js",
     "start-registry": "node dist/server/registry/index.js",
-    "dev-proxy": "ts-node src/server/proxy/index.ts",
+    "dev-gateway": "ts-node src/server/gateway/index.ts",
     "dev-mcp": "ts-node src/server/mcp/index.ts",
     "dev-registry": "ts-node src/server/registry/index.ts",
-    "test-otel": "ts-node src/server/proxy/test-otel.ts",
     "build-webview": "cd webview-ui && npm run build",
     "dev-webview": "cd webview-ui && npm run dev",
     "compile-all": "npm run compile:prod && npm run build-webview",

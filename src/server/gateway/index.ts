@@ -1,29 +1,29 @@
-import { FastifyProxyServer } from './fastify-server';
+import { FastifyGatewayServer } from './fastify-server';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
 
 // Store server instance for stopping later
-let serverInstance: FastifyProxyServer | null = null;
+let serverInstance: FastifyGatewayServer | null = null;
 
 /**
- * Start the Fastify proxy server
+ * Start the Fastify gateway server
  * @returns The server instance
  */
 export function startServer() {
   if (serverInstance) {
-    logger.info('Fastify proxy server is already running');
+    logger.info('Fastify gateway server is already running');
     return serverInstance;
   }
 
   try {
-    const config = getConfig().proxy;
-    serverInstance = new FastifyProxyServer();
+    const config = getConfig().gateway;
+    serverInstance = new FastifyGatewayServer();
 
-    logger.info(`Starting Fastify proxy server on http://${config.host}:${config.port}`);
+    logger.info(`Starting Fastify gateway server on http://${config.host}:${config.port}`);
     serverInstance.start();
 
-    logger.info(`Fastify proxy server is running on http://${config.host}:${config.port}`);
-    logger.info(`Gateway is ${config.gatewayEnabled ? 'enabled' : 'disabled'}`);
+    logger.info(`Fastify gateway server is running on http://${config.host}:${config.port}`);
+    logger.info(`Proxy is ${config.proxyEnabled ? 'enabled' : 'disabled'}`);
 
     // If MCP is enabled, log that it's available on the same server
     if (config.mcpEnabled) {
@@ -32,26 +32,26 @@ export function startServer() {
 
     return serverInstance;
   } catch (error) {
-    logger.error('Failed to start Fastify proxy server:', error);
+    logger.error('Failed to start Fastify gateway server:', error);
     throw error;
   }
 }
 
 /**
- * Stop the Fastify proxy server
+ * Stop the Fastify gateway server
  */
 export function stopServer() {
   if (!serverInstance) {
-    logger.info('Fastify proxy server is not running');
+    logger.info('Fastify gateway server is not running');
     return;
   }
 
   try {
     serverInstance.stop();
     serverInstance = null;
-    logger.info('Fastify proxy server stopped');
+    logger.info('Fastify gateway server stopped');
   } catch (error) {
-    logger.error('Failed to stop Fastify proxy server:', error);
+    logger.error('Failed to stop Fastify gateway server:', error);
     throw error;
   }
 }

@@ -2,23 +2,23 @@ import * as vscode from 'vscode';
 import { getConfig } from './server/utils/config';
 
 // Import server functions directly
-import { startServer as startProxyServer, stopServer as stopProxyServer } from './server/proxy';
+import { startServer as startGatewayServer, stopServer as stopGatewayServer } from './server/gateway';
 import { startServer as startMCPServer, stopServer as stopMCPServer } from './server/mcp';
 
 // Server instances
-let proxyServerInstance: any = null;
+let gatewayServerInstance: any = null;
 let mcpServerInstance: any = null;
 let registryServerInstance: any = null;
 
 // Event emitters for server status changes
 export const serverStatusEmitter = new vscode.EventEmitter<{
-  type: 'proxy' | 'mcp' | 'registry';
+  type: 'gateway' | 'mcp' | 'registry';
   status: 'started' | 'stopped';
 }>();
 
 // Check if servers are running
-export function isProxyServerRunning(): boolean {
-  return proxyServerInstance !== null;
+export function isGatewayServerRunning(): boolean {
+  return gatewayServerInstance !== null;
 }
 
 export function isMCPServerRunning(): boolean {
@@ -30,22 +30,22 @@ export function isRegistryServerRunning(): boolean {
 }
 
 export function registerCommands(context: vscode.ExtensionContext) {
-  // Start Proxy Server command
+  // Start Gateway Server command
   context.subscriptions.push(
-    vscode.commands.registerCommand('clay.startProxyServer', async () => {
-      if (proxyServerInstance) {
-        vscode.window.showInformationMessage('Proxy server is already running');
+    vscode.commands.registerCommand('clay.startGatewayServer', async () => {
+      if (gatewayServerInstance) {
+        vscode.window.showInformationMessage('Gateway server is already running');
         return;
       }
 
       try {
-        // Start the proxy server directly
-        proxyServerInstance = startProxyServer();
+        // Start the gateway server directly
+        gatewayServerInstance = startGatewayServer();
 
-        vscode.window.showInformationMessage('Proxy server started successfully');
-        serverStatusEmitter.fire({ type: 'proxy', status: 'started' });
+        vscode.window.showInformationMessage('Gateway server started successfully');
+        serverStatusEmitter.fire({ type: 'gateway', status: 'started' });
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to start proxy server: ${error}`);
+        vscode.window.showErrorMessage(`Failed to start gateway server: ${error}`);
       }
     })
   );
@@ -53,11 +53,11 @@ export function registerCommands(context: vscode.ExtensionContext) {
   // Start MCP Server command
   context.subscriptions.push(
     vscode.commands.registerCommand('clay.startMCPServer', async () => {
-      // Check if proxy server is running with MCP enabled
-      if (proxyServerInstance) {
+      // Check if gateway server is running with MCP enabled
+      if (gatewayServerInstance) {
         const config = getConfig();
-        if (config.proxy.mcpEnabled) {
-          vscode.window.showInformationMessage('MCP server is already running as part of the proxy server');
+        if (config.gateway.mcpEnabled) {
+          vscode.window.showInformationMessage('MCP server is already running as part of the gateway server');
           mcpServerInstance = true; // Mark as running
           serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
           return;
@@ -70,23 +70,23 @@ export function registerCommands(context: vscode.ExtensionContext) {
       }
 
       try {
-        // Start the proxy server with MCP enabled if not already running
-        if (!proxyServerInstance) {
+        // Start the gateway server with MCP enabled if not already running
+        if (!gatewayServerInstance) {
           // Update config to enable MCP
           const config = getConfig();
-          config.proxy.mcpEnabled = true;
+          config.gateway.mcpEnabled = true;
 
-          // Start the proxy server which will include MCP
-          proxyServerInstance = startProxyServer();
+          // Start the gateway server which will include MCP
+          gatewayServerInstance = startGatewayServer();
           mcpServerInstance = true; // Mark MCP as running
 
-          vscode.window.showInformationMessage('Proxy server with MCP started successfully');
-          serverStatusEmitter.fire({ type: 'proxy', status: 'started' });
+          vscode.window.showInformationMessage('Gateway server with MCP started successfully');
+          serverStatusEmitter.fire({ type: 'gateway', status: 'started' });
           serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
           return;
         }
 
-        // If we get here, proxy is running but MCP is not enabled
+        // If we get here, gateway is running but MCP is not enabled
         // This is a fallback to the old behavior of starting a separate MCP server
         mcpServerInstance = startMCPServer();
         vscode.window.showInformationMessage('MCP server started successfully (standalone mode)');
@@ -97,23 +97,23 @@ export function registerCommands(context: vscode.ExtensionContext) {
     })
   );
 
-  // Stop Proxy Server command
+  // Stop Gateway Server command
   context.subscriptions.push(
-    vscode.commands.registerCommand('clay.stopProxyServer', async () => {
-      if (!proxyServerInstance) {
-        vscode.window.showInformationMessage('Proxy server is not running');
+    vscode.commands.registerCommand('clay.stopGatewayServer', async () => {
+      if (!gatewayServerInstance) {
+        vscode.window.showInformationMessage('Gateway server is not running');
         return;
       }
 
       try {
-        // Stop the proxy server directly
-        stopProxyServer();
-        proxyServerInstance = null;
+        // Stop the gateway server directly
+        stopGatewayServer();
+        gatewayServerInstance = null;
 
-        vscode.window.showInformationMessage('Proxy server stopped successfully');
-        serverStatusEmitter.fire({ type: 'proxy', status: 'stopped' });
+        vscode.window.showInformationMessage('Gateway server stopped successfully');
+        serverStatusEmitter.fire({ type: 'gateway', status: 'stopped' });
       } catch (error) {
-        vscode.window.showErrorMessage(`Failed to stop proxy server: ${error}`);
+        vscode.window.showErrorMessage(`Failed to stop gateway server: ${error}`);
       }
     })
   );
@@ -126,31 +126,31 @@ export function registerCommands(context: vscode.ExtensionContext) {
         return;
       }
 
-      // Check if MCP is running as part of the proxy server
+      // Check if MCP is running as part of the gateway server
       const config = getConfig();
-      if (proxyServerInstance && config.proxy.mcpEnabled) {
-        // Ask user if they want to stop the proxy server or just disable MCP
+      if (gatewayServerInstance && config.gateway.mcpEnabled) {
+        // Ask user if they want to stop the gateway server or just disable MCP
         const action = await vscode.window.showInformationMessage(
-          'MCP server is running as part of the proxy server. What would you like to do?',
+          'MCP server is running as part of the gateway server. What would you like to do?',
           { modal: true },
-          'Stop Proxy Server', 'Disable MCP Only', 'Cancel'
+          'Stop Gateway Server', 'Disable MCP Only', 'Cancel'
         );
 
-        if (action === 'Stop Proxy Server') {
-          // Stop the proxy server (which includes MCP)
-          stopProxyServer();
-          proxyServerInstance = null;
+        if (action === 'Stop Gateway Server') {
+          // Stop the gateway server (which includes MCP)
+          stopGatewayServer();
+          gatewayServerInstance = null;
           mcpServerInstance = null;
 
-          vscode.window.showInformationMessage('Proxy server (including MCP) stopped successfully');
-          serverStatusEmitter.fire({ type: 'proxy', status: 'stopped' });
+          vscode.window.showInformationMessage('Gateway server (including MCP) stopped successfully');
+          serverStatusEmitter.fire({ type: 'gateway', status: 'stopped' });
           serverStatusEmitter.fire({ type: 'mcp', status: 'stopped' });
         } else if (action === 'Disable MCP Only') {
           // Just disable MCP in the config
-          config.proxy.mcpEnabled = false;
+          config.gateway.mcpEnabled = false;
           mcpServerInstance = null;
 
-          vscode.window.showInformationMessage('MCP server disabled. Proxy server is still running.');
+          vscode.window.showInformationMessage('MCP server disabled. Gateway server is still running.');
           serverStatusEmitter.fire({ type: 'mcp', status: 'stopped' });
         }
 

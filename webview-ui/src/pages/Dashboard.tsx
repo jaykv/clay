@@ -10,7 +10,7 @@ import { postMessage } from '@/utils/vscode';
 
 const Dashboard: React.FC = () => {
   // Server states
-  const [proxyServerRunning, setProxyServerRunning] = useState(false);
+  const [gatewayServerRunning, setGatewayServerRunning] = useState(false);
   const [mcpServerRunning, setMcpServerRunning] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -22,10 +22,10 @@ const Dashboard: React.FC = () => {
     // Determine if we're in VS Code or browser
     setIsVSCodeEnv(typeof window.acquireVsCodeApi === 'function');
 
-    // If we're in browser mode, we can assume the proxy server is running
+    // If we're in browser mode, we can assume the gateway server is running
     // since we're being served by it
     if (!isVSCodeEnv) {
-      setProxyServerRunning(true);
+      setGatewayServerRunning(true);
     }
 
     const messageHandler = (event: MessageEvent) => {
@@ -33,8 +33,8 @@ const Dashboard: React.FC = () => {
 
       // Handle server status updates
       if (message.command === 'serverStatus') {
-        if (message.server === 'proxy') {
-          setProxyServerRunning(message.status === 'running');
+        if (message.server === 'gateway') {
+          setGatewayServerRunning(message.status === 'running');
         } else if (message.server === 'mcp') {
           setMcpServerRunning(message.status === 'running');
         }
@@ -107,12 +107,12 @@ const Dashboard: React.FC = () => {
           <Card title="Servers">
             <div className="space-y-4">
               <ServerStatus
-                name="Proxy Server"
-                description="Handles proxying requests to external services"
-                isRunning={proxyServerRunning}
+                name="Gateway Server"
+                description="Main server that handles gateway, proxy, and MCP functionality"
+                isRunning={gatewayServerRunning}
                 port={3000}
-                startCommand="startProxyServer"
-                stopCommand="stopProxyServer"
+                startCommand="startGatewayServer"
+                stopCommand="stopGatewayServer"
                 disableControls={!isVSCodeEnv}
               />
 

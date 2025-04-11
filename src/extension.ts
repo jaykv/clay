@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { registerCommands, serverStatusEmitter } from './commands';
-import { EnhancedWebviewProvider } from './webview/EnhancedWebviewProvider';
+import { EnhancedWebviewProvider } from './webview/WebviewProvider';
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
 
 export async function activate(context: vscode.ExtensionContext) {

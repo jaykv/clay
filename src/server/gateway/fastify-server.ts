@@ -12,13 +12,13 @@ import { registerProxyRoutesAPI } from './fastify-api';
 import { augmentEngine } from '../augment';
 import otelPlugin from './middleware/fastify-otel-plugin';
 import { ssePlugin } from './middleware/fastify-sse';
-import { registerWebSocketRoutes, broadcastNewTrace } from '../gateway/websocket';
+import { registerWebSocketRoutes, broadcastNewTrace } from './websocket';
 // Import MCPServerManager from Express implementation
 import { MCPServerManager } from '../mcp/server';
 
-export class FastifyProxyServer {
+export class FastifyGatewayServer {
   private server: FastifyInstance;
-  private config = getConfig().proxy;
+  private config = getConfig().gateway;
   private mcpManager: MCPServerManager | null = null;
   private augmentInitialized = false;
 
@@ -100,10 +100,9 @@ export class FastifyProxyServer {
    */
   private setupRoutes() {
     // Register WebSocket routes for real-time communication
-    if (this.config.gatewayEnabled) {
-      registerWebSocketRoutes(this.server);
-      logger.info('WebSocket routes registered for gateway');
-    }
+    // Always enabled as this is now the gateway server
+    registerWebSocketRoutes(this.server);
+    logger.info('WebSocket routes registered for gateway');
 
 
     // Health check endpoint
@@ -117,9 +116,8 @@ export class FastifyProxyServer {
     });
 
     // Register tracing routes for the gateway
-    if (this.config.gatewayEnabled) {
-      this.registerTracingRoutes();
-    }
+    // Always enabled as this is now the gateway server
+    this.registerTracingRoutes();
 
     // Register SSE management routes
     this.registerSSERoutes();
@@ -352,15 +350,15 @@ export class FastifyProxyServer {
         port: this.config.port,
         host: this.config.host
       });
-      logger.info(`Fastify proxy server is running on http://${this.config.host}:${this.config.port}`);
-      logger.info(`Gateway is ${this.config.gatewayEnabled ? 'enabled' : 'disabled'}`);
+      logger.info(`Fastify gateway server is running on http://${this.config.host}:${this.config.port}`);
+      logger.info(`Proxy is ${this.config.proxyEnabled ? 'enabled' : 'disabled'}`);
 
       // If MCP is enabled, log that it's available on the same server
       if (this.config.mcpEnabled) {
         logger.info(`MCP server is available at http://${this.config.host}:${this.config.port}/mcp`);
       }
     } catch (error) {
-      logger.error('Failed to start Fastify proxy server:', error);
+      logger.error('Failed to start Fastify gateway server:', error);
       throw error;
     }
   }
@@ -371,9 +369,9 @@ export class FastifyProxyServer {
   public async stop(): Promise<void> {
     try {
       await this.server.close();
-      logger.info('Fastify proxy server stopped');
+      logger.info('Fastify gateway server stopped');
     } catch (error) {
-      logger.error('Failed to stop Fastify proxy server:', error);
+      logger.error('Failed to stop Fastify gateway server:', error);
       throw error;
     }
   }

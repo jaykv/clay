@@ -1,10 +1,10 @@
 import { LogLevel } from './logger';
 
-export interface ProxyConfig {
+export interface GatewayConfig {
   port: number;
   host: string;
   logLevel: LogLevel;
-  gatewayEnabled: boolean;
+  proxyEnabled: boolean;
   mcpEnabled: boolean;
 }
 
@@ -30,18 +30,18 @@ export interface AugmentConfig {
 }
 
 export interface Config {
-  proxy: ProxyConfig;
+  gateway: GatewayConfig;
   mcp: MCPConfig;
   registry: RegistryConfig;
   augment: AugmentConfig;
 }
 
 const defaultConfig: Config = {
-  proxy: {
+  gateway: {
     port: 3000,
     host: 'localhost',
     logLevel: LogLevel.INFO,
-    gatewayEnabled: true,
+    proxyEnabled: true,
     mcpEnabled: true
   },
   mcp: {
@@ -81,9 +81,9 @@ export function updateConfig(newConfig: Partial<Config>): void {
   config = {
     ...config,
     ...newConfig,
-    proxy: {
-      ...config.proxy,
-      ...(newConfig.proxy || {})
+    gateway: {
+      ...config.gateway,
+      ...(newConfig.gateway || {})
     },
     mcp: {
       ...config.mcp,

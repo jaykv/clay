@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { isProxyServerRunning, isMCPServerRunning } from '../commands';
+import { isGatewayServerRunning, isMCPServerRunning } from '../commands';
 
 // Cache for HTML content to avoid reading from disk repeatedly
 interface HtmlCache {
@@ -36,11 +36,11 @@ export class EnhancedWebviewProvider {
    * Send the current server status to the webview
    */
   private static sendServerStatus(): void {
-    // Send proxy server status
+    // Send gateway server status
     this.postMessage({
       command: 'serverStatus',
-      server: 'proxy',
-      status: isProxyServerRunning() ? 'running' : 'stopped'
+      server: 'gateway',
+      status: isGatewayServerRunning() ? 'running' : 'stopped'
     });
 
     // Send MCP server status
