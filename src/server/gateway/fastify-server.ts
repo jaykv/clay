@@ -14,13 +14,12 @@ import { augmentEngine } from '../augment';
 import otelPlugin from './middleware/fastify-otel-plugin';
 import { ssePlugin } from './middleware/fastify-sse';
 import { registerWebSocketRoutes } from './websocket';
-import { MCPServerManager } from '../mcp/server';
-import {registerMCPRoutes} from '../mcp';
+// MCP server is now standalone
 
 export class FastifyGatewayServer {
   private server: FastifyInstance;
   private config = getConfig().gateway;
-  private mcpManager: MCPServerManager | null = null;
+  // MCP server is now standalone
   private augmentInitialized = false;
 
   constructor() {
@@ -35,10 +34,7 @@ export class FastifyGatewayServer {
       bodyLimit: 10 * 1024 * 1024, // 10MB
     });
 
-    // Initialize MCP server if enabled
-    if (this.config.mcpEnabled) {
-      this.mcpManager = new MCPServerManager();
-    }
+    // MCP server is now standalone
 
     // Initialize Augment Context Engine if enabled
     if (getConfig().augment.enabled) {
@@ -131,10 +127,6 @@ export class FastifyGatewayServer {
       this.registerAugmentAPI();
     }
 
-    // Set up MCP routes if enabled
-    if (this.config.mcpEnabled) {
-      this.registerMCPRoutes();
-    }
 
     // Serve static assets from the webview-ui/dist directory
     // Check multiple possible paths for the webview-ui/dist directory
@@ -342,18 +334,6 @@ export class FastifyGatewayServer {
     this.server.register(ssePlugin);
   }
 
-  /**
-   * Set up MCP routes
-   */
-  private registerMCPRoutes() {
-    if (!this.mcpManager) {
-      logger.info('MCP server is disabled, skipping route registration');
-      return;
-    }
-
-    // We'll implement this later
-    this.server.register(registerMCPRoutes);
-  }
 
 
 
@@ -369,10 +349,6 @@ export class FastifyGatewayServer {
       logger.info(`Fastify gateway server is running on http://${this.config.host}:${this.config.port}`);
       logger.info(`Proxy is ${this.config.proxyEnabled ? 'enabled' : 'disabled'}`);
 
-      // If MCP is enabled, log that it's available on the same server
-      if (this.config.mcpEnabled) {
-        logger.info(`MCP server is available at http://${this.config.host}:${this.config.port}/mcp`);
-      }
     } catch (error) {
       logger.error('Failed to start Fastify gateway server:', error);
       throw error;

@@ -2,20 +2,26 @@ import * as vscode from 'vscode';
 
 // Import server functions directly
 import { startServer as startGatewayServer, stopServer as stopGatewayServer } from './server/gateway';
+import { startMCPServer } from './server/mcp';
 
 // Server instances
 let gatewayServerInstance: any = null;
+let mcpServerInstance: any = null;
 let registryServerInstance: any = null;
 
 // Event emitters for server status changes
 export const serverStatusEmitter = new vscode.EventEmitter<{
-  type: 'gateway' | 'registry';
+  type: 'gateway' | 'mcp' | 'registry';
   status: 'started' | 'stopped';
 }>();
 
 // Check if servers are running
 export function isGatewayServerRunning(): boolean {
   return gatewayServerInstance !== null;
+}
+
+export function isMCPServerRunning(): boolean {
+  return mcpServerInstance !== null;
 }
 
 export function isRegistryServerRunning(): boolean {
@@ -64,12 +70,55 @@ export function registerCommands(context: vscode.ExtensionContext) {
     })
   );
 
+  // Start MCP Server command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('clay.startMCPServer', async () => {
+      if (mcpServerInstance) {
+        vscode.window.showInformationMessage('MCP server is already running');
+        return mcpServerInstance;
+      }
+
+      try {
+        // Start the MCP server directly
+        mcpServerInstance = await startMCPServer();
+
+        vscode.window.showInformationMessage('MCP server started successfully');
+        serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
+        return mcpServerInstance;
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to start MCP server: ${error}`);
+        return null;
+      }
+    })
+  );
+
+  // Stop MCP Server command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('clay.stopMCPServer', async () => {
+      if (!mcpServerInstance) {
+        vscode.window.showInformationMessage('MCP server is not running');
+        return;
+      }
+
+      try {
+        // For now, we'll just set the instance to null
+        // In the future, we might want to add a stop method to the MCP server
+        mcpServerInstance = null;
+
+        vscode.window.showInformationMessage('MCP server stopped successfully');
+        serverStatusEmitter.fire({ type: 'mcp', status: 'stopped' });
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to stop MCP server: ${error}`);
+      }
+    })
+  );
+
   // Register MCP Server command
   context.subscriptions.push(
     vscode.commands.registerCommand('clay.registerMCPServer', async () => {
       const serverUrl = await vscode.window.showInputBox({
         prompt: 'Enter the MCP server URL',
-        placeHolder: 'http://localhost:3000'
+        placeHolder: 'http://localhost:3001'
       });
 
       if (!serverUrl) {

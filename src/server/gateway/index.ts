@@ -25,10 +25,6 @@ export function startServer() {
     logger.info(`Fastify gateway server is running on http://${config.host}:${config.port}`);
     logger.info(`Proxy is ${config.proxyEnabled ? 'enabled' : 'disabled'}`);
 
-    // If MCP is enabled, log that it's available on the same server
-    if (config.mcpEnabled) {
-      logger.info(`MCP server is available at http://${config.host}:${config.port}/mcp`);
-    }
 
     return serverInstance;
   } catch (error) {

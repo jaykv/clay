@@ -1,13 +1,33 @@
 import * as vscode from 'vscode';
-import { registerCommands, serverStatusEmitter } from './commands';
+import { registerCommands, serverStatusEmitter, isMCPServerRunning } from './commands';
 import { EnhancedWebviewProvider } from './webview/WebviewProvider';
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
+import { getConfig } from './server/utils/config';
+import { startMCPServer } from './server/mcp';
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log('Clay extension is now active');
 
+  // Load configuration from YAML file
+  // Configuration is loaded automatically when getConfig() is called
+
   // Register commands
   registerCommands(context);
+
+  // Autostart MCP server if enabled
+  const mcpConfig = getConfig().mcp;
+  if (mcpConfig.autostart && !isMCPServerRunning()) {
+    console.log(`Autostarting MCP server on port ${mcpConfig.port}...`);
+    try {
+      const mcpServer = await startMCPServer();
+      if (mcpServer) {
+        serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
+        console.log(`MCP server started on port ${mcpConfig.port}`);
+      }
+    } catch (error) {
+      console.error('Failed to autostart MCP server:', error);
+    }
+  }
 
   // Register gateway provider
   context.subscriptions.push(

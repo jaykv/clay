@@ -1,4 +1,9 @@
 import { LogLevel } from './logger';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import * as yaml from 'js-yaml';
+import { logger } from './logger';
 
 export interface GatewayConfig {
   port: number;
@@ -13,6 +18,7 @@ export interface MCPConfig {
   host: string;
   name: string;
   version: string;
+  autostart: boolean;
 }
 
 export interface RegistryConfig {
@@ -48,7 +54,8 @@ const defaultConfig: Config = {
     port: 3001,
     host: 'localhost',
     name: 'VSCode MCP Server',
-    version: '1.0.0'
+    version: '1.0.0',
+    autostart: true
   },
   registry: {
     port: 3002,
@@ -71,13 +78,60 @@ const defaultConfig: Config = {
   }
 };
 
+// Initialize config with default values
 let config: Config = { ...defaultConfig };
 
+// Path to the config file
+const configDir = path.join(os.homedir(), '.clay');
+const configPath = path.join(configDir, 'config.yaml');
+
+/**
+ * Load configuration from YAML file
+ */
+export function loadConfigFromFile(): void {
+  try {
+    // Create config directory if it doesn't exist
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+      logger.info(`Created config directory: ${configDir}`);
+    }
+
+    // Check if config file exists
+    if (!fs.existsSync(configPath)) {
+      // Create default config file
+      fs.writeFileSync(configPath, yaml.dump(defaultConfig));
+      logger.info(`Created default config file: ${configPath}`);
+      return;
+    }
+
+    // Read config file
+    const fileContent = fs.readFileSync(configPath, 'utf8');
+    const fileConfig = yaml.load(fileContent) as Partial<Config>;
+
+    // Update config with values from file
+    updateConfig(fileConfig);
+    logger.info(`Loaded configuration from ${configPath}`);
+  } catch (error) {
+    logger.error(`Failed to load configuration from ${configPath}:`, error);
+    logger.info('Using default configuration');
+  }
+}
+
+// Load configuration from file when module is imported
+loadConfigFromFile();
+
+/**
+ * Get the current configuration
+ */
 export function getConfig(): Config {
   return config;
 }
 
+/**
+ * Update the configuration and save to file
+ */
 export function updateConfig(newConfig: Partial<Config>): void {
+  // Update in-memory config
   config = {
     ...config,
     ...newConfig,
@@ -98,4 +152,12 @@ export function updateConfig(newConfig: Partial<Config>): void {
       ...(newConfig.augment || {})
     }
   };
+
+  // Save to file
+  try {
+    fs.writeFileSync(configPath, yaml.dump(config));
+    logger.info(`Saved configuration to ${configPath}`);
+  } catch (error) {
+    logger.error(`Failed to save configuration to ${configPath}:`, error);
+  }
 }
