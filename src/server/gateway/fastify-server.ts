@@ -7,15 +7,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
-import { findMatchingRoute, getProxyRoutes } from './routes';
+import { getProxyRoutes } from './routes';
 import { registerProxyRoutesAPI } from './fastify-api';
 import { registerAugmentAPI } from './augment-api';
 import { augmentEngine } from '../augment';
 import otelPlugin from './middleware/fastify-otel-plugin';
 import { ssePlugin } from './middleware/fastify-sse';
-import { registerWebSocketRoutes, broadcastNewTrace } from './websocket';
-// Import MCPServerManager from Express implementation
+import { registerWebSocketRoutes } from './websocket';
 import { MCPServerManager } from '../mcp/server';
+import {registerMCPRoutes} from '../mcp';
 
 export class FastifyGatewayServer {
   private server: FastifyInstance;
@@ -133,7 +133,7 @@ export class FastifyGatewayServer {
 
     // Set up MCP routes if enabled
     if (this.config.mcpEnabled) {
-      this.setupMCPRoutes();
+      this.registerMCPRoutes();
     }
 
     // Serve static assets from the webview-ui/dist directory
@@ -345,13 +345,14 @@ export class FastifyGatewayServer {
   /**
    * Set up MCP routes
    */
-  private setupMCPRoutes() {
+  private registerMCPRoutes() {
     if (!this.mcpManager) {
       logger.info('MCP server is disabled, skipping route registration');
       return;
     }
 
     // We'll implement this later
+    this.server.register(registerMCPRoutes);
   }
 
 

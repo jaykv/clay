@@ -1,6 +1,7 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { Request, Response } from 'express';
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { IncomingMessage, ServerResponse } from 'http'; // Import Node.js types
 import { z } from 'zod';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
@@ -131,24 +132,34 @@ export class MCPServerManager {
     return this.server;
   }
 
-  public handleSSEConnection(res: Response, messagesEndpoint: string) {
-    const transport = new SSEServerTransport(messagesEndpoint, res);
+  // Use FastifyReply but pass the raw Node.js response to the transport
+  public handleSSEConnection(res: FastifyReply, messagesEndpoint: string) {
+    // SSEServerTransport likely expects a Node.js ServerResponse
+    const transport = new SSEServerTransport(messagesEndpoint, res.raw as ServerResponse);
     this.transports[transport.sessionId] = transport;
+    logger.info(`[MCP Server] Stored transport for session: ${transport.sessionId}`);
 
-    res.on('close', () => {
+    res.raw.on('close', () => { // Attach listener to the raw Node.js response
+      logger.warn(`[MCP Server] SSE connection closed for session: ${transport.sessionId}. Deleting transport.`);
       delete this.transports[transport.sessionId];
-      logger.info(`MCP client disconnected: ${transport.sessionId}`);
+      logger.info(`[MCP Server] Transport deleted for session: ${transport.sessionId}`);
     });
 
     logger.info(`MCP client connected: ${transport.sessionId}`);
     return this.server.connect(transport);
   }
 
-  public async handlePostMessage(req: Request, res: Response, sessionId: string) {
+  // Use FastifyRequest/Reply but pass the raw Node.js objects to the transport method
+  public async handlePostMessage(req: FastifyRequest, res: FastifyReply, sessionId: string) {
+    logger.info(`[MCP Server] Received POST message for session: ${sessionId}`);
     const transport = this.transports[sessionId];
     if (transport) {
-      await transport.handlePostMessage(req, res);
+      // Await the SDK handler and let it send the response (e.g., 202 Accepted or an error)
+      await transport.handlePostMessage(req.raw as IncomingMessage, res.raw as ServerResponse, req.body);
     } else {
+      // Log the error, but the SDK's handlePostMessage would normally handle this response if the transport existed.
+      // Since it doesn't, we send the 400 here.
+      logger.error(`[MCP Server] No transport found for session ID: ${sessionId} during POST request.`);
       res.status(400).send('No transport found for sessionId');
     }
   }

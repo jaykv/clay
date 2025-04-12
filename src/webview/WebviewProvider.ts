@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { isGatewayServerRunning, isMCPServerRunning } from '../commands';
+import { isGatewayServerRunning } from '../commands';
 
 // Cache for HTML content to avoid reading from disk repeatedly
 interface HtmlCache {
@@ -41,13 +41,6 @@ export class EnhancedWebviewProvider {
       command: 'serverStatus',
       server: 'gateway',
       status: isGatewayServerRunning() ? 'running' : 'stopped'
-    });
-
-    // Send MCP server status
-    this.postMessage({
-      command: 'serverStatus',
-      server: 'mcp',
-      status: isMCPServerRunning() ? 'running' : 'stopped'
     });
   }
 
