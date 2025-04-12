@@ -1,4 +1,3 @@
-import { getConfig } from './config';
 import { logger } from './logger';
 
 // In-memory storage for traces

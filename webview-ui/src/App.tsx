@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocat
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Dashboard from '@/pages/Dashboard';
 import { initVSCodeAPI } from '@/utils/vscode';
+import { TracesProvider } from '@/contexts/TracesContext';
 
 // Component to handle navigation messages from the extension
 const NavigationHandler: React.FC = () => {
@@ -61,20 +62,22 @@ const App: React.FC = () => {
   }
 
   return (
-    <Router>
-      <DashboardLayout>
-        <NavigationHandler />
-        {!isVSCode && (
-          <div className="bg-blue-100 dark:bg-blue-900 p-2 mb-4 rounded text-sm">
-            Running in standalone browser mode. Server controls are disabled.
-          </div>
-        )}
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </DashboardLayout>
-    </Router>
+    <TracesProvider>
+      <Router>
+        <DashboardLayout>
+          <NavigationHandler />
+          {!isVSCode && (
+            <div className="bg-blue-100 dark:bg-blue-900 p-2 mb-4 rounded text-sm">
+              Running in standalone browser mode. Server controls are disabled.
+            </div>
+          )}
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </DashboardLayout>
+      </Router>
+    </TracesProvider>
   );
 };
 

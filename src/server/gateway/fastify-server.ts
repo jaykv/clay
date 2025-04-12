@@ -9,6 +9,7 @@ import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
 import { findMatchingRoute, getProxyRoutes } from './routes';
 import { registerProxyRoutesAPI } from './fastify-api';
+import { registerAugmentAPI } from './augment-api';
 import { augmentEngine } from '../augment';
 import otelPlugin from './middleware/fastify-otel-plugin';
 import { ssePlugin } from './middleware/fastify-sse';
@@ -124,6 +125,11 @@ export class FastifyGatewayServer {
 
     // Mount the proxy routes API
     this.registerProxyRoutesAPI();
+
+    // Register Augment Context Engine API if enabled
+    if (getConfig().augment.enabled) {
+      this.registerAugmentAPI();
+    }
 
     // Set up MCP routes if enabled
     if (this.config.mcpEnabled) {
@@ -310,6 +316,15 @@ export class FastifyGatewayServer {
   private registerProxyRoutesAPI() {
     // Register proxy routes API
     this.server.register(registerProxyRoutesAPI);
+  }
+
+  /**
+   * Register the Augment Context Engine API
+   */
+  private registerAugmentAPI() {
+    // Register Augment Context Engine API
+    this.server.register(registerAugmentAPI);
+    logger.info('Augment Context Engine API registered');
   }
 
   /**

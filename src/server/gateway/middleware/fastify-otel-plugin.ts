@@ -27,8 +27,14 @@ const otelPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
       const path = request.url;
 
-      // Skip tracing for trace API endpoints to prevent recursion
-      if (path.startsWith('/api/traces')) {
+      // Skip tracing for all API endpoints to prevent recursion and unnecessary trace data
+      if (path.startsWith('/api/') || 
+        path.startsWith('/ws/')
+        || path.startsWith('/assets/') ||
+        path.startsWith('/health') || 
+        path.startsWith('/sse') ||
+        path == "/"
+      ) {
         return;
       }
 

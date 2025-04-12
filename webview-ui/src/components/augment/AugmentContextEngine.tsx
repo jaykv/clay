@@ -1,11 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { postMessage } from '@/utils/vscode';
+import IndexedFiles from './IndexedFiles';
 
 const AugmentContextEngine: React.FC = () => {
+  // State for showing indexed files - default to true to show files by default
+  const [showIndexedFiles, setShowIndexedFiles] = useState(true);
+
   // Function to trigger VS Code commands
   const executeCommand = (command: string) => {
+    // When in browser mode, handle commands differently
+    if (typeof window.acquireVsCodeApi !== 'function') {
+      // For reindexing, we can call the API directly
+      if (command === 'clay.reindexCodebase') {
+        fetch('/api/augment/reindex', { method: 'POST' })
+          .then(response => {
+            if (response.ok) {
+              alert('Reindexing started successfully');
+            } else {
+              alert('Failed to start reindexing');
+            }
+          })
+          .catch(error => {
+            console.error('Error starting reindexing:', error);
+            alert('Error starting reindexing: ' + error.message);
+          });
+      }
+      // For search, we can implement a browser-based search
+      else if (command === 'clay.searchCodebase') {
+        const query = prompt('Enter search query:');
+        if (query) {
+          // Redirect to a new tab with the search results in HTML format
+          window.open(`/api/augment/search?q=${encodeURIComponent(query)}&format=html`, '_blank');
+        }
+      }
+      // For other commands, show a message
+      else {
+        alert(`This command (${command}) is only available in VS Code.`);
+      }
+      return;
+    }
+
+    // In VS Code, send the command to the extension
     postMessage({ command });
   };
 
@@ -18,7 +55,7 @@ const AugmentContextEngine: React.FC = () => {
             Search your entire codebase for specific code patterns, functions, or text.
           </p>
           <div className="flex items-center space-x-2">
-            <Button 
+            <Button
               onClick={() => executeCommand('clay.searchCodebase')}
               leftIcon={<span className="material-icons text-sm">search</span>}
             >
@@ -37,7 +74,7 @@ const AugmentContextEngine: React.FC = () => {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Button 
+              <Button
                 onClick={() => executeCommand('clay.getSymbolDefinition')}
                 variant="secondary"
                 className="w-full"
@@ -50,7 +87,7 @@ const AugmentContextEngine: React.FC = () => {
               </div>
             </div>
             <div>
-              <Button 
+              <Button
                 onClick={() => executeCommand('clay.findReferences')}
                 variant="secondary"
                 className="w-full"
@@ -71,18 +108,29 @@ const AugmentContextEngine: React.FC = () => {
             Manage the codebase index used by the Augment Context Engine.
           </p>
           <div className="flex items-center space-x-2">
-            <Button 
+            <Button
               onClick={() => executeCommand('clay.reindexCodebase')}
               variant="secondary"
               leftIcon={<span className="material-icons text-sm">refresh</span>}
             >
               Reindex Codebase
             </Button>
+            <Button
+              onClick={() => setShowIndexedFiles(!showIndexedFiles)}
+              variant="secondary"
+              leftIcon={<span className="material-icons text-sm">{showIndexedFiles ? 'visibility_off' : 'visibility'}</span>}
+            >
+              {showIndexedFiles ? 'Hide Indexed Files' : 'Show Indexed Files'}
+            </Button>
             <div className="text-xs text-gray-500 dark:text-gray-400">
               Keyboard: Ctrl+Shift+I / Cmd+Shift+I (Mac)
             </div>
           </div>
         </div>
+
+        {showIndexedFiles && (
+          <IndexedFiles />
+        )}
 
         <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
           <h3 className="font-medium mb-2 text-blue-700 dark:text-blue-400">About Augment Context Engine</h3>

@@ -104,9 +104,14 @@ export class WebSocketClient {
 
   /**
    * Send a message to the WebSocket server
+   * @param type The message type
+   * @param data Optional data to send
+   * @param silent If true, don't log errors if the send fails
+   * @returns True if the message was sent successfully, false otherwise
    */
   public send(type: string, data?: any): boolean {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      console.debug(`WebSocket not connected, cannot send ${type}`);
       return false;
     }
 
@@ -114,7 +119,7 @@ export class WebSocketClient {
       this.socket.send(JSON.stringify({ type, ...data }));
       return true;
     } catch (error) {
-      console.error('Failed to send WebSocket message:', error);
+      console.error(`Failed to send WebSocket message (${type}):`, error);
       return false;
     }
   }
@@ -255,11 +260,27 @@ export class WebSocketClient {
     this.send('clearTraces');
   }
 
+  // Track last stats request time to prevent spamming
+  private lastStatsTime = 0;
+  private readonly STATS_THROTTLE_MS = 5000; // 5 seconds minimum between stats requests
+
   /**
    * Request trace statistics from the server
+   * @param silent If true, don't log errors if the send fails
+   * @param force If true, bypass the rate limiter
    */
-  public getStats(): void {
-    this.send('getStats');
+  public getStats(force: boolean = false): void {
+    // Rate limit stats requests to prevent spamming
+    const now = Date.now();
+    if (!force && now - this.lastStatsTime < this.STATS_THROTTLE_MS) {
+      // Silently ignore too-frequent requests
+      return;
+    }
+
+    this.lastStatsTime = now;
+
+    // Use the send method with silent mode
+    this.send('getStats', undefined);
   }
 
   /**
@@ -272,7 +293,8 @@ export class WebSocketClient {
 
     // Request initial data immediately after connection
     setTimeout(() => {
-      this.getStats();
+      // Force the initial stats request to bypass rate limiting
+      this.getStats(true);
       this.getTraces();
     }, 100);
   }

@@ -1,201 +1,221 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import Card from '@/components/ui/Card';
-import { getTraceStats, TraceStats } from '@/lib/api/traces';
-import { wsClient, ConnectionStatus } from '@/lib/api/websocket';
-
-// Using TraceStats interface imported from api/traces
+import { Spinner } from '@/components/ui/Spinner';
+import { useTraces } from '@/contexts/TracesContext';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  Cell
+} from 'recharts';
 
 const PerformanceMetrics: React.FC = () => {
-  const [stats, setStats] = useState<TraceStats | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+  // Use the shared traces context
+  const {
+    stats,
+    loading,
+    error,
+    connectionStatus,
+    lastUpdated,
+    loadStats
+  } = useTraces();
 
-  const loadStats = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Convert stats to chart data
+  const methodChartData = stats ? Object.entries(stats.methodCounts).map(([method, count]) => ({
+    name: method,
+    value: count
+  })) : [];
 
-      // Set a timeout to show loading state for at least 500ms
-      // This prevents flickering if data loads very quickly
-      const loadingTimer = setTimeout(() => {}, 500);
+  const statusChartData = stats ? Object.entries(stats.statusCounts).map(([status, count]) => ({
+    name: `${status}s`,
+    value: count
+  })) : [];
 
-      const data = await getTraceStats();
-      setStats(data);
 
-      clearTimeout(loadingTimer);
-    } catch (err) {
-      // Only show error if we don't have any stats yet
-      if (!stats) {
-        setError('Failed to load performance metrics. Make sure the proxy server is running.');
-      }
-      console.error(err);
-    } finally {
-      // Add a small delay before hiding the loading indicator
-      // to prevent UI flickering
-      setTimeout(() => {
-        setLoading(false);
-      }, 300);
-    }
-  }, [stats]);
+  // Format duration in ms to a readable format
+  const formatDuration = (ms: number) => {
+    if (ms < 1) return '< 1ms';
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
 
-  // Handle stats updates via WebSocket
-  const handleStatsUpdate = useCallback((message: any) => {
-    if (message.data) {
-      setStats(message.data);
-      setLoading(false);
-      setError(null); // Clear any errors when we get data
-    }
-  }, []);
 
-  useEffect(() => {
-    // Set up status listener
-    wsClient.onStatusChange(setConnectionStatus);
-
-    // Set up stats listener
-    wsClient.on('stats', handleStatsUpdate);
-
-    // Initial load of stats
-    loadStats();
-
-    // Request stats every 5 seconds if connected, or load via HTTP if not
-    const interval = setInterval(() => {
-      if (wsClient.isConnected()) {
-        wsClient.getStats();
-      } else {
-        // Fall back to HTTP if WebSocket is not connected
-        console.log('WebSocket not connected, loading stats via HTTP');
-        loadStats();
-      }
-    }, 5000);
-
-    return () => {
-      // Clean up listeners when component unmounts
-      wsClient.offStatusChange(setConnectionStatus);
-      wsClient.off('stats', handleStatsUpdate);
-      clearInterval(interval);
-    };
-  }, [loadStats, handleStatsUpdate]);
-
-  if (loading && !stats) {
-    return (
-      <Card title="Performance Metrics">
-        <div className="py-4 text-center text-gray-500 dark:text-gray-400">
-          <svg className="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Loading metrics...
-        </div>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card title="Performance Metrics">
-        <div className="py-4 text-center text-red-500 dark:text-red-400">
-          <p>{error}</p>
-          <button
-            onClick={loadStats}
-            className="mt-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
-        </div>
-      </Card>
-    );
-  }
 
   return (
     <Card title="Performance Metrics">
-      <div className="flex items-center gap-2 mb-4">
-        <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
-        <span className="text-xs text-gray-500">{connectionStatus}</span>
-        {error && <span className="text-xs text-red-500 ml-2">{error}</span>}
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Requests</h3>
-          <p className="mt-1 text-2xl font-semibold">{stats?.total || 0}</p>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-medium">Trace Metrics</h3>
+          <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+          <span className="text-xs text-gray-500">{connectionStatus}</span>
         </div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Success Rate</h3>
-          <p className="mt-1 text-2xl font-semibold">{stats?.successRate.toFixed(1) || 0}%</p>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg Response Time</h3>
-          <p className="mt-1 text-2xl font-semibold">{stats?.avgResponseTime.toFixed(2) || 0} ms</p>
+        <div className="space-x-2">
+          <button
+            onClick={loadStats}
+            className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+            disabled={loading && !stats}
+          >
+            {loading && !stats && (
+              <Spinner size="sm" className="mr-2" />
+            )}
+            {loading && !stats ? 'Loading...' : 'Refresh'}
+          </button>
         </div>
       </div>
 
-      {stats?.truncated && (stats.truncated.bodies > 0 || stats.truncated.responses > 0) && (
-        <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <h3 className="text-sm font-medium text-amber-800 dark:text-amber-400 mb-1">Data Truncation Notice</h3>
-          <p className="text-xs text-amber-700 dark:text-amber-500">
-            Some request/response data was too large and has been truncated:
-          </p>
-          <ul className="text-xs text-amber-700 dark:text-amber-500 mt-1 list-disc list-inside">
-            {stats.truncated.bodies > 0 && (
-              <li>{stats.truncated.bodies} request {stats.truncated.bodies === 1 ? 'body' : 'bodies'} truncated</li>
-            )}
-            {stats.truncated.responses > 0 && (
-              <li>{stats.truncated.responses} response {stats.truncated.responses === 1 ? 'body' : 'bodies'} truncated</li>
-            )}
-          </ul>
+      {loading && !stats && (
+        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+          <Spinner size="lg" className="mx-auto mb-4" />
+          <p>Loading metrics...</p>
+        </div>
+      )}
+
+      {loading && stats && (
+        <div className="fixed top-2 right-2 bg-blue-100 dark:bg-blue-900 p-2 rounded-full shadow-md">
+          <Spinner size="sm" />
+        </div>
+      )}
+
+      {error && !stats && (
+        <div className="py-8 text-center text-red-500">
+          <p>{error}</p>
+          <button
+            onClick={loadStats}
+            className="mt-4 px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+          >
+            Try Again
+          </button>
         </div>
       )}
 
       {stats && (
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Requests by Method</h3>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-              {Object.entries(stats.methodCounts).length > 0 ? (
-                <div className="space-y-2">
-                  {Object.entries(stats.methodCounts).map(([method, count]) => (
-                    <div key={method} className="flex justify-between">
-                      <span className="font-mono">{method}</span>
-                      <span className="font-semibold">{count}</span>
-                    </div>
-                  ))}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Summary Stats */}
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-sm font-medium mb-3">Summary</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Requests</p>
+                  <p className="text-2xl font-semibold">{stats.total}</p>
                 </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Success Rate</p>
+                  <p className="text-2xl font-semibold">
+                    {stats.successRate.toFixed(1)}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Avg Response Time</p>
+                  <p className="text-2xl font-semibold">{formatDuration(stats.avgResponseTime)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Last Updated</p>
+                  <p className="text-sm">
+                    {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Method Distribution */}
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-sm font-medium mb-3">Requests by Method</h4>
+              {methodChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={methodChartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                    <XAxis dataKey="name" tick={{ fill: '#888' }} />
+                    <YAxis tick={{ fill: '#888' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                        border: 'none',
+                        borderRadius: '4px',
+                        color: '#fff'
+                      }}
+                    />
+                    <Bar dataKey="value" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
               ) : (
-                <p className="text-center text-gray-500 dark:text-gray-400">No data available</p>
+                <div className="h-[200px] flex items-center justify-center text-gray-500">
+                  No data available
+                </div>
               )}
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Requests by Status</h3>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
-              {Object.entries(stats.statusCounts).length > 0 ? (
-                <div className="space-y-2">
-                  {Object.entries(stats.statusCounts).map(([status, count]) => (
-                    <div key={status} className="flex justify-between">
-                      <span className="font-mono">{status}</span>
-                      <span className="font-semibold">{count}</span>
-                    </div>
-                  ))}
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Status Code Distribution */}
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-sm font-medium mb-3">Status Code Distribution</h4>
+              {statusChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={statusChartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                    <XAxis dataKey="name" tick={{ fill: '#888' }} />
+                    <YAxis tick={{ fill: '#888' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                        border: 'none',
+                        borderRadius: '4px',
+                        color: '#fff'
+                      }}
+                    />
+                    <Bar dataKey="value">
+                      {statusChartData.map((entry, index) => {
+                        // Color based on status code
+                        let color = '#8884d8'; // Default purple
+                        if (entry.name.startsWith('2')) color = '#00C49F'; // Green for 2xx
+                        if (entry.name.startsWith('4')) color = '#FFBB28'; // Yellow for 4xx
+                        if (entry.name.startsWith('5')) color = '#FF8042'; // Orange for 5xx
+
+                        return <Cell key={`cell-${index}`} fill={color} />;
+                      })}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               ) : (
-                <p className="text-center text-gray-500 dark:text-gray-400">No data available</p>
+                <div className="h-[200px] flex items-center justify-center text-gray-500">
+                  No data available
+                </div>
               )}
             </div>
+
+            {/* Truncation Stats */}
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-sm font-medium mb-3">Truncation Statistics</h4>
+              {stats.truncated ? (
+                <div className="grid grid-cols-2 gap-4 h-[200px]">
+                  <div className="flex flex-col items-center justify-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Truncated Request Bodies</p>
+                    <p className="text-2xl font-semibold">{stats.truncated.bodies}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      ({stats.total > 0 ? ((stats.truncated.bodies / stats.total) * 100).toFixed(1) : 0}%)
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center justify-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Truncated Response Bodies</p>
+                    <p className="text-2xl font-semibold">{stats.truncated.responses}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      ({stats.total > 0 ? ((stats.truncated.responses / stats.total) * 100).toFixed(1) : 0}%)
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-gray-500">
+                  No truncation data available
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Additional information */}
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+            <p>Metrics are updated automatically every 10 seconds when the WebSocket connection is active.</p>
           </div>
         </div>
       )}
-
-      <div className="mt-4 text-right">
-        <button
-          onClick={loadStats}
-          className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
-        >
-          Refresh
-        </button>
-      </div>
     </Card>
   );
 };

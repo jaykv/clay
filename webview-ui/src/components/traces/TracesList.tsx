@@ -1,119 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import Card from '@/components/ui/Card';
-import { getTraces, clearTraces, OtelSpan, TraceData, PaginationData, otelSpanToTraceData } from '@/lib/api/traces';
-import { wsClient, ConnectionStatus } from '@/lib/api/websocket';
-
-// Using the OtelSpan interface imported from api/traces
+import { TraceData, otelSpanToTraceData } from '@/lib/api/traces';
+import { useTraces } from '@/contexts/TracesContext';
 
 const TracesList: React.FC = () => {
-  const [traces, setTraces] = useState<OtelSpan[]>([]);
-  const [pagination, setPagination] = useState<PaginationData>({ total: 0, page: 1, limit: 50, pages: 0 });
-  const [loading, setLoading] = useState(false);
-  const [, setError] = useState<string | null>(null);
-  const [selectedTrace, setSelectedTrace] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+  // Use the shared traces context
+  const {
+    traces,
+    pagination,
+    loading,
+    connectionStatus,
+    selectedTrace,
+    setSelectedTrace,
+    loadTraces,
+    handleClearTraces
+  } = useTraces();
 
   // Convert OtelSpan to TraceData for display
   const convertedTraces = traces.map(otelSpanToTraceData);
 
-  const loadTraces = useCallback(async (page = pagination.page, limit = pagination.limit) => {
-    try {
-      setLoading(true);
-      setError(null);
 
-      // Set a timeout to show loading state for at least 500ms
-      // This prevents flickering if data loads very quickly
-      const loadingTimer = setTimeout(() => {}, 500);
-
-      const data = await getTraces(page, limit);
-      setTraces(data.traces);
-      setPagination(data.pagination);
-
-      clearTimeout(loadingTimer);
-    } catch (err) {
-      // Only show error if we don't have any traces yet
-      if (traces.length === 0) {
-        setError('Failed to load traces. Make sure the proxy server is running.');
-      }
-      console.error(err);
-    } finally {
-      // Add a small delay before hiding the loading indicator
-      // to prevent UI flickering
-      setTimeout(() => {
-        setLoading(false);
-      }, 300);
-    }
-  }, [pagination.page, pagination.limit, traces.length]);
-
-  const handleClearTraces = async () => {
-    try {
-      setLoading(true);
-      await clearTraces();
-      setTraces([]);
-      setSelectedTrace(null);
-    } catch (err) {
-      setError('Failed to clear traces.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle new traces coming in via WebSocket
-  const handleNewTrace = useCallback((message: any) => {
-    if (message.data) {
-      // Add the new trace to the beginning of the array
-      setTraces(prevTraces => [message.data, ...prevTraces.slice(0, 49)]);
-
-      // Update pagination total
-      setPagination(prev => ({
-        ...prev,
-        total: prev.total + 1
-      }));
-
-      // Clear any errors when we get data
-      setError(null);
-    }
-  }, []);
-
-  // Handle traces update via WebSocket
-  const handleTracesUpdate = useCallback((message: any) => {
-    if (message.data) {
-      setTraces(message.data.traces);
-      setPagination(message.data.pagination);
-      setLoading(false);
-      setError(null); // Clear any errors when we get data
-    }
-  }, []);
-
-  // Initialize WebSocket connection and listeners
-  useEffect(() => {
-    // Set up status listener
-    wsClient.onStatusChange(setConnectionStatus);
-
-    // Set up WebSocket listeners
-    wsClient.on('newTrace', handleNewTrace);
-    wsClient.on('traces', handleTracesUpdate);
-
-    // Initial load of traces
-    loadTraces();
-
-    // Set up polling for traces if WebSocket is not connected
-    const interval = setInterval(() => {
-      if (wsClient.getStatus() !== 'connected') {
-        console.log('WebSocket not connected, polling for traces');
-        loadTraces();
-      }
-    }, 10000); // Poll every 10 seconds if WebSocket is not connected
-
-    return () => {
-      // Clean up listeners when component unmounts
-      wsClient.offStatusChange(setConnectionStatus);
-      wsClient.off('newTrace', handleNewTrace);
-      wsClient.off('traces', handleTracesUpdate);
-      clearInterval(interval);
-    };
-  }, [loadTraces, handleNewTrace, handleTracesUpdate]);
 
   const formatDate = (date: Date | number) => {
     if (date instanceof Date) {

@@ -100,12 +100,12 @@ export class EnhancedWebviewProvider {
           case 'alert':
             vscode.window.showErrorMessage(message.text);
             return;
-          case 'startProxyServer':
-            vscode.commands.executeCommand('clay.startProxyServer')
+          case 'startGatewayServer':
+            vscode.commands.executeCommand('clay.startGatewayServer')
               .then(() => this.sendServerStatus());
             return;
-          case 'stopProxyServer':
-            vscode.commands.executeCommand('clay.stopProxyServer')
+          case 'stopGatewayServer':
+            vscode.commands.executeCommand('clay.stopGatewayServer')
               .then(() => this.sendServerStatus());
             return;
           case 'startMCPServer':

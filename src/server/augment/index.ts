@@ -281,6 +281,19 @@ export class AugmentContextEngine {
   }
 
   /**
+   * Get all indexed files
+   * @returns All indexed files
+   */
+  public getAllFiles(): CodeFile[] {
+    if (!this.initialized) {
+      logger.warn('Augment Context Engine not initialized');
+      return [];
+    }
+
+    return this.indexer.getAllFiles();
+  }
+
+  /**
    * Shutdown the engine
    */
   public shutdown(): void {

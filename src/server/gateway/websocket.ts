@@ -58,8 +58,6 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
       }, 100); // Small delay to ensure client is ready
       // Handle messages from client
       socket.on('message', (message: any) => {
-        logger.error(message);
-
         try {
           const data = JSON.parse(message.toString());
           logger.info(`Received message: ${JSON.stringify(data)}`);
@@ -187,10 +185,23 @@ function handleClearTraces(socket: WebSocket) {
   }
 }
 
+// Track last stats time to prevent spamming
+let lastStatsTime = 0;
+const STATS_THROTTLE_MS = 5000; // 5 seconds minimum between stats requests
+
 /**
  * Handle getStats request
  */
 function handleGetStats(socket: WebSocket) {
+  // Rate limit stats requests to prevent spamming
+  const now = Date.now();
+  if (now - lastStatsTime < STATS_THROTTLE_MS) {
+    // Silently ignore too-frequent requests
+    return;
+  }
+
+  lastStatsTime = now;
+
   try {
     const stats = getTraceStats();
     socket.send(JSON.stringify({
@@ -198,7 +209,7 @@ function handleGetStats(socket: WebSocket) {
       data: stats
     }));
   } catch (error) {
-    logger.error('Error fetching stats:', error);
+    // Don't log errors for stats to reduce spam
     socket.send(JSON.stringify({
       type: 'error',
       message: 'Failed to fetch stats'

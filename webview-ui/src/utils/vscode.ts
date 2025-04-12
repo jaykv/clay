@@ -17,8 +17,8 @@ let vscode: ReturnType<typeof window.acquireVsCodeApi>;
 
 // Commands that can be sent to the extension
 export type VSCodeCommand =
-  | { command: 'startProxyServer' }
-  | { command: 'stopProxyServer' }
+  | { command: 'startGatewayServer' }
+  | { command: 'stopGatewayServer' }
   | { command: 'startMCPServer' }
   | { command: 'stopMCPServer' }
   | { command: 'refresh' }
@@ -63,7 +63,7 @@ export function postMessage(message: VSCodeCommand): boolean {
     console.log('Running in browser mode, VS Code message would be:', message);
 
     // Special handling for certain commands when running in browser
-    if (message.command === 'startProxyServer' || message.command === 'stopProxyServer') {
+    if (message.command === 'startGatewayServer' || message.command === 'stopGatewayServer') {
       console.log('Note: Server controls are not available when running in browser mode');
     }
 

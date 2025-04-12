@@ -218,14 +218,23 @@ export async function getTraces(page = 1, limit = 50): Promise<TracesResponse> {
       // Request traces
       wsClient.getTraces(page, limit);
 
-      // Set a timeout to prevent hanging (reduced from 2000ms to 1000ms)
+      // Set a timeout to prevent hanging
       setTimeout(() => {
         wsClient.off('traces', handleTracesResponse);
         wsClient.off('error', handleError);
-        console.warn('Timeout waiting for traces response, but data might arrive later');
-        // Don't reject, just log a warning - the data might arrive later
+        console.warn(`Timeout waiting for traces response, but data might arrive later ${page}`);
+        // Don't reject, just resolve with empty data - the real data might arrive later
         // and the component will update when it does
-      }, 1000);
+        resolve({
+          traces: [],
+          pagination: {
+            total: 0,
+            page,
+            limit,
+            pages: 0
+          }
+        });
+      }, 5000); // Increased timeout to 5 seconds
     });
   } catch (error) {
     console.error('Error fetching traces:', error);
@@ -346,14 +355,25 @@ export async function getTraceStats(): Promise<TraceStats> {
       // Request stats
       wsClient.getStats();
 
-      // Set a timeout to prevent hanging (reduced from 2000ms to 1000ms)
+      // Set a timeout to prevent hanging
       setTimeout(() => {
         wsClient.off('stats', handleStatsResponse);
         wsClient.off('error', handleError);
-        console.warn('Timeout waiting for trace stats, but data might arrive later');
-        // Don't reject, just log a warning - the data might arrive later
+        console.warn('Timeout waiting for stats response, but data might arrive later');
+        // Don't reject, just resolve with default data - the real data might arrive later
         // and the component will update when it does
-      }, 1000);
+        resolve({
+          total: 0,
+          successRate: 0,
+          avgResponseTime: 0,
+          methodCounts: {},
+          statusCounts: {},
+          truncated: {
+            bodies: 0,
+            responses: 0
+          }
+        });
+      }, 5000); // 5 second timeout
     });
   } catch (error) {
     console.error('Error fetching trace stats:', error);
