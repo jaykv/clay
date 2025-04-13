@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { getTraces, clearTraces, OtelSpan, TraceStats, PaginationData } from '@/lib/api/traces';
 import { wsClient, ConnectionStatus } from '@/lib/api/websocket';
 
@@ -34,13 +41,16 @@ const TracesContext = createContext<TracesContextState>({
   handleClearTraces: async () => {},
 });
 
-
-
 // Provider component
 export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [traces, setTraces] = useState<OtelSpan[]>([]);
   const [stats, setStats] = useState<TraceStats | null>(null);
-  const [pagination, setPagination] = useState<PaginationData>({ total: 0, page: 1, limit: 50, pages: 0 });
+  const [pagination, setPagination] = useState<PaginationData>({
+    total: 0,
+    page: 1,
+    limit: 50,
+    pages: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
@@ -48,26 +58,29 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [selectedTrace, setSelectedTrace] = useState<string | null>(null);
 
   // Load traces from the server
-  const loadTraces = useCallback(async (page = pagination.page, limit = pagination.limit) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const loadTraces = useCallback(
+    async (page = pagination.page, limit = pagination.limit) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const data = await getTraces(page, limit);
+        const data = await getTraces(page, limit);
 
-      if (data.traces.length > 0) {
-        setTraces(data.traces);
-        setPagination(data.pagination);
+        if (data.traces.length > 0) {
+          setTraces(data.traces);
+          setPagination(data.pagination);
+        }
+
+        setLastUpdated(new Date());
+      } catch (err) {
+        console.error('Error loading traces:', err);
+        setError('Failed to load traces');
+      } finally {
+        setLoading(false);
       }
-
-      setLastUpdated(new Date());
-    } catch (err) {
-      console.error('Error loading traces:', err);
-      setError('Failed to load traces');
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit]);
+    },
+    [pagination.page, pagination.limit]
+  );
 
   // Load stats from the server
   const loadStats = useCallback(() => {
@@ -110,7 +123,7 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       // Update pagination total
       setPagination(prev => ({
         ...prev,
-        total: prev.total + 1
+        total: prev.total + 1,
       }));
 
       // Update last updated time
@@ -169,7 +182,15 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       wsClient.off('traces', handleTracesUpdate);
       wsClient.off('stats', handleStatsUpdate);
     };
-  }, [handleNewTrace, handleTracesUpdate, handleStatsUpdate, loadTraces, loadStats, pagination.page, pagination.limit]);
+  }, [
+    handleNewTrace,
+    handleTracesUpdate,
+    handleStatsUpdate,
+    loadTraces,
+    loadStats,
+    pagination.page,
+    pagination.limit,
+  ]);
 
   // Provide the context value
   const contextValue: TracesContextState = {
@@ -187,11 +208,7 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     handleClearTraces,
   };
 
-  return (
-    <TracesContext.Provider value={contextValue}>
-      {children}
-    </TracesContext.Provider>
-  );
+  return <TracesContext.Provider value={contextValue}>{children}</TracesContext.Provider>;
 };
 
 // Custom hook to use the traces context

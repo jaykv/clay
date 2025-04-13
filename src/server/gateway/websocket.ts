@@ -13,15 +13,14 @@ const activeConnections = new Set<WebSocket>();
 export function registerWebSocketRoutes(fastify: FastifyInstance) {
   // Register WebSocket plugin
   fastify.register(FastifyWebSocket, {
-    options: { maxPayload: 1048576 }
-  })
+    options: { maxPayload: 1048576 },
+  });
 
   // Log WebSocket registration
   logger.info('Registering WebSocket routes for gateway');
 
   // WebSocket connection endpoint
-  fastify.register(async function(fastify) {
-
+  fastify.register(async function (fastify) {
     fastify.get('/ws', { websocket: true }, (socket: WebSocket, _req: FastifyRequest) => {
       logger.info('WebSocket client connected');
 
@@ -29,27 +28,33 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
       activeConnections.add(socket);
 
       // Send initial connection message
-      socket.send(JSON.stringify({
-        type: 'connection',
-        message: 'Connected to Clay Gateway'
-      }));
+      socket.send(
+        JSON.stringify({
+          type: 'connection',
+          message: 'Connected to Clay Gateway',
+        })
+      );
 
       // Send initial data immediately with a small delay to ensure client is ready
       setTimeout(() => {
         try {
           // Send trace stats
           const stats = getTraceStats();
-          socket.send(JSON.stringify({
-            type: 'stats',
-            data: stats
-          }));
+          socket.send(
+            JSON.stringify({
+              type: 'stats',
+              data: stats,
+            })
+          );
 
           // Send recent traces
           const traces = getTraces(50, 1);
-          socket.send(JSON.stringify({
-            type: 'traces',
-            data: traces
-          }));
+          socket.send(
+            JSON.stringify({
+              type: 'traces',
+              data: traces,
+            })
+          );
 
           logger.info('Sent initial data to WebSocket client');
         } catch (error) {
@@ -77,26 +82,31 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
               handleGetStats(socket);
               break;
             case 'ping':
-              socket.send(JSON.stringify({
-                type: 'pong',
-                timestamp: Date.now()
-              }));
+              socket.send(
+                JSON.stringify({
+                  type: 'pong',
+                  timestamp: Date.now(),
+                })
+              );
               break;
             default:
-              socket.send(JSON.stringify({
-                type: 'error',
-                message: `Unknown message type: ${data.type}`
-              }));
+              socket.send(
+                JSON.stringify({
+                  type: 'error',
+                  message: `Unknown message type: ${data.type}`,
+                })
+              );
           }
         } catch (error) {
           logger.error('Error handling WebSocket message:', error);
-          socket.send(JSON.stringify({
-            type: 'error',
-            message: 'Invalid message format'
-          }));
+          socket.send(
+            JSON.stringify({
+              type: 'error',
+              message: 'Invalid message format',
+            })
+          );
         }
       });
-
 
       // Handle disconnection
       socket.on('close', () => {
@@ -104,8 +114,8 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
         activeConnections.delete(socket);
         logger.info('WebSocket client disconnected');
       });
-    })
-  })
+    });
+  });
 }
 
 /**
@@ -117,16 +127,20 @@ function handleGetTraces(socket: WebSocket, data: any) {
     const limit = data.limit || 50;
     const tracesData = getTraces(limit, page);
 
-    socket.send(JSON.stringify({
-      type: 'traces',
-      data: tracesData
-    }));
+    socket.send(
+      JSON.stringify({
+        type: 'traces',
+        data: tracesData,
+      })
+    );
   } catch (error) {
     logger.error('Error fetching traces:', error);
-    socket.send(JSON.stringify({
-      type: 'error',
-      message: 'Failed to fetch traces'
-    }));
+    socket.send(
+      JSON.stringify({
+        type: 'error',
+        message: 'Failed to fetch traces',
+      })
+    );
   }
 }
 
@@ -136,33 +150,41 @@ function handleGetTraces(socket: WebSocket, data: any) {
 function handleGetTrace(socket: WebSocket, data: any) {
   try {
     if (!data.id) {
-      socket.send(JSON.stringify({
-        type: 'error',
-        message: 'Trace ID is required'
-      }));
+      socket.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'Trace ID is required',
+        })
+      );
       return;
     }
 
     const trace = getTraceById(data.id);
 
     if (!trace) {
-      socket.send(JSON.stringify({
-        type: 'error',
-        message: 'Trace not found'
-      }));
+      socket.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'Trace not found',
+        })
+      );
       return;
     }
 
-    socket.send(JSON.stringify({
-      type: 'trace',
-      data: trace
-    }));
+    socket.send(
+      JSON.stringify({
+        type: 'trace',
+        data: trace,
+      })
+    );
   } catch (error) {
     logger.error(`Error fetching trace ${data.id}:`, error);
-    socket.send(JSON.stringify({
-      type: 'error',
-      message: 'Failed to fetch trace'
-    }));
+    socket.send(
+      JSON.stringify({
+        type: 'error',
+        message: 'Failed to fetch trace',
+      })
+    );
   }
 }
 
@@ -172,16 +194,20 @@ function handleGetTrace(socket: WebSocket, data: any) {
 function handleClearTraces(socket: WebSocket) {
   try {
     clearTraces();
-    socket.send(JSON.stringify({
-      type: 'tracesCleared',
-      success: true
-    }));
+    socket.send(
+      JSON.stringify({
+        type: 'tracesCleared',
+        success: true,
+      })
+    );
   } catch (error) {
     logger.error('Error clearing traces:', error);
-    socket.send(JSON.stringify({
-      type: 'error',
-      message: 'Failed to clear traces'
-    }));
+    socket.send(
+      JSON.stringify({
+        type: 'error',
+        message: 'Failed to clear traces',
+      })
+    );
   }
 }
 
@@ -204,20 +230,22 @@ function handleGetStats(socket: WebSocket) {
 
   try {
     const stats = getTraceStats();
-    socket.send(JSON.stringify({
-      type: 'stats',
-      data: stats
-    }));
+    socket.send(
+      JSON.stringify({
+        type: 'stats',
+        data: stats,
+      })
+    );
   } catch (error) {
     // Don't log errors for stats to reduce spam
-    socket.send(JSON.stringify({
-      type: 'error',
-      message: 'Failed to fetch stats'
-    }));
+    socket.send(
+      JSON.stringify({
+        type: 'error',
+        message: 'Failed to fetch stats',
+      })
+    );
   }
 }
-
-
 
 /**
  * Broadcast a new trace to all connected clients
@@ -227,7 +255,7 @@ export function broadcastNewTrace(trace: any) {
 
   const message = JSON.stringify({
     type: 'newTrace',
-    data: trace
+    data: trace,
   });
 
   for (const socket of activeConnections) {

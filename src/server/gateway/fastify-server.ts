@@ -87,7 +87,7 @@ export class FastifyGatewayServer {
       logger.error('Server error:', error);
       reply.status(500).send({
         error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       });
     });
   }
@@ -100,7 +100,6 @@ export class FastifyGatewayServer {
     // Always enabled as this is now the gateway server
     registerWebSocketRoutes(this.server);
     logger.info('WebSocket routes registered for gateway');
-
 
     // Health check endpoint
     this.server.get('/health', async (request, reply) => {
@@ -116,8 +115,8 @@ export class FastifyGatewayServer {
         body: {
           type: 'object',
           properties: {},
-          additionalProperties: true
-        }
+          additionalProperties: true,
+        },
       },
       handler: async (request, reply) => {
         logger.info('Received request to stop gateway server via admin endpoint');
@@ -132,7 +131,7 @@ export class FastifyGatewayServer {
             logger.error('Error stopping gateway server:', error);
           });
         }, 100);
-      }
+      },
     });
 
     // API version endpoint
@@ -155,13 +154,12 @@ export class FastifyGatewayServer {
       this.registerAugmentAPI();
     }
 
-
     // Serve static assets from the webview-ui/dist directory
     // Check multiple possible paths for the webview-ui/dist directory
     const possiblePaths = [
-      path.resolve(__dirname, '..', 'webview-ui', 'dist'),          // For direct server execution
+      path.resolve(__dirname, '..', 'webview-ui', 'dist'), // For direct server execution
       path.resolve(__dirname, '..', '..', '..', 'webview-ui', 'dist'), // For VS Code extension
-      path.resolve(__dirname, '..', '..', 'webview-ui', 'dist')      // Another possible path
+      path.resolve(__dirname, '..', '..', 'webview-ui', 'dist'), // Another possible path
     ];
 
     // Find the first path that exists
@@ -255,11 +253,13 @@ export class FastifyGatewayServer {
 
         // Skip API routes and other special paths
         const url = new URL(request.url, 'http://localhost');
-        if (url.pathname.startsWith('/api/') ||
-            url.pathname.startsWith('/proxy/') ||
-            url.pathname === '/health' ||
-            url.pathname.startsWith('/assets/') ||
-            url.pathname.startsWith('/ws')) {
+        if (
+          url.pathname.startsWith('/api/') ||
+          url.pathname.startsWith('/proxy/') ||
+          url.pathname === '/health' ||
+          url.pathname.startsWith('/assets/') ||
+          url.pathname.startsWith('/ws')
+        ) {
           logger.info(`Skipping SPA handling for API route: ${url.pathname}`);
           reply.status(404).send({ error: 'Not found' });
           return;
@@ -268,7 +268,9 @@ export class FastifyGatewayServer {
         // Serve the index.html for client-side routing
         try {
           const indexPath = path.join(webviewDistPath, 'index.html');
-          logger.info(`Attempting to serve SPA index.html from: ${indexPath} for route: ${url.pathname}`);
+          logger.info(
+            `Attempting to serve SPA index.html from: ${indexPath} for route: ${url.pathname}`
+          );
 
           if (fs.existsSync(indexPath)) {
             logger.info(`SPA index.html found, serving for route: ${url.pathname}`);
@@ -313,10 +315,10 @@ export class FastifyGatewayServer {
             return {
               ...headers,
               'X-Forwarded-Host': req.headers.host || '',
-              'X-Forwarded-For': req.headers['x-forwarded-for'] || ''
+              'X-Forwarded-For': req.headers['x-forwarded-for'] || '',
             };
-          }
-        }
+          },
+        },
       });
     }
 
@@ -362,9 +364,6 @@ export class FastifyGatewayServer {
     this.server.register(ssePlugin);
   }
 
-
-
-
   /**
    * Start the server
    */
@@ -372,9 +371,8 @@ export class FastifyGatewayServer {
     try {
       await this.server.listen({
         port: this.config.port,
-        host: this.config.host
+        host: this.config.host,
       });
-
     } catch (error) {
       logger.error('Failed to start Fastify gateway server:', error);
       throw error;

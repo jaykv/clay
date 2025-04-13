@@ -45,15 +45,11 @@ export function registerAugmentAPI(fastify: FastifyInstance, options: any, done:
 
       if (filter) {
         const lowerFilter = filter.toLowerCase();
-        filteredFiles = filteredFiles.filter(file =>
-          file.path.toLowerCase().includes(lowerFilter)
-        );
+        filteredFiles = filteredFiles.filter(file => file.path.toLowerCase().includes(lowerFilter));
       }
 
       if (language) {
-        filteredFiles = filteredFiles.filter(file =>
-          file.language === language
-        );
+        filteredFiles = filteredFiles.filter(file => file.language === language);
       }
 
       // Sort files by path
@@ -69,7 +65,7 @@ export function registerAugmentAPI(fastify: FastifyInstance, options: any, done:
         path: file.path,
         language: file.language,
         size: file.size,
-        lastModified: file.lastModified
+        lastModified: file.lastModified,
       }));
 
       return {
@@ -78,8 +74,8 @@ export function registerAugmentAPI(fastify: FastifyInstance, options: any, done:
           total: filteredFiles.length,
           page,
           limit,
-          totalPages: Math.ceil(filteredFiles.length / limit)
-        }
+          totalPages: Math.ceil(filteredFiles.length / limit),
+        },
       };
     } catch (error) {
       logger.error('Failed to get indexed files:', error);
@@ -89,7 +85,7 @@ export function registerAugmentAPI(fastify: FastifyInstance, options: any, done:
 
   // Get file details
   fastify.get<{
-    Params: { path: string }
+    Params: { path: string };
   }>('/api/augment/files/:path', async (request, reply) => {
     try {
       // Ensure the engine is initialized
@@ -113,7 +109,7 @@ export function registerAugmentAPI(fastify: FastifyInstance, options: any, done:
 
       return {
         file,
-        symbols
+        symbols,
       };
     } catch (error) {
       logger.error('Failed to get file details:', error);
@@ -164,26 +160,42 @@ export function registerAugmentAPI(fastify: FastifyInstance, options: any, done:
           <p>Found ${results.length} results</p>
 
           <div class="results">
-            ${results.map((result, index) => `
+            ${results
+              .map(
+                (result, index) => `
               <div class="result">
                 <div class="file-path">${result.snippets[0]?.filePath || 'Unknown file'}</div>
-                ${result.snippets.map(snippet => `
+                ${result.snippets
+                  .map(
+                    snippet => `
                   <div class="snippet">
                     <div>${snippet.content.replace(new RegExp(query, 'gi'), match => `<span class="highlight">${match}</span>`)}</div>
                     <div>Line: ${snippet.startLine}-${snippet.endLine}</div>
                   </div>
-                `).join('')}
+                `
+                  )
+                  .join('')}
 
-                ${result.symbols && result.symbols.length > 0 ? `
+                ${
+                  result.symbols && result.symbols.length > 0
+                    ? `
                   <div class="symbols">
                     <strong>Symbols:</strong>
-                    ${result.symbols.map(symbol => `
+                    ${result.symbols
+                      .map(
+                        symbol => `
                       <span class="symbol">${symbol.name} (${symbol.type})</span>
-                    `).join('')}
+                    `
+                      )
+                      .join('')}
                   </div>
-                ` : ''}
+                `
+                    : ''
+                }
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
 
           <a href="/" class="back-link">Back to Dashboard</a>

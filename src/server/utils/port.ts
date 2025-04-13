@@ -13,9 +13,8 @@ const execAsync = promisify(exec);
 export async function findProcessIdByPort(port: number): Promise<number | null> {
   try {
     // Use different commands based on the platform
-    const cmd = process.platform === 'win32'
-      ? `netstat -ano | findstr :${port}`
-      : `lsof -i :${port} -t`;
+    const cmd =
+      process.platform === 'win32' ? `netstat -ano | findstr :${port}` : `lsof -i :${port} -t`;
 
     const { stdout } = await execAsync(cmd);
 
@@ -58,7 +57,7 @@ export async function isMCPServer(port: number, host: string = 'localhost'): Pro
     // Try to access the /health endpoint which should be available on MCP servers
     const response = await fetch(`http://${host}:${port}/health`, {
       method: 'GET',
-      timeout: 2000 // 2 second timeout
+      timeout: 2000, // 2 second timeout
     });
 
     if (response.ok) {
@@ -89,7 +88,7 @@ export async function isGatewayServer(port: number, host: string = 'localhost'):
     // Try to access the /api/health endpoint which should be available on Gateway servers
     const response = await fetch(`http://${host}:${port}/api/health`, {
       method: 'GET',
-      timeout: 2000 // 2 second timeout
+      timeout: 2000, // 2 second timeout
     });
 
     if (response.ok) {
@@ -155,9 +154,7 @@ export async function killProcessByPort(
     logger.info(`Killing process ${pid} using port ${port}`);
 
     // Use different commands based on the platform
-    const cmd = process.platform === 'win32'
-      ? `taskkill /F /PID ${pid}`
-      : `kill -9 ${pid}`;
+    const cmd = process.platform === 'win32' ? `taskkill /F /PID ${pid}` : `kill -9 ${pid}`;
 
     await execAsync(cmd);
     logger.info(`Successfully killed process ${pid}`);

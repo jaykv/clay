@@ -42,12 +42,12 @@ The extension includes an MCP registry that:
 
 This extension provides the following keyboard shortcuts:
 
-* `Ctrl+Shift+D` / `Cmd+Shift+D` (Mac): Show Tracing Dashboard
-* `Ctrl+Shift+A` / `Cmd+Shift+A` (Mac): Open Augment Context Engine
-* `Ctrl+Shift+F` / `Cmd+Shift+F` (Mac): Search Codebase
-* `Ctrl+Shift+G` / `Cmd+Shift+G` (Mac): Go to Symbol Definition
-* `Ctrl+Shift+R` / `Cmd+Shift+R` (Mac): Find References
-* `Ctrl+Shift+I` / `Cmd+Shift+I` (Mac): Reindex Codebase
+- `Ctrl+Shift+D` / `Cmd+Shift+D` (Mac): Show Tracing Dashboard
+- `Ctrl+Shift+A` / `Cmd+Shift+A` (Mac): Open Augment Context Engine
+- `Ctrl+Shift+F` / `Cmd+Shift+F` (Mac): Search Codebase
+- `Ctrl+Shift+G` / `Cmd+Shift+G` (Mac): Go to Symbol Definition
+- `Ctrl+Shift+R` / `Cmd+Shift+R` (Mac): Find References
+- `Ctrl+Shift+I` / `Cmd+Shift+I` (Mac): Reindex Codebase
 
 ## Usage
 

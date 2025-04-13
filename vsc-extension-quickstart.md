@@ -57,20 +57,20 @@ The extension includes a powerful code intelligence engine that:
 
 This extension contributes the following settings:
 
-* `clay.proxyPort`: Port for the proxy server (default: 3000)
-* `clay.mcpPort`: Port for the MCP server (default: 3001)
-* `clay.registryPort`: Port for the registry server (default: 3002)
+- `clay.proxyPort`: Port for the proxy server (default: 3000)
+- `clay.mcpPort`: Port for the MCP server (default: 3001)
+- `clay.registryPort`: Port for the registry server (default: 3002)
 
 ## Keyboard Shortcuts
 
 This extension provides the following keyboard shortcuts:
 
-* `Ctrl+Shift+D` / `Cmd+Shift+D` (Mac): Show Tracing Dashboard
-* `Ctrl+Shift+A` / `Cmd+Shift+A` (Mac): Open Augment Context Engine
-* `Ctrl+Shift+F` / `Cmd+Shift+F` (Mac): Search Codebase
-* `Ctrl+Shift+G` / `Cmd+Shift+G` (Mac): Go to Symbol Definition
-* `Ctrl+Shift+R` / `Cmd+Shift+R` (Mac): Find References
-* `Ctrl+Shift+I` / `Cmd+Shift+I` (Mac): Reindex Codebase
+- `Ctrl+Shift+D` / `Cmd+Shift+D` (Mac): Show Tracing Dashboard
+- `Ctrl+Shift+A` / `Cmd+Shift+A` (Mac): Open Augment Context Engine
+- `Ctrl+Shift+F` / `Cmd+Shift+F` (Mac): Search Codebase
+- `Ctrl+Shift+G` / `Cmd+Shift+G` (Mac): Go to Symbol Definition
+- `Ctrl+Shift+R` / `Cmd+Shift+R` (Mac): Find References
+- `Ctrl+Shift+I` / `Cmd+Shift+I` (Mac): Reindex Codebase
 
 ## Known Issues
 

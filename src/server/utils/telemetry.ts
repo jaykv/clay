@@ -34,8 +34,7 @@ export function initOpenTelemetry() {
  * Generate a unique ID for each request
  */
 export function generateTraceId(): string {
-  return Math.random().toString(36).substring(2, 15) +
-         Math.random().toString(36).substring(2, 15);
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 /**
@@ -69,8 +68,8 @@ export function getTraces(limit = 50, page = 1) {
       total,
       page,
       limit,
-      pages
-    }
+      pages,
+    },
   };
 }
 
@@ -130,9 +129,7 @@ export function getTraceStats() {
     statusCounts,
     truncated: {
       bodies: truncatedBodies,
-      responses: truncatedResponses
-    }
+      responses: truncatedResponses,
+    },
   };
 }
-
-

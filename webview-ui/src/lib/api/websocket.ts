@@ -35,7 +35,10 @@ export class WebSocketClient {
   private listeners: Map<WebSocketEventType, Set<(data: any) => void>> = new Map();
   private statusListeners: Set<(status: ConnectionStatus) => void> = new Set();
   private connectionStatus: ConnectionStatus = 'disconnected';
-  private pendingRequests: Map<string, { resolve: Function, reject: Function, timer: NodeJS.Timeout }> = new Map();
+  private pendingRequests: Map<
+    string,
+    { resolve: Function; reject: Function; timer: NodeJS.Timeout }
+  > = new Map();
   private requestId = 0;
 
   constructor(url?: string) {
@@ -65,7 +68,10 @@ export class WebSocketClient {
    * Connect to the WebSocket server
    */
   public connect(): void {
-    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
@@ -127,7 +133,12 @@ export class WebSocketClient {
   /**
    * Send a request and wait for a response
    */
-  public request(type: string, data?: any, responseType?: string, timeout: number = 2000): Promise<any> {
+  public request(
+    type: string,
+    data?: any,
+    responseType?: string,
+    timeout: number = 2000
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
         this.connect();
@@ -341,7 +352,7 @@ export class WebSocketClient {
     this.scheduleReconnect();
 
     // Reject all pending requests
-    this.pendingRequests.forEach((request) => {
+    this.pendingRequests.forEach(request => {
       clearTimeout(request.timer);
       request.reject(new Error('WebSocket disconnected'));
     });
@@ -369,7 +380,10 @@ export class WebSocketClient {
    * Handle focus event
    */
   private handleFocus(): void {
-    if (this.connectionStatus !== 'connected' && this.reconnectAttempts < this.maxReconnectAttempts) {
+    if (
+      this.connectionStatus !== 'connected' &&
+      this.reconnectAttempts < this.maxReconnectAttempts
+    ) {
       console.log('Window focused, reconnecting WebSocket if needed...');
       this.connect();
     }
@@ -396,12 +410,43 @@ export class WebSocketClient {
       this.reconnectAttempts++;
 
       this.reconnectTimer = setTimeout(() => {
-        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+        console.log(
+          `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+        );
         this.connect();
       }, this.reconnectInterval);
     } else {
       console.log('Max reconnect attempts reached, giving up');
     }
+  }
+
+  /**
+   * Manually reconnect to the WebSocket server
+   * This resets the reconnect attempts counter and tries to connect immediately
+   * @returns True if a reconnection was attempted, false if already connected
+   */
+  public reconnect(): boolean {
+    // If already connected or connecting, don't reconnect
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)
+    ) {
+      return false;
+    }
+
+    // Reset reconnect attempts counter
+    this.reconnectAttempts = 0;
+
+    // Clear any existing reconnect timer
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    // Connect immediately
+    console.log('Manual reconnection initiated');
+    this.connect();
+    return true;
   }
 
   /**

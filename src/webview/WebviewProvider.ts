@@ -43,7 +43,7 @@ export class EnhancedWebviewProvider {
       this.postMessage({
         command: 'serverStatus',
         server: 'gateway',
-        status: gatewayRunning ? 'running' : 'stopped'
+        status: gatewayRunning ? 'running' : 'stopped',
       });
 
       // Send MCP server status
@@ -51,7 +51,7 @@ export class EnhancedWebviewProvider {
       this.postMessage({
         command: 'serverStatus',
         server: 'mcp',
-        status: mcpRunning ? 'running' : 'stopped'
+        status: mcpRunning ? 'running' : 'stopped',
       });
     } catch (error) {
       console.error('Error checking server status:', error);
@@ -82,8 +82,8 @@ export class EnhancedWebviewProvider {
         localResourceRoots: [
           vscode.Uri.joinPath(extensionUri, 'webview-ui'),
           vscode.Uri.joinPath(extensionUri, 'webview-ui', 'dist'),
-          vscode.Uri.joinPath(extensionUri, 'webview-ui', 'dist', 'assets')
-        ]
+          vscode.Uri.joinPath(extensionUri, 'webview-ui', 'dist', 'assets'),
+        ],
       }
     );
 
@@ -93,11 +93,15 @@ export class EnhancedWebviewProvider {
     panel.webview.html = this.getHtmlForWebview(panel.webview, extensionUri);
 
     // Listen for when the panel is disposed
-    panel.onDidDispose(() => {
-      this.panel = undefined;
-      // Clear the cache when the panel is disposed
-      this.htmlCache = null;
-    }, null, []);
+    panel.onDidDispose(
+      () => {
+        this.panel = undefined;
+        // Clear the cache when the panel is disposed
+        this.htmlCache = null;
+      },
+      null,
+      []
+    );
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -108,48 +112,44 @@ export class EnhancedWebviewProvider {
             vscode.window.showErrorMessage(message.text);
             return;
           case 'startGatewayServer':
-            vscode.commands.executeCommand('clay.startGatewayServer')
-              .then(() => {
-                // Update server status after command completes
-                setTimeout(() => {
-                  this.sendServerStatus().catch((error: Error) => {
-                    console.error('Error updating server status:', error);
-                  });
-                }, 500);
-              });
+            vscode.commands.executeCommand('clay.startGatewayServer').then(() => {
+              // Update server status after command completes
+              setTimeout(() => {
+                this.sendServerStatus().catch((error: Error) => {
+                  console.error('Error updating server status:', error);
+                });
+              }, 500);
+            });
             return;
           case 'stopGatewayServer':
-            vscode.commands.executeCommand('clay.stopGatewayServer')
-              .then(() => {
-                // Update server status after command completes
-                setTimeout(() => {
-                  this.sendServerStatus().catch((error: Error) => {
-                    console.error('Error updating server status:', error);
-                  });
-                }, 500);
-              });
+            vscode.commands.executeCommand('clay.stopGatewayServer').then(() => {
+              // Update server status after command completes
+              setTimeout(() => {
+                this.sendServerStatus().catch((error: Error) => {
+                  console.error('Error updating server status:', error);
+                });
+              }, 500);
+            });
             return;
           case 'startMCPServer':
-            vscode.commands.executeCommand('clay.startMCPServer')
-              .then(() => {
-                // Update server status after command completes
-                setTimeout(() => {
-                  this.sendServerStatus().catch((error: Error) => {
-                    console.error('Error updating server status:', error);
-                  });
-                }, 500);
-              });
+            vscode.commands.executeCommand('clay.startMCPServer').then(() => {
+              // Update server status after command completes
+              setTimeout(() => {
+                this.sendServerStatus().catch((error: Error) => {
+                  console.error('Error updating server status:', error);
+                });
+              }, 500);
+            });
             return;
           case 'stopMCPServer':
-            vscode.commands.executeCommand('clay.stopMCPServer')
-              .then(() => {
-                // Update server status after command completes
-                setTimeout(() => {
-                  this.sendServerStatus().catch((error: Error) => {
-                    console.error('Error updating server status:', error);
-                  });
-                }, 500);
-              });
+            vscode.commands.executeCommand('clay.stopMCPServer').then(() => {
+              // Update server status after command completes
+              setTimeout(() => {
+                this.sendServerStatus().catch((error: Error) => {
+                  console.error('Error updating server status:', error);
+                });
+              }, 500);
+            });
             return;
           case 'openRoutesManager':
             vscode.commands.executeCommand('clay.openRoutesManager');
@@ -185,9 +185,11 @@ export class EnhancedWebviewProvider {
       const now = Date.now();
 
       // Check if we have a valid cache
-      if (this.htmlCache &&
-          now - this.htmlCache.timestamp < this.CACHE_TTL &&
-          this.htmlCache.html) {
+      if (
+        this.htmlCache &&
+        now - this.htmlCache.timestamp < this.CACHE_TTL &&
+        this.htmlCache.html
+      ) {
         console.log('Using cached HTML content for webview');
         return this.htmlCache.html;
       }
@@ -232,7 +234,9 @@ export class EnhancedWebviewProvider {
 
       // Log for debugging
       console.log(`CSS file exists: ${cssExists}, path: ${cssFilePath}`);
-      console.log(`Alternative CSS file exists: ${!!alternativeCssFilePath}, path: ${alternativeCssFilePath}`);
+      console.log(
+        `Alternative CSS file exists: ${!!alternativeCssFilePath}, path: ${alternativeCssFilePath}`
+      );
       console.log(`JS file exists: true, path: ${jsFilePath}`);
 
       // Create webview URIs for the assets
@@ -260,11 +264,16 @@ export class EnhancedWebviewProvider {
 
         if (hasCssLink) {
           // Replace existing CSS link
-          indexHtml = indexHtml.replace(/<link[^>]*rel="stylesheet"[^>]*href="[^"]*"[^>]*>/,
-            `<link rel="stylesheet" href="${cssUri}">`);
+          indexHtml = indexHtml.replace(
+            /<link[^>]*rel="stylesheet"[^>]*href="[^"]*"[^>]*>/,
+            `<link rel="stylesheet" href="${cssUri}">`
+          );
         } else {
           // Add CSS link if not present
-          indexHtml = indexHtml.replace('</head>', `<link rel="stylesheet" href="${cssUri}"></head>`);
+          indexHtml = indexHtml.replace(
+            '</head>',
+            `<link rel="stylesheet" href="${cssUri}"></head>`
+          );
         }
         console.log('CSS reference added/updated in HTML');
       } else {
@@ -273,8 +282,11 @@ export class EnhancedWebviewProvider {
 
       // Add CSP
       const nonce = this.getNonce();
-      indexHtml = indexHtml.replace(/<head>/, `<head>
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*; ">`);
+      indexHtml = indexHtml.replace(
+        /<head>/,
+        `<head>
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*; ">`
+      );
 
       // Add nonce to scripts
       indexHtml = indexHtml.replace(/<script/g, `<script nonce="${nonce}"`);
@@ -284,7 +296,7 @@ export class EnhancedWebviewProvider {
         html: indexHtml,
         jsUri,
         cssUri,
-        timestamp: now
+        timestamp: now,
       };
 
       return indexHtml;

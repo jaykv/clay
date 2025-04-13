@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
 
 // Import server functions directly
-import { startServer as startGatewayServer, stopServer as stopGatewayServer } from './server/gateway';
+import {
+  startServer as startGatewayServer,
+  stopServer as stopGatewayServer,
+} from './server/gateway';
 import { startMCPServer, stopMCPServer } from './server/mcp';
 import { isMCPServer, isGatewayServer } from './server/utils/port';
 import { getConfig } from './server/utils/config';
@@ -14,7 +17,7 @@ import {
   registryServerInstance,
   setGatewayServerInstance,
   setMCPServerInstance,
-  serverStatusEmitter
+  serverStatusEmitter,
 } from './globals';
 
 // Check if servers are running
@@ -26,7 +29,9 @@ export async function isGatewayServerRunning(): Promise<boolean> {
 
   // If the server is not running but we have an instance reference, clear it
   if (!isRunning && gatewayServerInstance !== null) {
-    logger.warn('Gateway server instance reference exists but server is not running. Clearing reference.');
+    logger.warn(
+      'Gateway server instance reference exists but server is not running. Clearing reference.'
+    );
     setGatewayServerInstance(null);
     return false;
   }
@@ -45,7 +50,9 @@ export async function isMCPServerRunning(): Promise<boolean> {
 
   // If the server is not running but we have an instance reference, clear it
   if (!isRunning && mcpServerInstance !== null) {
-    logger.warn('MCP server instance reference exists but server is not running. Clearing reference.');
+    logger.warn(
+      'MCP server instance reference exists but server is not running. Clearing reference.'
+    );
     setMCPServerInstance(null);
     return false;
   }
@@ -144,7 +151,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('clay.registerMCPServer', async () => {
       const serverUrl = await vscode.window.showInputBox({
         prompt: 'Enter the MCP server URL',
-        placeHolder: 'http://localhost:3001'
+        placeHolder: 'http://localhost:3001',
       });
 
       if (!serverUrl) {
@@ -153,7 +160,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
       const serverName = await vscode.window.showInputBox({
         prompt: 'Enter a name for the MCP server',
-        placeHolder: 'My MCP Server'
+        placeHolder: 'My MCP Server',
       });
 
       if (!serverName) {

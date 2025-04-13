@@ -21,42 +21,43 @@ export class CodeSearch {
    */
   public search(query: string, maxResults: number = 10): SearchResult[] {
     logger.info(`Searching for: ${query}`);
-    
+
     // Normalize query
     const normalizedQuery = query.toLowerCase().trim();
-    
+
     // Get all files
     const files = this.indexer.getAllFiles();
-    
+
     // Search results
     const results: SearchResult[] = [];
-    
+
     // Search in files
     for (const file of files) {
       const fileResults = this.searchInFile(file, normalizedQuery);
-      
+
       if (fileResults.length > 0) {
         // Group snippets by file
         const snippets = fileResults;
-        
+
         // Get symbols in the file
-        const symbols = this.indexer.getSymbolsInFile(file.path)
+        const symbols = this.indexer
+          .getSymbolsInFile(file.path)
           .filter(symbol => this.symbolMatchesQuery(symbol, normalizedQuery));
-        
+
         // Calculate relevance score (simple implementation)
-        const relevanceScore = snippets.length + (symbols.length * 2);
-        
+        const relevanceScore = snippets.length + symbols.length * 2;
+
         results.push({
           snippets,
           symbols: symbols.length > 0 ? symbols : undefined,
-          relevanceScore
+          relevanceScore,
         });
       }
     }
-    
+
     // Sort by relevance score (descending)
     results.sort((a, b) => b.relevanceScore - a.relevanceScore);
-    
+
     // Limit results
     return results.slice(0, maxResults);
   }
@@ -69,32 +70,32 @@ export class CodeSearch {
    */
   private searchInFile(file: CodeFile, query: string): CodeSnippet[] {
     const snippets: CodeSnippet[] = [];
-    
+
     // Split content into lines
     const lines = file.content.split('\n');
-    
+
     // Search for query in each line
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].toLowerCase();
-      
+
       if (line.includes(query)) {
         // Find the start and end of the snippet
         const snippetStart = Math.max(0, i - 2);
         const snippetEnd = Math.min(lines.length - 1, i + 2);
-        
+
         // Extract the snippet
         const snippetContent = lines.slice(snippetStart, snippetEnd + 1).join('\n');
-        
+
         snippets.push({
           filePath: file.path,
           content: snippetContent,
           startLine: snippetStart + 1, // 1-based line numbers
           endLine: snippetEnd + 1,
-          language: file.language
+          language: file.language,
         });
       }
     }
-    
+
     return snippets;
   }
 
@@ -105,9 +106,11 @@ export class CodeSearch {
    * @returns Whether the symbol matches the query
    */
   private symbolMatchesQuery(symbol: CodeSymbol, query: string): boolean {
-    return symbol.name.toLowerCase().includes(query) ||
+    return (
+      symbol.name.toLowerCase().includes(query) ||
       (symbol.signature?.toLowerCase().includes(query) ?? false) ||
-      (symbol.documentation?.toLowerCase().includes(query) ?? false);
+      (symbol.documentation?.toLowerCase().includes(query) ?? false)
+    );
   }
 
   /**

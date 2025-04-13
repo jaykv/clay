@@ -22,14 +22,18 @@ export async function startMCPServer(): Promise<ExpressMCPServer> {
     // Check if the port is in use
     const isRunning = await isMCPServer(config.port, config.host);
     if (isRunning) {
-      logger.warn(`Port ${config.port} is already in use. Attempting to stop any existing server...`);
+      logger.warn(
+        `Port ${config.port} is already in use. Attempting to stop any existing server...`
+      );
 
       // Try to stop any existing server
       try {
         await stopMCPServer(true);
       } catch (error) {
         logger.error('Failed to stop existing server:', error);
-        throw new Error(`Port ${config.port} is in use and could not be freed. Please stop any running MCP server manually.`);
+        throw new Error(
+          `Port ${config.port} is in use and could not be freed. Please stop any running MCP server manually.`
+        );
       }
     }
 
@@ -70,7 +74,9 @@ export async function stopMCPServer(force: boolean = false): Promise<void> {
     if (force) {
       const isRunning = await isMCPServer(config.port, config.host);
       if (isRunning) {
-        logger.warn(`Port ${config.port} is in use but no server instance found. This may be a zombie process.`);
+        logger.warn(
+          `Port ${config.port} is in use but no server instance found. This may be a zombie process.`
+        );
 
         // Try to kill the process using the port, but only if it's an MCP server
         const killed = await killProcessByPort(config.port, config.host, 'mcp', false);

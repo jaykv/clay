@@ -27,11 +27,11 @@ export class CodeIndexer {
       totalFiles: 0,
       totalSymbols: 0,
       lastUpdated: 0,
-      rootDirectory: rootDirectory
+      rootDirectory: rootDirectory,
     };
 
     // Initialize file watcher
-    this.fileWatcher = new FileWatcher(rootDirectory, (filePath) => this.handleFileChange(filePath));
+    this.fileWatcher = new FileWatcher(rootDirectory, filePath => this.handleFileChange(filePath));
 
     logger.info(`CodeIndexer initialized with root directory: ${rootDirectory}`);
   }
@@ -62,7 +62,9 @@ export class CodeIndexer {
       this.indexStatus.lastUpdated = Date.now();
       this.indexStatus.isIndexing = false;
 
-      logger.info(`Indexing completed. Indexed ${this.files.size} files and ${this.symbols.size} symbols.`);
+      logger.info(
+        `Indexing completed. Indexed ${this.files.size} files and ${this.symbols.size} symbols.`
+      );
     } catch (error) {
       logger.error('Error during indexing:', error);
       this.indexStatus.isIndexing = false;
@@ -129,7 +131,7 @@ export class CodeIndexer {
         content,
         language,
         size: stats.size,
-        lastModified: stats.mtimeMs
+        lastModified: stats.mtimeMs,
       };
 
       // Add to index
@@ -176,7 +178,7 @@ export class CodeIndexer {
             type: SymbolType.FUNCTION,
             filePath: file.path,
             startLine,
-            endLine
+            endLine,
           };
 
           this.symbols.set(`${file.path}:${name}`, symbol);
@@ -192,7 +194,18 @@ export class CodeIndexer {
     // Simple implementation for now
     // In a real implementation, we would use glob patterns
     const extension = path.extname(filePath).toLowerCase();
-    const supportedExtensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.c', '.cpp', '.go', '.rs'];
+    const supportedExtensions = [
+      '.js',
+      '.ts',
+      '.jsx',
+      '.tsx',
+      '.py',
+      '.java',
+      '.c',
+      '.cpp',
+      '.go',
+      '.rs',
+    ];
 
     return supportedExtensions.includes(extension);
   }
@@ -272,8 +285,7 @@ export class CodeIndexer {
    * Get all symbols in a file
    */
   public getSymbolsInFile(filePath: string): CodeSymbol[] {
-    return Array.from(this.symbols.values())
-      .filter(symbol => symbol.filePath === filePath);
+    return Array.from(this.symbols.values()).filter(symbol => symbol.filePath === filePath);
   }
 
   /**
@@ -300,7 +312,7 @@ export class CodeIndexer {
 
     // Update the file watcher
     this.fileWatcher.stop();
-    this.fileWatcher = new FileWatcher(rootDirectory, (filePath) => this.handleFileChange(filePath));
+    this.fileWatcher = new FileWatcher(rootDirectory, filePath => this.handleFileChange(filePath));
 
     // We'll need to reindex with the new root directory
     // This will happen when startIndexing is called

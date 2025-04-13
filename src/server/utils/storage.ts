@@ -8,7 +8,7 @@ import { logger } from './logger';
  */
 export class Storage {
   private basePath: string;
-  
+
   /**
    * Create a new storage instance
    * @param configDir The directory name under ~/.clay/
@@ -16,16 +16,16 @@ export class Storage {
   constructor(configDir: string = '') {
     // Create base path at ~/.clay
     this.basePath = path.join(os.homedir(), '.clay');
-    
+
     // Add config subdirectory if specified
     if (configDir) {
       this.basePath = path.join(this.basePath, configDir);
     }
-    
+
     // Ensure the directory exists
     this.ensureDirectory();
   }
-  
+
   /**
    * Ensure the storage directory exists
    */
@@ -40,7 +40,7 @@ export class Storage {
       throw new Error(`Failed to create storage directory: ${error}`);
     }
   }
-  
+
   /**
    * Get the full path to a file
    * @param filename The filename
@@ -49,7 +49,7 @@ export class Storage {
   private getFilePath(filename: string): string {
     return path.join(this.basePath, filename);
   }
-  
+
   /**
    * Read data from a file
    * @param filename The filename
@@ -58,7 +58,7 @@ export class Storage {
    */
   public read<T>(filename: string, defaultValue: T): T {
     const filePath = this.getFilePath(filename);
-    
+
     try {
       if (fs.existsSync(filePath)) {
         const data = fs.readFileSync(filePath, 'utf-8');
@@ -67,10 +67,10 @@ export class Storage {
     } catch (error) {
       logger.error(`Failed to read from ${filePath}:`, error);
     }
-    
+
     return defaultValue;
   }
-  
+
   /**
    * Write data to a file
    * @param filename The filename
@@ -79,7 +79,7 @@ export class Storage {
    */
   public write<T>(filename: string, data: T): boolean {
     const filePath = this.getFilePath(filename);
-    
+
     try {
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
       logger.debug(`Wrote data to ${filePath}`);
@@ -89,7 +89,7 @@ export class Storage {
       return false;
     }
   }
-  
+
   /**
    * Check if a file exists
    * @param filename The filename
@@ -98,7 +98,7 @@ export class Storage {
   public exists(filename: string): boolean {
     return fs.existsSync(this.getFilePath(filename));
   }
-  
+
   /**
    * Delete a file
    * @param filename The filename
@@ -106,7 +106,7 @@ export class Storage {
    */
   public delete(filename: string): boolean {
     const filePath = this.getFilePath(filename);
-    
+
     try {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
@@ -116,7 +116,7 @@ export class Storage {
     } catch (error) {
       logger.error(`Failed to delete ${filePath}:`, error);
     }
-    
+
     return false;
   }
 }

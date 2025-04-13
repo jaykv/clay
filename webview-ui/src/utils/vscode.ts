@@ -23,9 +23,9 @@ export type VSCodeCommand =
   | { command: 'stopMCPServer' }
   | { command: 'refresh' }
   | { command: 'openRoutesManager' }
-  | { command: 'navigate', route: string }
+  | { command: 'navigate'; route: string }
   | { command: 'getServerStatus' }
-  | { command: 'switchTab', tab: string }
+  | { command: 'switchTab'; tab: string }
   | { command: 'clay.searchCodebase' }
   | { command: 'clay.getSymbolDefinition' }
   | { command: 'clay.findReferences' }

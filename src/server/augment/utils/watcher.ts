@@ -42,8 +42,12 @@ export class FileWatcher {
     logger.info('Starting FileWatcher');
 
     // Create a glob pattern from the include and exclude patterns
-    const includePatterns = this.config.include.map(pattern => path.join(this.rootDirectory, pattern));
-    const excludePatterns = this.config.exclude.map(pattern => path.join(this.rootDirectory, pattern));
+    const includePatterns = this.config.include.map(pattern =>
+      path.join(this.rootDirectory, pattern)
+    );
+    const excludePatterns = this.config.exclude.map(pattern =>
+      path.join(this.rootDirectory, pattern)
+    );
 
     // Create the watcher with platform-specific options
     const watchOptions: chokidar.WatchOptions = {
@@ -52,8 +56,8 @@ export class FileWatcher {
       ignoreInitial: true,
       awaitWriteFinish: {
         stabilityThreshold: 300,
-        pollInterval: 100
-      }
+        pollInterval: 100,
+      },
     };
 
     // Disable fsevents on non-macOS platforms
@@ -71,7 +75,7 @@ export class FileWatcher {
           ignored: excludePatterns,
           persistent: true,
           ignoreInitial: true,
-          useFsEvents: false
+          useFsEvents: false,
         });
       } catch (fallbackError) {
         logger.error('Error creating fallback file watcher:', fallbackError);
@@ -81,10 +85,10 @@ export class FileWatcher {
 
     // Add event listeners
     this.watcher
-      .on('add', (filePath) => this.handleFileChange('add', filePath))
-      .on('change', (filePath) => this.handleFileChange('change', filePath))
-      .on('unlink', (filePath) => this.handleFileChange('unlink', filePath))
-      .on('error', (error) => logger.error('FileWatcher error:', error));
+      .on('add', filePath => this.handleFileChange('add', filePath))
+      .on('change', filePath => this.handleFileChange('change', filePath))
+      .on('unlink', filePath => this.handleFileChange('unlink', filePath))
+      .on('error', error => logger.error('FileWatcher error:', error));
 
     logger.info('FileWatcher started');
   }

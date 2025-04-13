@@ -78,7 +78,7 @@ export class YAMLStorage {
       const yamlStr = yaml.dump(this.data, {
         indent: 2,
         lineWidth: 120,
-        noRefs: true
+        noRefs: true,
       });
 
       fs.writeFileSync(this.configPath, yamlStr, 'utf-8');

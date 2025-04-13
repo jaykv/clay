@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { registerCommands, isMCPServerRunning, isGatewayServerRunning } from './commands';
-import { serverStatusEmitter } from './globals';
+import { serverStatusEmitter, ServerStatusEvent } from './globals';
 import { EnhancedWebviewProvider } from './webview/WebviewProvider';
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
 import { getConfig } from './server/utils/config';
@@ -68,12 +68,12 @@ export async function activate(context: vscode.ExtensionContext) {
   // Listen for server status changes and immediately update the webview
   // This provides faster UI updates than waiting for health checks
   context.subscriptions.push(
-    serverStatusEmitter.event(({ type, status }) => {
-      logger.debug(`Sending immediate server status update: ${type} is ${status}`);
+    serverStatusEmitter.event((event: ServerStatusEvent) => {
+      logger.debug(`Sending immediate server status update: ${event.type} is ${event.status}`);
       EnhancedWebviewProvider.postMessage({
         command: 'serverStatus',
-        server: type,
-        status: status === 'started' ? 'running' : 'stopped'
+        server: event.type,
+        status: event.status === 'started' ? 'running' : 'stopped',
       });
     })
   );
@@ -87,7 +87,7 @@ export async function activate(context: vscode.ExtensionContext) {
       // Then send a message to navigate to the routes page
       EnhancedWebviewProvider.postMessage({
         command: 'navigate',
-        route: '/proxy-routes'
+        route: '/proxy-routes',
       });
     })
   );
@@ -101,7 +101,7 @@ export async function activate(context: vscode.ExtensionContext) {
       // Then send a message to switch to the Augment tab
       EnhancedWebviewProvider.postMessage({
         command: 'switchTab',
-        tab: 'augment'
+        tab: 'augment',
       });
     })
   );

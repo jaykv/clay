@@ -4,7 +4,7 @@ import {
   getProxyRoute,
   setProxyRoute,
   deleteProxyRoute,
-  reinitializeRoutes
+  reinitializeRoutes,
 } from './routes';
 import { logger } from '../utils/logger';
 
@@ -25,7 +25,7 @@ export function registerProxyRoutesAPI(fastify: FastifyInstance, options: any, d
 
   // Get a specific proxy route
   fastify.get<{
-    Params: { path: string }
+    Params: { path: string };
   }>('/api/proxy/routes/:path', async (request, reply) => {
     try {
       const path = request.params.path;
@@ -48,7 +48,7 @@ export function registerProxyRoutesAPI(fastify: FastifyInstance, options: any, d
       path: string;
       target: string;
       description?: string;
-    }
+    };
   }>('/api/proxy/routes', async (request, reply) => {
     try {
       const { path, target, description } = request.body;
@@ -67,7 +67,7 @@ export function registerProxyRoutesAPI(fastify: FastifyInstance, options: any, d
 
   // Delete a proxy route
   fastify.delete<{
-    Params: { path: string }
+    Params: { path: string };
   }>('/api/proxy/routes/:path', async (request, reply) => {
     try {
       const path = request.params.path;

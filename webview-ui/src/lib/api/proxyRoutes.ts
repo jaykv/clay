@@ -8,9 +8,7 @@ export interface ProxyRoute {
 
 // Use relative URLs when accessed directly via the proxy server
 // or absolute URLs when in VS Code webview
-const API_BASE_URL = typeof window.acquireVsCodeApi === 'function'
-  ? 'http://localhost:3000'
-  : '';
+const API_BASE_URL = typeof window.acquireVsCodeApi === 'function' ? 'http://localhost:3000' : '';
 
 /**
  * Get all proxy routes

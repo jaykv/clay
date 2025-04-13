@@ -20,7 +20,9 @@ export async function startServer() {
     // Check if the port is in use
     const isRunning = await isGatewayServer(config.port, config.host);
     if (isRunning) {
-      logger.warn(`Port ${config.port} is already in use. Attempting to stop any existing server...`);
+      logger.warn(
+        `Port ${config.port} is already in use. Attempting to stop any existing server...`
+      );
 
       // Try to stop any existing server
       try {
@@ -34,7 +36,9 @@ export async function startServer() {
         }
       } catch (error) {
         logger.error('Failed to stop existing server:', error);
-        throw new Error(`Port ${config.port} is in use and could not be freed. Please stop any running Gateway server manually.`);
+        throw new Error(
+          `Port ${config.port} is in use and could not be freed. Please stop any running Gateway server manually.`
+        );
       }
     }
 
@@ -79,7 +83,9 @@ export async function stopServer(force: boolean = false) {
     const isRunning = await isGatewayServer(config.port, config.host);
 
     if (isRunning) {
-      logger.warn(`Port ${config.port} is in use but no server instance found. This may be a zombie process.`);
+      logger.warn(
+        `Port ${config.port} is in use but no server instance found. This may be a zombie process.`
+      );
 
       // Try to kill the process using the port, but only if it's a Gateway server
       const killed = await killProcessByPort(config.port, config.host, 'gateway', true);

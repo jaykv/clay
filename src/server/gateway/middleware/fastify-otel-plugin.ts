@@ -1,6 +1,14 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
-import { initOpenTelemetry, getTraces, getTraceById, clearTraces, getTraceStats, generateTraceId, addTrace } from '../../utils/telemetry';
+import {
+  initOpenTelemetry,
+  getTraces,
+  getTraceById,
+  clearTraces,
+  getTraceStats,
+  generateTraceId,
+  addTrace,
+} from '../../utils/telemetry';
 import { logger } from '../../utils/logger';
 import { broadcastNewTrace } from '../../gateway/websocket';
 
@@ -28,12 +36,13 @@ const otelPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const path = request.url;
 
       // Skip tracing for all API endpoints to prevent recursion and unnecessary trace data
-      if (path.startsWith('/api/') || 
-        path.startsWith('/ws/')
-        || path.startsWith('/assets/') ||
-        path.startsWith('/health') || 
+      if (
+        path.startsWith('/api/') ||
+        path.startsWith('/ws/') ||
+        path.startsWith('/assets/') ||
+        path.startsWith('/health') ||
         path.startsWith('/sse') ||
-        path == "/"
+        path == '/'
       ) {
         return;
       }
@@ -80,7 +89,7 @@ const otelPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         headers,
         body,
         bodyTruncated,
-        startTime
+        startTime,
       };
 
       // Store trace in request for later use
@@ -88,80 +97,86 @@ const otelPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     });
 
     // Add response hook to capture response data
-    fastify.addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload: any) => {
-      if (!request.trace) return payload;
+    fastify.addHook(
+      'onSend',
+      async (request: FastifyRequest, reply: FastifyReply, payload: any) => {
+        if (!request.trace) return payload;
 
-      try {
-        // Capture response data
-        const trace = request.trace;
-        trace.endTime = Date.now();
-        trace.duration = trace.endTime - trace.startTime;
-        trace.status = reply.statusCode;
+        try {
+          // Capture response data
+          const trace = request.trace;
+          trace.endTime = Date.now();
+          trace.duration = trace.endTime - trace.startTime;
+          trace.status = reply.statusCode;
 
-        // Try to capture response body
-        let responseTruncated = false;
-        let responseBody: any;
+          // Try to capture response body
+          let responseTruncated = false;
+          let responseBody: any;
 
-        if (payload) {
-          try {
-            const rawPayload = typeof payload === 'string' ? payload : JSON.stringify(payload);
-            if (rawPayload.length > MAX_RESPONSE_SIZE) {
-              responseBody = rawPayload.substring(0, MAX_RESPONSE_SIZE) + '... [truncated]';
-              responseTruncated = true;
-            } else {
-              responseBody = typeof payload === 'string' ? payload : JSON.parse(rawPayload);
+          if (payload) {
+            try {
+              const rawPayload = typeof payload === 'string' ? payload : JSON.stringify(payload);
+              if (rawPayload.length > MAX_RESPONSE_SIZE) {
+                responseBody = rawPayload.substring(0, MAX_RESPONSE_SIZE) + '... [truncated]';
+                responseTruncated = true;
+              } else {
+                responseBody = typeof payload === 'string' ? payload : JSON.parse(rawPayload);
+              }
+            } catch (error) {
+              logger.debug(`Failed to process response for ${trace.id}:`, error);
+              responseBody = '[Error processing response]';
             }
-          } catch (error) {
-            logger.debug(`Failed to process response for ${trace.id}:`, error);
-            responseBody = '[Error processing response]';
           }
+
+          trace.response = responseBody;
+          trace.responseTruncated = responseTruncated;
+
+          // Add the trace to storage
+          addTrace(trace);
+
+          // Broadcast the trace to all connected WebSocket clients
+          broadcastNewTrace(trace);
+
+          // Log the trace
+          logger.info(
+            `${request.method} ${request.url} ${trace.status || 'ERR'} ${trace.duration}ms [${trace.id}]`
+          );
+        } catch (error) {
+          logger.error(`Error processing trace:`, error);
         }
 
-        trace.response = responseBody;
-        trace.responseTruncated = responseTruncated;
-
-        // Add the trace to storage
-        addTrace(trace);
-
-        // Broadcast the trace to all connected WebSocket clients
-        broadcastNewTrace(trace);
-
-        // Log the trace
-        logger.info(
-          `${request.method} ${request.url} ${trace.status || 'ERR'} ${trace.duration}ms [${trace.id}]`
-        );
-      } catch (error) {
-        logger.error(`Error processing trace:`, error);
+        return payload;
       }
-
-      return payload;
-    });
+    );
 
     // Add error hook to capture errors
-    fastify.addHook('onError', async (request: FastifyRequest, reply: FastifyReply, error: Error) => {
-      if (!request.trace) return;
+    fastify.addHook(
+      'onError',
+      async (request: FastifyRequest, reply: FastifyReply, error: Error) => {
+        if (!request.trace) return;
 
-      try {
-        const trace = request.trace;
-        trace.endTime = Date.now();
-        trace.duration = trace.endTime - trace.startTime;
-        trace.status = reply.statusCode;
-        trace.error = error;
+        try {
+          const trace = request.trace;
+          trace.endTime = Date.now();
+          trace.duration = trace.endTime - trace.startTime;
+          trace.status = reply.statusCode;
+          trace.error = error;
 
-        // Add the trace to storage
-        addTrace(trace);
+          // Add the trace to storage
+          addTrace(trace);
 
-        // Broadcast the trace to all connected WebSocket clients
-        broadcastNewTrace(trace);
+          // Broadcast the trace to all connected WebSocket clients
+          broadcastNewTrace(trace);
 
-        // Log the error
-        logger.error(
-          `${request.method} ${request.url} ${reply.statusCode} ${trace.duration}ms [${trace.id}] Error: ${error.message}`
-        );
-      } catch (err) {
-        logger.error('Failed to process error trace:', err);
+          // Log the error
+          logger.error(
+            `${request.method} ${request.url} ${reply.statusCode} ${trace.duration}ms [${trace.id}] Error: ${error.message}`
+          );
+        } catch (err) {
+          logger.error('Failed to process error trace:', err);
+        }
       }
-    });
+    );
 
     logger.info('Fastify tracing plugin registered successfully');
 
@@ -219,7 +234,7 @@ function registerTracingRoutes(fastify: FastifyInstance) {
 
   // Get a specific trace
   fastify.get<{
-    Params: { id: string }
+    Params: { id: string };
   }>('/api/traces/:id', async (request, reply) => {
     try {
       const { id } = request.params;
@@ -239,5 +254,5 @@ function registerTracingRoutes(fastify: FastifyInstance) {
 
 export default fastifyPlugin(otelPlugin, {
   name: 'fastify-otel-plugin',
-  fastify: '5.x'
+  fastify: '5.x',
 });

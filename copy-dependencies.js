@@ -17,14 +17,14 @@ const dependencies = [
   '@fastify/cors',
   '@fastify/http-proxy',
   '@fastify/sensible',
-  '@fastify/static'
+  '@fastify/static',
 ];
 
 // Create a temporary package.json for installing only the required dependencies
 const tempPackageJson = {
   name: 'clay-dependencies',
   version: '1.0.0',
-  dependencies: {}
+  dependencies: {},
 };
 
 // Read the main package.json to get the dependency versions

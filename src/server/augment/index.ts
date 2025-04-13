@@ -196,7 +196,7 @@ export class AugmentContextEngine {
         totalFiles: 0,
         totalSymbols: 0,
         lastUpdated: 0,
-        rootDirectory: ''
+        rootDirectory: '',
       };
     }
 

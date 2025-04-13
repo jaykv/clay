@@ -47,7 +47,7 @@ function initializeRoutes(): void {
         path: 'ai',
         target: 'http://localhost:3001',
         description: 'Default AI service route',
-        createdAt: Date.now()
+        createdAt: Date.now(),
       });
 
       // Save the default route to storage
@@ -63,7 +63,7 @@ function initializeRoutes(): void {
         path: 'ai',
         target: 'http://localhost:3001',
         description: 'Default AI service route',
-        createdAt: Date.now()
+        createdAt: Date.now(),
       });
     }
   }
@@ -98,7 +98,7 @@ export function setProxyRoute(path: string, target: string, description?: string
     path,
     target,
     description,
-    createdAt: proxyRoutes.get(path)?.createdAt || Date.now()
+    createdAt: proxyRoutes.get(path)?.createdAt || Date.now(),
   };
 
   proxyRoutes.set(path, route);
@@ -138,8 +138,7 @@ export function findMatchingRoute(requestPath: string): ProxyRoute | undefined {
   }
 
   // Then, try prefix match (longest prefix first)
-  const sortedPaths = Array.from(proxyRoutes.keys())
-    .sort((a, b) => b.length - a.length);
+  const sortedPaths = Array.from(proxyRoutes.keys()).sort((a, b) => b.length - a.length);
 
   for (const path of sortedPaths) {
     if (normalizedPath.startsWith(path + '/')) {

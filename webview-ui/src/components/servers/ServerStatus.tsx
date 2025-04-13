@@ -69,7 +69,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({
         // Fall back to VS Code command if direct stop fails or is not available
         postMessage({ command: stopCommand });
       }
-    } else if(isRunning) {
+    } else if (isRunning) {
       // Send the command to stop the server
       postMessage({ command: stopCommand });
     }
@@ -118,11 +118,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({
             Stop
           </Button>
         ) : (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleStart}
-          >
+          <Button variant="primary" size="sm" onClick={handleStart}>
             Start
           </Button>
         )}

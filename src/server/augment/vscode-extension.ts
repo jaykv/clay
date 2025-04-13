@@ -40,13 +40,16 @@ export function initializeAugmentContextEngineForVSCode(context: vscode.Extensio
 /**
  * Register VS Code commands for the Augment Context Engine
  */
-function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine: AugmentContextEngine): void {
+function registerAugmentCommands(
+  context: vscode.ExtensionContext,
+  augmentEngine: AugmentContextEngine
+): void {
   // Register command to search the codebase
   context.subscriptions.push(
     vscode.commands.registerCommand('clay.searchCodebase', async () => {
       const query = await vscode.window.showInputBox({
         prompt: 'Enter search query',
-        placeHolder: 'Search the codebase...'
+        placeHolder: 'Search the codebase...',
       });
 
       if (!query) {
@@ -59,9 +62,9 @@ function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine
           {
             location: vscode.ProgressLocation.Notification,
             title: `Searching codebase for "${query}"`,
-            cancellable: false
+            cancellable: false,
           },
-          async (progress) => {
+          async progress => {
             // Search the codebase
             const results = await augmentEngine.searchCode(query);
 
@@ -75,15 +78,18 @@ function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine
               result.snippets.map(snippet => ({
                 label: `$(file) ${snippet.filePath}`,
                 description: `Line ${snippet.startLine}-${snippet.endLine}`,
-                detail: snippet.content.length > 100 ? snippet.content.substring(0, 100) + '...' : snippet.content,
-                snippet
+                detail:
+                  snippet.content.length > 100
+                    ? snippet.content.substring(0, 100) + '...'
+                    : snippet.content,
+                snippet,
               }))
             );
 
             const selected = await vscode.window.showQuickPick(items, {
               placeHolder: `Found ${items.length} results for "${query}"`,
               matchOnDescription: true,
-              matchOnDetail: true
+              matchOnDetail: true,
             });
 
             if (selected) {
@@ -93,7 +99,10 @@ function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine
 
               // Select the range
               const startPosition = new vscode.Position(selected.snippet.startLine - 1, 0);
-              const endPosition = new vscode.Position(selected.snippet.endLine - 1, document.lineAt(selected.snippet.endLine - 1).text.length);
+              const endPosition = new vscode.Position(
+                selected.snippet.endLine - 1,
+                document.lineAt(selected.snippet.endLine - 1).text.length
+              );
 
               editor.selection = new vscode.Selection(startPosition, endPosition);
               editor.revealRange(
@@ -127,9 +136,9 @@ function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine
           {
             location: vscode.ProgressLocation.Notification,
             title: 'Finding symbol definition',
-            cancellable: false
+            cancellable: false,
           },
-          async (progress) => {
+          async progress => {
             // Get the VS Code API
             const vscodeAPI = augmentEngine.getVSCodeAPI();
             if (!vscodeAPI) {
@@ -155,7 +164,10 @@ function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine
 
             // Select the range
             const startPosition = new vscode.Position(definition.startLine - 1, 0);
-            const endPosition = new vscode.Position(definition.endLine - 1, defDocument.lineAt(definition.endLine - 1).text.length);
+            const endPosition = new vscode.Position(
+              definition.endLine - 1,
+              defDocument.lineAt(definition.endLine - 1).text.length
+            );
 
             defEditor.selection = new vscode.Selection(startPosition, endPosition);
             defEditor.revealRange(
@@ -188,9 +200,9 @@ function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine
           {
             location: vscode.ProgressLocation.Notification,
             title: 'Finding references',
-            cancellable: false
+            cancellable: false,
           },
-          async (progress) => {
+          async progress => {
             // Get the VS Code API
             const vscodeAPI = augmentEngine.getVSCodeAPI();
             if (!vscodeAPI) {
@@ -215,23 +227,28 @@ function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine
               label: `$(file) ${ref.filePath}`,
               description: `Line ${ref.startLine}`,
               detail: ref.name,
-              reference: ref
+              reference: ref,
             }));
 
             const selected = await vscode.window.showQuickPick(items, {
               placeHolder: `Found ${items.length} references`,
               matchOnDescription: true,
-              matchOnDetail: true
+              matchOnDetail: true,
             });
 
             if (selected) {
               // Open the file and navigate to the reference
-              const refDocument = await vscode.workspace.openTextDocument(selected.reference.filePath);
+              const refDocument = await vscode.workspace.openTextDocument(
+                selected.reference.filePath
+              );
               const refEditor = await vscode.window.showTextDocument(refDocument);
 
               // Select the range
               const startPosition = new vscode.Position(selected.reference.startLine - 1, 0);
-              const endPosition = new vscode.Position(selected.reference.endLine - 1, refDocument.lineAt(selected.reference.endLine - 1).text.length);
+              const endPosition = new vscode.Position(
+                selected.reference.endLine - 1,
+                refDocument.lineAt(selected.reference.endLine - 1).text.length
+              );
 
               refEditor.selection = new vscode.Selection(startPosition, endPosition);
               refEditor.revealRange(
@@ -256,9 +273,9 @@ function registerAugmentCommands(context: vscode.ExtensionContext, augmentEngine
           {
             location: vscode.ProgressLocation.Notification,
             title: 'Reindexing codebase',
-            cancellable: false
+            cancellable: false,
           },
-          async (progress) => {
+          async progress => {
             // Reindex the codebase
             await augmentEngine.reindex();
             vscode.window.showInformationMessage('Codebase reindexed successfully');

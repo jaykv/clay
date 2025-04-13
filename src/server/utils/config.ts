@@ -48,34 +48,27 @@ const defaultConfig: Config = {
     host: 'localhost',
     logLevel: LogLevel.INFO,
     proxyEnabled: true,
-    mcpEnabled: true
+    mcpEnabled: true,
   },
   mcp: {
     port: 3001,
     host: 'localhost',
     name: 'VSCode MCP Server',
     version: '1.0.0',
-    autostart: true
+    autostart: true,
   },
   registry: {
     port: 3002,
-    host: 'localhost'
+    host: 'localhost',
   },
   augment: {
     enabled: true,
     indexPath: '.clay/index',
-    include: [
-      '**/*.{js,ts,jsx,tsx,py,java,c,cpp,go,rs}'
-    ],
-    exclude: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/build/**',
-      '**/.git/**'
-    ],
+    include: ['**/*.{js,ts,jsx,tsx,py,java,c,cpp,go,rs}'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'],
     maxFileSize: 1000000, // 1MB
-    realtimeUpdates: true
-  }
+    realtimeUpdates: true,
+  },
 };
 
 // Initialize config with default values
@@ -137,20 +130,20 @@ export function updateConfig(newConfig: Partial<Config>): void {
     ...newConfig,
     gateway: {
       ...config.gateway,
-      ...(newConfig.gateway || {})
+      ...(newConfig.gateway || {}),
     },
     mcp: {
       ...config.mcp,
-      ...(newConfig.mcp || {})
+      ...(newConfig.mcp || {}),
     },
     registry: {
       ...config.registry,
-      ...(newConfig.registry || {})
+      ...(newConfig.registry || {}),
     },
     augment: {
       ...config.augment,
-      ...(newConfig.augment || {})
-    }
+      ...(newConfig.augment || {}),
+    },
   };
 
   // Save to file

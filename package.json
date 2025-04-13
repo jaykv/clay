@@ -146,7 +146,10 @@
     "compile-all": "npm run compile:prod && npm run build-webview",
     "copy-deps": "node copy-dependencies.js",
     "vsce:package": "npm run copy-deps && npx @vscode/vsce package --no-dependencies",
-    "vsce:publish": "npm run copy-deps && npx @vscode/vsce publish --no-dependencies"
+    "vsce:publish": "npm run copy-deps && npx @vscode/vsce publish --no-dependencies",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:webview": "cd webview-ui && npm run format"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -164,8 +167,11 @@
     "@vscode/vsce": "^3.3.2",
     "cross-env": "^7.0.3",
     "eslint": "^8.39.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-prettier": "^5.2.6",
     "glob": "^8.1.0",
     "mocha": "^10.2.0",
+    "prettier": "^3.5.3",
     "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",

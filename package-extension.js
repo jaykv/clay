@@ -5,35 +5,35 @@ const fs = require('fs');
 // Compile the extension
 console.log('Compiling extension...');
 const compileProcess = spawn('npm', ['run', 'compile'], {
-  stdio: 'inherit'
+  stdio: 'inherit',
 });
 
-compileProcess.on('close', (code) => {
+compileProcess.on('close', code => {
   if (code !== 0) {
     console.error(`Compilation failed with code ${code}`);
     process.exit(code);
   }
 
   console.log('Compilation successful!');
-  
+
   // Package the extension
   console.log('Packaging extension...');
   const packageProcess = spawn('npm', ['run', 'vsce:package'], {
-    stdio: 'inherit'
+    stdio: 'inherit',
   });
-  
-  packageProcess.on('close', (code) => {
+
+  packageProcess.on('close', code => {
     if (code !== 0) {
       console.error(`Packaging failed with code ${code}`);
       process.exit(code);
     }
-    
+
     console.log('Extension packaged successfully!');
-    
+
     // Find the VSIX file
     const files = fs.readdirSync('.');
     const vsixFile = files.find(file => file.endsWith('.vsix'));
-    
+
     if (vsixFile) {
       console.log(`VSIX file created: ${vsixFile}`);
       console.log('You can install this extension in VSCode by:');

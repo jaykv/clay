@@ -30,10 +30,12 @@ export function registerAugmentMCPResources(server: McpServer): void {
         }
 
         return {
-          contents: [{
-            uri: uri.href,
-            text: file.content
-          }]
+          contents: [
+            {
+              uri: uri.href,
+              text: file.content,
+            },
+          ],
         };
       } catch (error) {
         logger.error('Error in codebase-file resource:', error);
@@ -63,10 +65,12 @@ export function registerAugmentMCPResources(server: McpServer): void {
         const formattedResults = formatSearchResults(results);
 
         return {
-          contents: [{
-            uri: uri.href,
-            text: formattedResults
-          }]
+          contents: [
+            {
+              uri: uri.href,
+              text: formattedResults,
+            },
+          ],
         };
       } catch (error) {
         logger.error('Error in codebase-search resource:', error);
@@ -76,37 +80,34 @@ export function registerAugmentMCPResources(server: McpServer): void {
   );
 
   // Add codebase status resource
-  server.resource(
-    'codebase-status',
-    'codebase-status://current',
-    async (uri) => {
-      logger.info('MCP resource codebase-status requested');
+  server.resource('codebase-status', 'codebase-status://current', async uri => {
+    logger.info('MCP resource codebase-status requested');
 
-      try {
-        // Ensure the engine is initialized
-        if (!augmentEngine.isInitialized()) {
-          await augmentEngine.initialize();
-        }
-
-        // Get the index status
-        const status = augmentEngine.getIndexStatus();
-
-        // Format the status
-        const formattedStatus = formatIndexStatus(status);
-
-        return {
-          contents: [{
-            uri: uri.href,
-            text: formattedStatus
-          }]
-        };
-      } catch (error) {
-        logger.error('Error in codebase-status resource:', error);
-        throw error;
+    try {
+      // Ensure the engine is initialized
+      if (!augmentEngine.isInitialized()) {
+        await augmentEngine.initialize();
       }
-    }
-  );
 
+      // Get the index status
+      const status = augmentEngine.getIndexStatus();
+
+      // Format the status
+      const formattedStatus = formatIndexStatus(status);
+
+      return {
+        contents: [
+          {
+            uri: uri.href,
+            text: formattedStatus,
+          },
+        ],
+      };
+    } catch (error) {
+      logger.error('Error in codebase-status resource:', error);
+      throw error;
+    }
+  });
 }
 
 /**

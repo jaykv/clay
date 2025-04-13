@@ -13,8 +13,7 @@ const sseClients: Map<string, SSEClient> = new Map();
 
 // Generate a unique client ID
 function generateClientId(): string {
-  return Math.random().toString(36).substring(2, 15) +
-         Math.random().toString(36).substring(2, 15);
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 // Send an event to a specific client
@@ -58,7 +57,7 @@ export function ssePlugin(fastify: FastifyInstance, options: any, done: () => vo
     reply.raw.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      Connection: 'keep-alive',
     });
 
     // Create a new client ID
@@ -87,12 +86,12 @@ export function ssePlugin(fastify: FastifyInstance, options: any, done: () => vo
   fastify.get('/api/sse/connections', async (request, reply) => {
     const connections = Array.from(sseClients.keys()).map(id => ({
       id,
-      connectedAt: parseInt(sseClients.get(id)?.lastEventId || '0') || Date.now()
+      connectedAt: parseInt(sseClients.get(id)?.lastEventId || '0') || Date.now(),
     }));
 
     return {
       count: connections.length,
-      connections
+      connections,
     };
   });
 
@@ -131,7 +130,7 @@ export function ssePlugin(fastify: FastifyInstance, options: any, done: () => vo
 
     return {
       success: true,
-      clientCount: sseClients.size
+      clientCount: sseClients.size,
     };
   });
 

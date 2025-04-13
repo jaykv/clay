@@ -49,13 +49,13 @@ export default defineConfig({
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
         // Ensure CSS is extracted and not inlined
-        assetFileNames: (assetInfo) => {
+        assetFileNames: assetInfo => {
           if (assetInfo.name && assetInfo.name.endsWith('.css')) {
             return 'assets/style.css';
           }
           return 'assets/[name].[ext]';
-        }
-      }
+        },
+      },
     },
     // Improve build performance
     reportCompressedSize: false,
@@ -63,9 +63,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
+      '@': path.resolve(__dirname, './src'),
+    },
   },
   // Base path for assets when running in VS Code webview
-  base: ''
+  base: '',
 });

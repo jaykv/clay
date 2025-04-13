@@ -72,13 +72,14 @@ export function otelSpanToTraceData(span: OtelSpan): TraceData {
       headers: span.headers || {},
       body: span.body,
       bodyTruncated: span.bodyTruncated,
-      startTime: typeof span.startTime === 'number' ? span.startTime : new Date(span.startTime).getTime(),
+      startTime:
+        typeof span.startTime === 'number' ? span.startTime : new Date(span.startTime).getTime(),
       endTime: typeof span.endTime === 'number' ? span.endTime : new Date(span.endTime).getTime(),
       duration: span.duration,
-      status: span.status?.code || span.status as any,
+      status: span.status?.code || (span.status as any),
       response: span.response,
       responseTruncated: span.responseTruncated,
-      error: span.error
+      error: span.error,
     } as TraceData;
   }
 
@@ -134,7 +135,7 @@ export function otelSpanToTraceData(span: OtelSpan): TraceData {
       duration: endTimeMs - startTimeMs,
       status: httpStatus ? Number(httpStatus) : undefined,
       response,
-      error: span.status?.code === 2 ? new Error(span.status.message || 'Error') : undefined
+      error: span.status?.code === 2 ? new Error(span.status.message || 'Error') : undefined,
     };
   }
 
@@ -147,7 +148,7 @@ export function otelSpanToTraceData(span: OtelSpan): TraceData {
     headers: {},
     startTime: Date.now(),
     endTime: Date.now(),
-    duration: 0
+    duration: 0,
   };
 }
 
@@ -174,7 +175,6 @@ export interface TracesResponse {
   traces: OtelSpan[];
   pagination: PaginationData;
 }
-
 
 /**
  * Get traces with pagination
@@ -231,8 +231,8 @@ export async function getTraces(page = 1, limit = 50): Promise<TracesResponse> {
             total: 0,
             page,
             limit,
-            pages: 0
-          }
+            pages: 0,
+          },
         });
       }, 5000); // Increased timeout to 5 seconds
     });
@@ -370,8 +370,8 @@ export async function getTraceStats(): Promise<TraceStats> {
           statusCounts: {},
           truncated: {
             bodies: 0,
-            responses: 0
-          }
+            responses: 0,
+          },
         });
       }, 5000); // 5 second timeout
     });

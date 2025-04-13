@@ -1,0 +1,20 @@
+# Build outputs
+dist/
+out/
+build/
+.clay/
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# VS Code specific
+.vscode-test/
+
+# Webview UI build
+webview-ui/dist/
+
+# Other
+.git/
+.github/
+*.vsix

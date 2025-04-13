@@ -14,7 +14,7 @@ export function registerAugmentMCPTools(server: McpServer): void {
     'codebase-search',
     {
       query: z.string().describe('The search query'),
-      maxResults: z.number().optional().describe('The maximum number of results to return')
+      maxResults: z.number().optional().describe('The maximum number of results to return'),
     },
     async ({ query, maxResults = 10 }) => {
       logger.info(`MCP tool codebase-search called with query: ${query}`);
@@ -32,13 +32,13 @@ export function registerAugmentMCPTools(server: McpServer): void {
         const formattedResults = formatSearchResults(results);
 
         return {
-          content: [{ type: 'text', text: formattedResults }]
+          content: [{ type: 'text', text: formattedResults }],
         };
       } catch (error) {
         logger.error('Error in codebase-search tool:', error);
         return {
           content: [{ type: 'text', text: `Error searching codebase: ${error}` }],
-          isError: true
+          isError: true,
         };
       }
     }
@@ -48,7 +48,7 @@ export function registerAugmentMCPTools(server: McpServer): void {
   server.tool(
     'codebase-get-file',
     {
-      filePath: z.string().describe('The path to the file')
+      filePath: z.string().describe('The path to the file'),
     },
     async ({ filePath }) => {
       logger.info(`MCP tool codebase-get-file called with filePath: ${filePath}`);
@@ -65,18 +65,18 @@ export function registerAugmentMCPTools(server: McpServer): void {
         if (!file) {
           return {
             content: [{ type: 'text', text: `File not found: ${filePath}` }],
-            isError: true
+            isError: true,
           };
         }
 
         return {
-          content: [{ type: 'text', text: file.content }]
+          content: [{ type: 'text', text: file.content }],
         };
       } catch (error) {
         logger.error('Error in codebase-get-file tool:', error);
         return {
           content: [{ type: 'text', text: `Error getting file: ${error}` }],
-          isError: true
+          isError: true,
         };
       }
     }
@@ -87,7 +87,7 @@ export function registerAugmentMCPTools(server: McpServer): void {
     'codebase-get-symbol',
     {
       name: z.string().describe('The name of the symbol'),
-      filePath: z.string().describe('The path to the file')
+      filePath: z.string().describe('The path to the file'),
     },
     async ({ name, filePath }) => {
       logger.info(`MCP tool codebase-get-symbol called with name: ${name}, filePath: ${filePath}`);
@@ -104,7 +104,7 @@ export function registerAugmentMCPTools(server: McpServer): void {
         if (!symbol) {
           return {
             content: [{ type: 'text', text: `Symbol not found: ${name} in ${filePath}` }],
-            isError: true
+            isError: true,
           };
         }
 
@@ -112,78 +112,70 @@ export function registerAugmentMCPTools(server: McpServer): void {
         const formattedSymbol = formatSymbol(symbol);
 
         return {
-          content: [{ type: 'text', text: formattedSymbol }]
+          content: [{ type: 'text', text: formattedSymbol }],
         };
       } catch (error) {
         logger.error('Error in codebase-get-symbol tool:', error);
         return {
           content: [{ type: 'text', text: `Error getting symbol: ${error}` }],
-          isError: true
+          isError: true,
         };
       }
     }
   );
 
   // Add index-status tool
-  server.tool(
-    'codebase-index-status',
-    {},
-    async () => {
-      logger.info('MCP tool codebase-index-status called');
+  server.tool('codebase-index-status', {}, async () => {
+    logger.info('MCP tool codebase-index-status called');
 
-      try {
-        // Ensure the engine is initialized
-        if (!augmentEngine.isInitialized()) {
-          await augmentEngine.initialize();
-        }
-
-        // Get the index status
-        const status = augmentEngine.getIndexStatus();
-
-        // Format the status
-        const formattedStatus = formatIndexStatus(status);
-
-        return {
-          content: [{ type: 'text', text: formattedStatus }]
-        };
-      } catch (error) {
-        logger.error('Error in codebase-index-status tool:', error);
-        return {
-          content: [{ type: 'text', text: `Error getting index status: ${error}` }],
-          isError: true
-        };
+    try {
+      // Ensure the engine is initialized
+      if (!augmentEngine.isInitialized()) {
+        await augmentEngine.initialize();
       }
+
+      // Get the index status
+      const status = augmentEngine.getIndexStatus();
+
+      // Format the status
+      const formattedStatus = formatIndexStatus(status);
+
+      return {
+        content: [{ type: 'text', text: formattedStatus }],
+      };
+    } catch (error) {
+      logger.error('Error in codebase-index-status tool:', error);
+      return {
+        content: [{ type: 'text', text: `Error getting index status: ${error}` }],
+        isError: true,
+      };
     }
-  );
+  });
 
   // Add reindex tool
-  server.tool(
-    'codebase-reindex',
-    {},
-    async () => {
-      logger.info('MCP tool codebase-reindex called');
+  server.tool('codebase-reindex', {}, async () => {
+    logger.info('MCP tool codebase-reindex called');
 
-      try {
-        // Ensure the engine is initialized
-        if (!augmentEngine.isInitialized()) {
-          await augmentEngine.initialize();
-        }
-
-        // Reindex the codebase
-        await augmentEngine.reindex();
-
-        return {
-          content: [{ type: 'text', text: 'Codebase reindexing completed successfully' }]
-        };
-      } catch (error) {
-        logger.error('Error in codebase-reindex tool:', error);
-        return {
-          content: [{ type: 'text', text: `Error reindexing codebase: ${error}` }],
-          isError: true
-        };
+    try {
+      // Ensure the engine is initialized
+      if (!augmentEngine.isInitialized()) {
+        await augmentEngine.initialize();
       }
+
+      // Reindex the codebase
+      await augmentEngine.reindex();
+
+      return {
+        content: [{ type: 'text', text: 'Codebase reindexing completed successfully' }],
+      };
+    } catch (error) {
+      logger.error('Error in codebase-reindex tool:', error);
+      return {
+        content: [{ type: 'text', text: `Error reindexing codebase: ${error}` }],
+        isError: true,
+      };
     }
-  );
+  });
 
   // Add get-definition tool
   server.tool(
@@ -191,10 +183,12 @@ export function registerAugmentMCPTools(server: McpServer): void {
     {
       filePath: z.string().describe('The path to the file'),
       line: z.number().describe('The line number (1-based)'),
-      character: z.number().describe('The character position')
+      character: z.number().describe('The character position'),
     },
     async ({ filePath, line, character }) => {
-      logger.info(`MCP tool codebase-get-definition called with filePath: ${filePath}, line: ${line}, character: ${character}`);
+      logger.info(
+        `MCP tool codebase-get-definition called with filePath: ${filePath}, line: ${line}, character: ${character}`
+      );
 
       try {
         // Ensure the engine is initialized
@@ -210,8 +204,10 @@ export function registerAugmentMCPTools(server: McpServer): void {
 
             if (!definition) {
               return {
-                content: [{ type: 'text', text: `No definition found at ${filePath}:${line}:${character}` }],
-                isError: true
+                content: [
+                  { type: 'text', text: `No definition found at ${filePath}:${line}:${character}` },
+                ],
+                isError: true,
               };
             }
 
@@ -219,21 +215,26 @@ export function registerAugmentMCPTools(server: McpServer): void {
             const formattedDefinition = formatSymbol(definition);
 
             return {
-              content: [{ type: 'text', text: formattedDefinition }]
+              content: [{ type: 'text', text: formattedDefinition }],
             };
           }
         }
 
         // If VS Code API is not available or failed
         return {
-          content: [{ type: 'text', text: 'Definition lookup is only available when running as a VS Code extension' }],
-          isError: true
+          content: [
+            {
+              type: 'text',
+              text: 'Definition lookup is only available when running as a VS Code extension',
+            },
+          ],
+          isError: true,
         };
       } catch (error) {
         logger.error('Error in codebase-get-definition tool:', error);
         return {
           content: [{ type: 'text', text: `Error getting definition: ${error}` }],
-          isError: true
+          isError: true,
         };
       }
     }
@@ -243,7 +244,7 @@ export function registerAugmentMCPTools(server: McpServer): void {
   server.tool(
     'codebase-get-document-symbols',
     {
-      filePath: z.string().describe('The path to the file')
+      filePath: z.string().describe('The path to the file'),
     },
     async ({ filePath }) => {
       logger.info(`MCP tool codebase-get-document-symbols called with filePath: ${filePath}`);
@@ -263,7 +264,7 @@ export function registerAugmentMCPTools(server: McpServer): void {
             if (!symbols || symbols.length === 0) {
               return {
                 content: [{ type: 'text', text: `No symbols found in file: ${filePath}` }],
-                isError: true
+                isError: true,
               };
             }
 
@@ -300,7 +301,7 @@ export function registerAugmentMCPTools(server: McpServer): void {
             }
 
             return {
-              content: [{ type: 'text', text: formattedSymbols }]
+              content: [{ type: 'text', text: formattedSymbols }],
             };
           }
         }
@@ -311,7 +312,7 @@ export function registerAugmentMCPTools(server: McpServer): void {
         if (!symbols || symbols.length === 0) {
           return {
             content: [{ type: 'text', text: `No symbols found in file: ${filePath}` }],
-            isError: true
+            isError: true,
           };
         }
 
@@ -319,13 +320,13 @@ export function registerAugmentMCPTools(server: McpServer): void {
         const formattedSymbols = formatSymbolsList(symbols);
 
         return {
-          content: [{ type: 'text', text: formattedSymbols }]
+          content: [{ type: 'text', text: formattedSymbols }],
         };
       } catch (error) {
         logger.error('Error in codebase-get-document-symbols tool:', error);
         return {
           content: [{ type: 'text', text: `Error getting document symbols: ${error}` }],
-          isError: true
+          isError: true,
         };
       }
     }
@@ -337,10 +338,12 @@ export function registerAugmentMCPTools(server: McpServer): void {
     {
       filePath: z.string().describe('The path to the file'),
       line: z.number().describe('The line number (1-based)'),
-      character: z.number().describe('The character position')
+      character: z.number().describe('The character position'),
     },
     async ({ filePath, line, character }) => {
-      logger.info(`MCP tool codebase-find-references called with filePath: ${filePath}, line: ${line}, character: ${character}`);
+      logger.info(
+        `MCP tool codebase-find-references called with filePath: ${filePath}, line: ${line}, character: ${character}`
+      );
 
       try {
         // Ensure the engine is initialized
@@ -356,8 +359,13 @@ export function registerAugmentMCPTools(server: McpServer): void {
 
             if (!references || references.length === 0) {
               return {
-                content: [{ type: 'text', text: `No references found for symbol at ${filePath}:${line}:${character}` }],
-                isError: true
+                content: [
+                  {
+                    type: 'text',
+                    text: `No references found for symbol at ${filePath}:${line}:${character}`,
+                  },
+                ],
+                isError: true,
               };
             }
 
@@ -369,21 +377,26 @@ export function registerAugmentMCPTools(server: McpServer): void {
             });
 
             return {
-              content: [{ type: 'text', text: formattedReferences }]
+              content: [{ type: 'text', text: formattedReferences }],
             };
           }
         }
 
         // If VS Code API is not available or failed
         return {
-          content: [{ type: 'text', text: 'Finding references is only available when running as a VS Code extension' }],
-          isError: true
+          content: [
+            {
+              type: 'text',
+              text: 'Finding references is only available when running as a VS Code extension',
+            },
+          ],
+          isError: true,
         };
       } catch (error) {
         logger.error('Error in codebase-find-references tool:', error);
         return {
           content: [{ type: 'text', text: `Error finding references: ${error}` }],
-          isError: true
+          isError: true,
         };
       }
     }

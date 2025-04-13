@@ -32,4 +32,3 @@ This will generate static HTML, CSS, and JavaScript files in the `dist` director
 ## VS Code Integration
 
 The `src/utils/vscode.ts` file contains utilities for communicating with the VS Code extension. It provides a type-safe way to send messages to the extension.
-

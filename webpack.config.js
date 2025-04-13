@@ -11,16 +11,16 @@ const config = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'extension.js',
-    libraryTarget: 'commonjs2'
+    libraryTarget: 'commonjs2',
   },
   externals: {
     vscode: 'commonjs vscode',
     // Exclude native modules and problematic modules
     fsevents: 'commonjs fsevents',
-    chokidar: 'commonjs chokidar'
+    chokidar: 'commonjs chokidar',
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: ['.ts', '.js'],
   },
   module: {
     rules: [
@@ -33,27 +33,29 @@ const config = {
             options: {
               transpileOnly: true, // Faster builds, but no type checking
               experimentalWatchApi: true, // Faster incremental builds
-            }
-          }
-        ]
-      }
-    ]
+            },
+          },
+        ],
+      },
+    ],
   },
   optimization: {
     minimize: isProduction,
-    minimizer: [new TerserPlugin({
-      terserOptions: {
-        compress: {
-          drop_console: false, // Keep console logs for debugging
-          passes: 2, // Multiple passes for better optimization
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          compress: {
+            drop_console: false, // Keep console logs for debugging
+            passes: 2, // Multiple passes for better optimization
+          },
+          mangle: true,
+          output: {
+            comments: false,
+          },
         },
-        mangle: true,
-        output: {
-          comments: false,
-        },
-      },
-      extractComments: false,
-    })],
+        extractComments: false,
+      }),
+    ],
     removeAvailableModules: isProduction,
     removeEmptyChunks: isProduction,
     splitChunks: false, // Don't split chunks for VS Code extensions
@@ -74,7 +76,7 @@ const config = {
     },
     {
       module: /chokidar/,
-    }
+    },
   ],
 };
 

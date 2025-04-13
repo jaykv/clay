@@ -216,15 +216,14 @@ const Dashboard: React.FC = () => {
                   Add, edit, and delete proxy routes to forward requests to external services.
                 </p>
               </div>
-              <Button onClick={() => setActiveTab('routes')}>
-                Go to Routes Manager
-              </Button>
+              <Button onClick={() => setActiveTab('routes')}>Go to Routes Manager</Button>
             </div>
           </Card>
 
           <Card title="Augment Context Engine">
             <p className="mb-4">
-              Access powerful code intelligence features to help you navigate and understand your codebase.
+              Access powerful code intelligence features to help you navigate and understand your
+              codebase.
             </p>
 
             <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
@@ -234,9 +233,7 @@ const Dashboard: React.FC = () => {
                   Search your codebase, navigate to symbol definitions, find references, and more.
                 </p>
               </div>
-              <Button onClick={() => setActiveTab('augment')}>
-                Open Augment
-              </Button>
+              <Button onClick={() => setActiveTab('augment')}>Open Augment</Button>
             </div>
           </Card>
         </>

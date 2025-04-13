@@ -43,7 +43,7 @@ const IndexedFiles: React.FC = () => {
     total: 0,
     page: 1,
     limit: 100,
-    totalPages: 0
+    totalPages: 0,
   });
 
   // Debounce search query to avoid too many API calls
@@ -189,11 +189,7 @@ const IndexedFiles: React.FC = () => {
             />
           </div>
           <div className="w-full md:w-48">
-            <Select
-              value={selectedLanguage}
-              onChange={handleLanguageChange}
-              className="w-full"
-            >
+            <Select value={selectedLanguage} onChange={handleLanguageChange} className="w-full">
               <option value="">All Languages</option>
               {languages.map(lang => (
                 <option key={lang} value={lang}>
@@ -243,12 +239,15 @@ const IndexedFiles: React.FC = () => {
                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                   {files.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-4 text-center text-gray-500 dark:text-gray-400">
+                      <td
+                        colSpan={4}
+                        className="px-4 py-4 text-center text-gray-500 dark:text-gray-400"
+                      >
                         No files found
                       </td>
                     </tr>
                   ) : (
-                    files.map((file) => (
+                    files.map(file => (
                       <tr key={file.path} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                           <div className="flex items-center">

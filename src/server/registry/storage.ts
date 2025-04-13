@@ -36,7 +36,7 @@ export class RegistryStorage {
 
   private loadServers() {
     const filePath = this.getServersFilePath();
-    
+
     if (fs.existsSync(filePath)) {
       try {
         const data = fs.readFileSync(filePath, 'utf-8');
@@ -54,7 +54,7 @@ export class RegistryStorage {
 
   private saveServers() {
     const filePath = this.getServersFilePath();
-    
+
     try {
       fs.writeFileSync(filePath, JSON.stringify(this.servers, null, 2), 'utf-8');
       logger.debug('Saved MCP servers to storage');
@@ -71,40 +71,45 @@ export class RegistryStorage {
     return this.servers[id];
   }
 
-  public registerServer(server: Omit<MCPServerInfo, 'id' | 'registeredAt' | 'lastSeenAt'>): MCPServerInfo {
+  public registerServer(
+    server: Omit<MCPServerInfo, 'id' | 'registeredAt' | 'lastSeenAt'>
+  ): MCPServerInfo {
     const id = Math.random().toString(36).substring(2, 15);
     const now = Date.now();
-    
+
     const serverInfo: MCPServerInfo = {
       id,
       ...server,
       registeredAt: now,
-      lastSeenAt: now
+      lastSeenAt: now,
     };
-    
+
     this.servers[id] = serverInfo;
     this.saveServers();
-    
+
     logger.info(`Registered new MCP server: ${server.name} (${id})`);
     return serverInfo;
   }
 
-  public updateServer(id: string, updates: Partial<Omit<MCPServerInfo, 'id' | 'registeredAt'>>): MCPServerInfo | undefined {
+  public updateServer(
+    id: string,
+    updates: Partial<Omit<MCPServerInfo, 'id' | 'registeredAt'>>
+  ): MCPServerInfo | undefined {
     const server = this.servers[id];
-    
+
     if (!server) {
       return undefined;
     }
-    
+
     const updatedServer: MCPServerInfo = {
       ...server,
       ...updates,
-      lastSeenAt: Date.now()
+      lastSeenAt: Date.now(),
     };
-    
+
     this.servers[id] = updatedServer;
     this.saveServers();
-    
+
     logger.info(`Updated MCP server: ${server.name} (${id})`);
     return updatedServer;
   }
@@ -113,25 +118,25 @@ export class RegistryStorage {
     if (!this.servers[id]) {
       return false;
     }
-    
+
     const serverName = this.servers[id].name;
     delete this.servers[id];
     this.saveServers();
-    
+
     logger.info(`Removed MCP server: ${serverName} (${id})`);
     return true;
   }
 
   public heartbeat(id: string): boolean {
     const server = this.servers[id];
-    
+
     if (!server) {
       return false;
     }
-    
+
     server.lastSeenAt = Date.now();
     this.saveServers();
-    
+
     return true;
   }
 
@@ -141,16 +146,16 @@ export class RegistryStorage {
       const server = this.servers[id];
       return now - server.lastSeenAt > maxAgeMs;
     });
-    
+
     staleIds.forEach(id => {
       logger.info(`Removing stale MCP server: ${this.servers[id].name} (${id})`);
       delete this.servers[id];
     });
-    
+
     if (staleIds.length > 0) {
       this.saveServers();
     }
-    
+
     return staleIds.length;
   }
 }

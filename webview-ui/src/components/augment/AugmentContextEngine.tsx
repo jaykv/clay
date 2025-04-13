@@ -118,7 +118,11 @@ const AugmentContextEngine: React.FC = () => {
             <Button
               onClick={() => setShowIndexedFiles(!showIndexedFiles)}
               variant="secondary"
-              leftIcon={<span className="material-icons text-sm">{showIndexedFiles ? 'visibility_off' : 'visibility'}</span>}
+              leftIcon={
+                <span className="material-icons text-sm">
+                  {showIndexedFiles ? 'visibility_off' : 'visibility'}
+                </span>
+              }
             >
               {showIndexedFiles ? 'Hide Indexed Files' : 'Show Indexed Files'}
             </Button>
@@ -128,14 +132,15 @@ const AugmentContextEngine: React.FC = () => {
           </div>
         </div>
 
-        {showIndexedFiles && (
-          <IndexedFiles />
-        )}
+        {showIndexedFiles && <IndexedFiles />}
 
         <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-          <h3 className="font-medium mb-2 text-blue-700 dark:text-blue-400">About Augment Context Engine</h3>
+          <h3 className="font-medium mb-2 text-blue-700 dark:text-blue-400">
+            About Augment Context Engine
+          </h3>
           <p className="text-sm text-blue-600 dark:text-blue-300 mb-2">
-            The Augment Context Engine provides powerful code intelligence features to help you navigate and understand your codebase.
+            The Augment Context Engine provides powerful code intelligence features to help you
+            navigate and understand your codebase.
           </p>
           <ul className="list-disc list-inside text-sm text-blue-600 dark:text-blue-300 space-y-1">
             <li>Intelligent code search across your entire codebase</li>

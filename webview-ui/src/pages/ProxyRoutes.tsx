@@ -8,7 +8,7 @@ const ProxyRoutes: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  
+
   // Form state
   const [path, setPath] = useState('');
   const [target, setTarget] = useState('');
@@ -76,19 +76,19 @@ const ProxyRoutes: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       await addProxyRoute({
         path: path.trim(),
         target: target.trim(),
         description: description.trim() || undefined,
       });
-      
+
       // Reset form
       setPath('');
       setTarget('');
       setDescription('');
       setShowForm(false);
-      
+
       // Reload routes
       await loadRoutes();
     } catch (err) {
@@ -112,9 +112,9 @@ const ProxyRoutes: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       await deleteProxyRoute(routePath);
-      
+
       // Reload routes
       await loadRoutes();
     } catch (err) {
@@ -133,10 +133,7 @@ const ProxyRoutes: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Proxy Routes Manager</h1>
-        <Button
-          onClick={() => setShowForm(!showForm)}
-          variant={showForm ? 'secondary' : 'primary'}
-        >
+        <Button onClick={() => setShowForm(!showForm)} variant={showForm ? 'secondary' : 'primary'}>
           {showForm ? 'Cancel' : 'Add Route'}
         </Button>
       </div>
@@ -146,7 +143,11 @@ const ProxyRoutes: React.FC = () => {
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
@@ -160,14 +161,17 @@ const ProxyRoutes: React.FC = () => {
         <Card title="Add New Route">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="path" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="path"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Path
               </label>
               <input
                 type="text"
                 id="path"
                 value={path}
-                onChange={(e) => setPath(e.target.value)}
+                onChange={e => setPath(e.target.value)}
                 placeholder="e.g., hello or api/v1"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
@@ -180,14 +184,17 @@ const ProxyRoutes: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="target" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="target"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Target URL
               </label>
               <input
                 type="text"
                 id="target"
                 value={target}
-                onChange={(e) => setTarget(e.target.value)}
+                onChange={e => setTarget(e.target.value)}
                 placeholder="e.g., https://api.example.com"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
@@ -200,14 +207,17 @@ const ProxyRoutes: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Description (optional)
               </label>
               <input
                 type="text"
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder="e.g., Production API"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
@@ -224,14 +234,34 @@ const ProxyRoutes: React.FC = () => {
 
       <Card title="Configured Routes">
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          Routes are used to proxy requests from <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">http://localhost:3000/proxy/{'{path}'}</code> to the target URL.
+          Routes are used to proxy requests from{' '}
+          <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+            http://localhost:3000/proxy/{'{path}'}
+          </code>{' '}
+          to the target URL.
         </p>
 
         {loading ? (
           <div className="py-4 text-center text-gray-500 dark:text-gray-400">
-            <svg className="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg
+              className="animate-spin h-5 w-5 mx-auto mb-2"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
             Loading routes...
           </div>
@@ -241,7 +271,7 @@ const ProxyRoutes: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {routes.map((route) => (
+            {routes.map(route => (
               <div
                 key={route.path}
                 className="flex items-center justify-between p-3 border rounded-md bg-white dark:bg-gray-800"
@@ -259,11 +289,7 @@ const ProxyRoutes: React.FC = () => {
                     → {route.target}
                   </div>
                 </div>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleDelete(route.path)}
-                >
+                <Button variant="danger" size="sm" onClick={() => handleDelete(route.path)}>
                   Delete
                 </Button>
               </div>

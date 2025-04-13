@@ -48,7 +48,7 @@ export class ExpressMCPServer {
     // Create the MCP server
     this.mcpServer = new McpServer({
       name: this.config.name,
-      version: this.config.version
+      version: this.config.version,
     });
 
     // Create the Express application
@@ -75,65 +75,57 @@ export class ExpressMCPServer {
 
   private setupResources() {
     // Add a simple file resource
-    this.mcpServer.resource(
-      'file',
-      'file://{path}',
-      async (uri: URL, params: any) => {
-        try {
-          // In a real implementation, we would read the file from the filesystem
-          // For now, we'll just return a mock response
-          return {
-            contents: [{
+    this.mcpServer.resource('file', 'file://{path}', async (uri: URL, params: any) => {
+      try {
+        // In a real implementation, we would read the file from the filesystem
+        // For now, we'll just return a mock response
+        return {
+          contents: [
+            {
               uri: uri.href,
-              text: `Content of file: ${params.path}`
-            }]
-          };
-        } catch (error) {
-          logger.error(`Error reading file: ${params.path}`, error);
-          throw new Error(`Failed to read file: ${params.path}`);
-        }
+              text: `Content of file: ${params.path}`,
+            },
+          ],
+        };
+      } catch (error) {
+        logger.error(`Error reading file: ${params.path}`, error);
+        throw new Error(`Failed to read file: ${params.path}`);
       }
-    );
+    });
     // Track the resource
     this.resources.push({
       id: 'file',
-      template: 'file://{path}'
+      template: 'file://{path}',
     });
 
     // Add a workspace resource
-    this.mcpServer.resource(
-      'workspace',
-      'workspace://current',
-      async (uri) => {
-        return {
-          contents: [{
+    this.mcpServer.resource('workspace', 'workspace://current', async uri => {
+      return {
+        contents: [
+          {
             uri: uri.href,
-            text: 'Current workspace information'
-          }]
-        };
-      }
-    );
+            text: 'Current workspace information',
+          },
+        ],
+      };
+    });
     // Track the resource
     this.resources.push({
       id: 'workspace',
-      template: 'workspace://current'
+      template: 'workspace://current',
     });
   }
 
   private setupTools() {
     // Add a simple echo tool
-    this.mcpServer.tool(
-      'echo',
-      { message: z.string() },
-      async ({ message }) => ({
-        content: [{ type: 'text', text: `Echo: ${message}` }]
-      })
-    );
+    this.mcpServer.tool('echo', { message: z.string() }, async ({ message }) => ({
+      content: [{ type: 'text', text: `Echo: ${message}` }],
+    }));
     // Track the tool
     this.tools.push({
       id: 'echo',
       parameters: { message: 'string' },
-      description: 'Echoes back the provided message'
+      description: 'Echoes back the provided message',
     });
 
     // Add a code completion tool
@@ -144,17 +136,19 @@ export class ExpressMCPServer {
         language: z.string(),
         position: z.object({
           line: z.number(),
-          character: z.number()
-        })
+          character: z.number(),
+        }),
       },
       async ({ language, position }) => {
         // In a real implementation, we would call an AI model for code completion
         // For now, we'll just return a mock response
         return {
-          content: [{
-            type: 'text',
-            text: `Completion for ${language} at line ${position.line}, character ${position.character}:\n\nfunction example() {\n  return 'completed code';\n}`
-          }]
+          content: [
+            {
+              type: 'text',
+              text: `Completion for ${language} at line ${position.line}, character ${position.character}:\n\nfunction example() {\n  return 'completed code';\n}`,
+            },
+          ],
         };
       }
     );
@@ -164,31 +158,29 @@ export class ExpressMCPServer {
       parameters: {
         code: 'string',
         language: 'string',
-        position: { line: 'number', character: 'number' }
+        position: { line: 'number', character: 'number' },
       },
-      description: 'Provides code completion suggestions'
+      description: 'Provides code completion suggestions',
     });
   }
 
   private setupPrompts() {
     // Add a code review prompt
-    this.mcpServer.prompt(
-      'review-code',
-      { code: z.string() },
-      ({ code }) => ({
-        messages: [{
+    this.mcpServer.prompt('review-code', { code: z.string() }, ({ code }) => ({
+      messages: [
+        {
           role: 'user',
           content: {
             type: 'text',
-            text: `Please review this code:\n\n${code}`
-          }
-        }]
-      })
-    );
+            text: `Please review this code:\n\n${code}`,
+          },
+        },
+      ],
+    }));
     // Track the prompt
     this.prompts.push({
       id: 'review-code',
-      parameters: { code: 'string' }
+      parameters: { code: 'string' },
     });
 
     // Add a documentation generation prompt
@@ -196,22 +188,24 @@ export class ExpressMCPServer {
       'generate-docs',
       {
         code: z.string(),
-        language: z.string()
+        language: z.string(),
       },
       ({ code, language }) => ({
-        messages: [{
-          role: 'user',
-          content: {
-            type: 'text',
-            text: `Please generate documentation for this ${language} code:\n\n${code}`
-          }
-        }]
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `Please generate documentation for this ${language} code:\n\n${code}`,
+            },
+          },
+        ],
       })
     );
     // Track the prompt
     this.prompts.push({
       id: 'generate-docs',
-      parameters: { code: 'string', language: 'string' }
+      parameters: { code: 'string', language: 'string' },
     });
   }
 
@@ -287,7 +281,7 @@ export class ExpressMCPServer {
       version: this.config.version,
       resources: this.resources,
       tools: this.tools,
-      prompts: this.prompts
+      prompts: this.prompts,
     };
   }
 

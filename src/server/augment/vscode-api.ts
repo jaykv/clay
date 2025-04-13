@@ -86,7 +86,9 @@ export class VSCodeAPI {
 
     // Get workspace folders
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-      this.workspaceFolders = vscode.workspace.workspaceFolders.map((folder: any) => folder.uri.fsPath);
+      this.workspaceFolders = vscode.workspace.workspaceFolders.map(
+        (folder: any) => folder.uri.fsPath
+      );
       this.rootPath = this.workspaceFolders[0];
       logger.info(`VS Code workspace folders: ${this.workspaceFolders.join(', ')}`);
     } else if (vscode.workspace.rootPath) {
@@ -148,10 +150,10 @@ export class VSCodeAPI {
       }
 
       // Get document symbols
-      const symbols = await vscode.commands.executeCommand(
+      const symbols = (await vscode.commands.executeCommand(
         'vscode.executeDocumentSymbolProvider',
         uri
-      ) as any[];
+      )) as any[];
 
       if (!symbols || symbols.length === 0) {
         logger.debug(`No symbols found for ${filePath}`);
@@ -198,7 +200,7 @@ export class VSCodeAPI {
         startLine: range.start.line + 1, // Convert to 1-based
         endLine: range.end.line + 1,
         parent: containerName,
-        signature: detail || undefined
+        signature: detail || undefined,
       };
 
       // Add to result
@@ -228,10 +230,10 @@ export class VSCodeAPI {
 
     try {
       // Use VS Code's workspace symbol provider
-      const symbols = await vscode.commands.executeCommand(
+      const symbols = (await vscode.commands.executeCommand(
         'vscode.executeWorkspaceSymbolProvider',
         query
-      ) as any[];
+      )) as any[];
 
       if (!symbols || symbols.length === 0) {
         logger.debug(`No workspace symbols found for query: ${query}`);
@@ -270,17 +272,19 @@ export class VSCodeAPI {
             const startLine = Math.max(0, range.start.line - 2);
             const endLine = Math.min(document.lineCount - 1, range.end.line + 2);
 
-            const snippetContent = document.getText(new vscode.Range(
-              new vscode.Position(startLine, 0),
-              new vscode.Position(endLine, document.lineAt(endLine).text.length)
-            ));
+            const snippetContent = document.getText(
+              new vscode.Range(
+                new vscode.Position(startLine, 0),
+                new vscode.Position(endLine, document.lineAt(endLine).text.length)
+              )
+            );
 
             snippets.push({
               filePath,
               content: snippetContent,
               startLine: startLine + 1, // Convert to 1-based
               endLine: endLine + 1,
-              language: document.languageId
+              language: document.languageId,
             });
           }
 
@@ -288,7 +292,7 @@ export class VSCodeAPI {
           results.push({
             snippets,
             symbols: convertedSymbols,
-            relevanceScore: fileSymbols.length * 2 // VS Code results get higher relevance
+            relevanceScore: fileSymbols.length * 2, // VS Code results get higher relevance
           });
         } catch (error) {
           logger.error(`Error processing file ${filePath}:`, error);
@@ -317,7 +321,7 @@ export class VSCodeAPI {
       filePath,
       startLine: symbol.location.range.start.line + 1, // Convert to 1-based
       endLine: symbol.location.range.end.line + 1,
-      parent: symbol.containerName || undefined
+      parent: symbol.containerName || undefined,
     };
   }
 
@@ -363,7 +367,11 @@ export class VSCodeAPI {
    * @param character The character position
    * @returns The definition of the symbol
    */
-  public async getDefinition(filePath: string, line: number, character: number): Promise<CodeSymbol | undefined> {
+  public async getDefinition(
+    filePath: string,
+    line: number,
+    character: number
+  ): Promise<CodeSymbol | undefined> {
     if (!this.isAvailable()) {
       logger.warn('VS Code API is not available');
       return undefined;
@@ -377,11 +385,11 @@ export class VSCodeAPI {
       const position = new vscode.Position(line - 1, character);
 
       // Get definition
-      const definitions = await vscode.commands.executeCommand(
+      const definitions = (await vscode.commands.executeCommand(
         'vscode.executeDefinitionProvider',
         uri,
         position
-      ) as any[];
+      )) as any[];
 
       if (!definitions || definitions.length === 0) {
         logger.debug(`No definition found at ${filePath}:${line}:${character}`);
@@ -395,10 +403,10 @@ export class VSCodeAPI {
       const document = await vscode.workspace.openTextDocument(definition.uri);
 
       // Try to get more information about the symbol
-      const symbols = await vscode.commands.executeCommand(
+      const symbols = (await vscode.commands.executeCommand(
         'vscode.executeDocumentSymbolProvider',
         definition.uri
-      ) as any[];
+      )) as any[];
 
       if (symbols && symbols.length > 0) {
         // Find the symbol that contains the definition
@@ -411,7 +419,7 @@ export class VSCodeAPI {
             filePath: definition.uri.fsPath,
             startLine: symbol.range.start.line + 1, // Convert to 1-based
             endLine: symbol.range.end.line + 1,
-            signature: symbol.detail || undefined
+            signature: symbol.detail || undefined,
           };
         }
       }
@@ -422,7 +430,7 @@ export class VSCodeAPI {
         type: SymbolType.UNKNOWN,
         filePath: definition.uri.fsPath,
         startLine: definition.range.start.line + 1, // Convert to 1-based
-        endLine: definition.range.end.line + 1
+        endLine: definition.range.end.line + 1,
       };
     } catch (error) {
       logger.error('Error getting definition:', error);
@@ -499,7 +507,7 @@ export class VSCodeAPI {
             content,
             language: this.getLanguageFromExtension(extension),
             size: stats.size,
-            lastModified: stats.mtimeMs
+            lastModified: stats.mtimeMs,
           };
         }
       } catch (error) {
@@ -522,7 +530,7 @@ export class VSCodeAPI {
         content: document.getText(),
         language: document.languageId,
         size: document.getText().length,
-        lastModified: Date.now()
+        lastModified: Date.now(),
       };
     } catch (error) {
       logger.error(`Error getting file ${filePath}:`, error);
@@ -604,7 +612,11 @@ export class VSCodeAPI {
    * @param character The character position
    * @returns The references to the symbol
    */
-  public async getReferences(filePath: string, line: number, character: number): Promise<CodeSymbol[]> {
+  public async getReferences(
+    filePath: string,
+    line: number,
+    character: number
+  ): Promise<CodeSymbol[]> {
     if (!this.isAvailable()) {
       logger.warn('VS Code API is not available');
       return [];
@@ -618,12 +630,12 @@ export class VSCodeAPI {
       const position = new vscode.Position(line - 1, character);
 
       // Get references
-      const references = await vscode.commands.executeCommand(
+      const references = (await vscode.commands.executeCommand(
         'vscode.executeReferenceProvider',
         uri,
         position,
         { includeDeclaration: true }
-      ) as any[];
+      )) as any[];
 
       if (!references || references.length === 0) {
         logger.debug(`No references found for symbol at ${filePath}:${line}:${character}`);
@@ -644,7 +656,7 @@ export class VSCodeAPI {
             type: SymbolType.UNKNOWN,
             filePath: reference.uri.fsPath,
             startLine: reference.range.start.line + 1, // Convert to 1-based
-            endLine: reference.range.end.line + 1
+            endLine: reference.range.end.line + 1,
           });
         } catch (error) {
           logger.error(`Error processing reference at ${reference.uri.fsPath}:`, error);
@@ -666,7 +678,11 @@ export class VSCodeAPI {
    * @param character The character position
    * @returns The hover information for the symbol
    */
-  public async getHover(filePath: string, line: number, character: number): Promise<string | undefined> {
+  public async getHover(
+    filePath: string,
+    line: number,
+    character: number
+  ): Promise<string | undefined> {
     if (!this.isAvailable()) {
       logger.warn('VS Code API is not available');
       return undefined;
@@ -680,11 +696,11 @@ export class VSCodeAPI {
       const position = new vscode.Position(line - 1, character);
 
       // Get hover information
-      const hovers = await vscode.commands.executeCommand(
+      const hovers = (await vscode.commands.executeCommand(
         'vscode.executeHoverProvider',
         uri,
         position
-      ) as any[];
+      )) as any[];
 
       if (!hovers || hovers.length === 0) {
         logger.debug(`No hover information found at ${filePath}:${line}:${character}`);
@@ -730,7 +746,11 @@ export class VSCodeAPI {
    * @param character The character position
    * @returns The type definition of the symbol
    */
-  public async getTypeDefinition(filePath: string, line: number, character: number): Promise<CodeSymbol | undefined> {
+  public async getTypeDefinition(
+    filePath: string,
+    line: number,
+    character: number
+  ): Promise<CodeSymbol | undefined> {
     if (!this.isAvailable()) {
       logger.warn('VS Code API is not available');
       return undefined;
@@ -744,11 +764,11 @@ export class VSCodeAPI {
       const position = new vscode.Position(line - 1, character);
 
       // Get type definition
-      const typeDefinitions = await vscode.commands.executeCommand(
+      const typeDefinitions = (await vscode.commands.executeCommand(
         'vscode.executeTypeDefinitionProvider',
         uri,
         position
-      ) as any[];
+      )) as any[];
 
       if (!typeDefinitions || typeDefinitions.length === 0) {
         logger.debug(`No type definition found at ${filePath}:${line}:${character}`);
@@ -762,10 +782,10 @@ export class VSCodeAPI {
       const document = await vscode.workspace.openTextDocument(typeDefinition.uri);
 
       // Try to get more information about the symbol
-      const symbols = await vscode.commands.executeCommand(
+      const symbols = (await vscode.commands.executeCommand(
         'vscode.executeDocumentSymbolProvider',
         typeDefinition.uri
-      ) as any[];
+      )) as any[];
 
       if (symbols && symbols.length > 0) {
         // Find the symbol that contains the type definition
@@ -778,7 +798,7 @@ export class VSCodeAPI {
             filePath: typeDefinition.uri.fsPath,
             startLine: symbol.range.start.line + 1, // Convert to 1-based
             endLine: symbol.range.end.line + 1,
-            signature: symbol.detail || undefined
+            signature: symbol.detail || undefined,
           };
         }
       }
@@ -789,7 +809,7 @@ export class VSCodeAPI {
         type: SymbolType.UNKNOWN,
         filePath: typeDefinition.uri.fsPath,
         startLine: typeDefinition.range.start.line + 1, // Convert to 1-based
-        endLine: typeDefinition.range.end.line + 1
+        endLine: typeDefinition.range.end.line + 1,
       };
     } catch (error) {
       logger.error('Error getting type definition:', error);
@@ -804,7 +824,11 @@ export class VSCodeAPI {
    * @param character The character position
    * @returns The implementations of the symbol
    */
-  public async getImplementations(filePath: string, line: number, character: number): Promise<CodeSymbol[]> {
+  public async getImplementations(
+    filePath: string,
+    line: number,
+    character: number
+  ): Promise<CodeSymbol[]> {
     if (!this.isAvailable()) {
       logger.warn('VS Code API is not available');
       return [];
@@ -818,11 +842,11 @@ export class VSCodeAPI {
       const position = new vscode.Position(line - 1, character);
 
       // Get implementations
-      const implementations = await vscode.commands.executeCommand(
+      const implementations = (await vscode.commands.executeCommand(
         'vscode.executeImplementationProvider',
         uri,
         position
-      ) as any[];
+      )) as any[];
 
       if (!implementations || implementations.length === 0) {
         logger.debug(`No implementations found for symbol at ${filePath}:${line}:${character}`);
@@ -838,10 +862,10 @@ export class VSCodeAPI {
           const document = await vscode.workspace.openTextDocument(implementation.uri);
 
           // Try to get more information about the symbol
-          const symbols = await vscode.commands.executeCommand(
+          const symbols = (await vscode.commands.executeCommand(
             'vscode.executeDocumentSymbolProvider',
             implementation.uri
-          ) as any[];
+          )) as any[];
 
           if (symbols && symbols.length > 0) {
             // Find the symbol that contains the implementation
@@ -854,7 +878,7 @@ export class VSCodeAPI {
                 filePath: implementation.uri.fsPath,
                 startLine: symbol.range.start.line + 1, // Convert to 1-based
                 endLine: symbol.range.end.line + 1,
-                signature: symbol.detail || undefined
+                signature: symbol.detail || undefined,
               });
               continue;
             }
@@ -866,7 +890,7 @@ export class VSCodeAPI {
             type: SymbolType.UNKNOWN,
             filePath: implementation.uri.fsPath,
             startLine: implementation.range.start.line + 1, // Convert to 1-based
-            endLine: implementation.range.end.line + 1
+            endLine: implementation.range.end.line + 1,
           });
         } catch (error) {
           logger.error(`Error processing implementation at ${implementation.uri.fsPath}:`, error);
@@ -888,7 +912,11 @@ export class VSCodeAPI {
    * @param character The character position
    * @returns The call hierarchy items for the symbol
    */
-  public async getCallHierarchyItems(filePath: string, line: number, character: number): Promise<any[]> {
+  public async getCallHierarchyItems(
+    filePath: string,
+    line: number,
+    character: number
+  ): Promise<any[]> {
     if (!this.isAvailable()) {
       logger.warn('VS Code API is not available');
       return [];
@@ -902,11 +930,11 @@ export class VSCodeAPI {
       const position = new vscode.Position(line - 1, character);
 
       // Get call hierarchy items
-      const items = await vscode.commands.executeCommand(
+      const items = (await vscode.commands.executeCommand(
         'vscode.prepareCallHierarchy',
         uri,
         position
-      ) as any[];
+      )) as any[];
 
       if (!items || items.length === 0) {
         logger.debug(`No call hierarchy items found at ${filePath}:${line}:${character}`);
@@ -933,10 +961,10 @@ export class VSCodeAPI {
 
     try {
       // Get incoming calls
-      const calls = await vscode.commands.executeCommand(
+      const calls = (await vscode.commands.executeCommand(
         'vscode.provideIncomingCalls',
         item
-      ) as any[];
+      )) as any[];
 
       if (!calls || calls.length === 0) {
         logger.debug(`No incoming calls found for ${item.name}`);
@@ -963,10 +991,10 @@ export class VSCodeAPI {
 
     try {
       // Get outgoing calls
-      const calls = await vscode.commands.executeCommand(
+      const calls = (await vscode.commands.executeCommand(
         'vscode.provideOutgoingCalls',
         item
-      ) as any[];
+      )) as any[];
 
       if (!calls || calls.length === 0) {
         logger.debug(`No outgoing calls found for ${item.name}`);
@@ -996,10 +1024,10 @@ export class VSCodeAPI {
       const uri = vscode.Uri.file(filePath);
 
       // Get semantic tokens
-      const tokens = await vscode.commands.executeCommand(
+      const tokens = (await vscode.commands.executeCommand(
         'vscode.provideDocumentSemanticTokens',
         uri
-      ) as any;
+      )) as any;
 
       if (!tokens) {
         logger.debug(`No semantic tokens found for ${filePath}`);
@@ -1032,14 +1060,14 @@ export class VSCodeAPI {
       const document = await vscode.workspace.openTextDocument(uri);
 
       // Get formatting edits
-      const edits = await vscode.commands.executeCommand(
+      const edits = (await vscode.commands.executeCommand(
         'vscode.executeFormatDocumentProvider',
         uri,
         {
           insertSpaces: true,
-          tabSize: 2
+          tabSize: 2,
         }
-      ) as any[];
+      )) as any[];
 
       if (!edits || edits.length === 0) {
         logger.debug(`No formatting edits found for ${filePath}`);
@@ -1070,6 +1098,4 @@ export class VSCodeAPI {
       return undefined;
     }
   }
-
-
 }

@@ -12,7 +12,7 @@ export async function checkServerHealth(url: string): Promise<boolean> {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       // Add a timeout to avoid hanging if the server is not responding
       signal: AbortSignal.timeout(2000),
@@ -40,7 +40,7 @@ export async function stopServer(url: string): Promise<boolean> {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       // Include an empty object as the request body to satisfy content-type requirements

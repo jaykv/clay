@@ -12,7 +12,7 @@ export enum SymbolType {
   NAMESPACE = 'namespace',
   MODULE = 'module',
   PROPERTY = 'property',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 /**
