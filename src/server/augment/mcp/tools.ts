@@ -9,8 +9,6 @@ import { CodeSymbol } from '../models';
  * @param server The MCP server
  */
 export function registerAugmentMCPTools(server: McpServer): void {
-  logger.info('Registering Augment Context Engine MCP tools');
-
   // Add codebase search tool
   server.tool(
     'codebase-search',

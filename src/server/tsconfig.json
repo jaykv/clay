@@ -5,13 +5,13 @@
     "outDir": "../../dist/server",
     "lib": ["ES2022", "DOM"],
     "sourceMap": true,
-    "rootDir": ".",
+    "rootDir": "../../src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
-  "include": ["./**/*"],
+  "include": ["./**/*", "../globals.ts"],
   "exclude": ["node_modules", ".vscode-test"]
 }

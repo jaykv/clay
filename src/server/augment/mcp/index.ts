@@ -7,9 +7,7 @@ import { registerAugmentMCPResources } from './resources';
  * Register all Augment Context Engine MCP components
  * @param server The MCP server
  */
-export function registerAugmentMCP(server: McpServer): void {
-  logger.info('Registering Augment Context Engine with MCP server');
-  
+export function registerAugmentMCP(server: McpServer): void {  
   // Register tools
   registerAugmentMCPTools(server);
   

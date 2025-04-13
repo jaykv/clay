@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { isGatewayServerRunning } from '../commands';
+import { isGatewayServerRunning, isMCPServerRunning } from '../commands';
 
 // Cache for HTML content to avoid reading from disk repeatedly
 interface HtmlCache {
@@ -18,6 +18,7 @@ interface HtmlCache {
 export class EnhancedWebviewProvider {
   public static readonly viewType = 'clayGateway';
   private static panel: vscode.WebviewPanel | undefined;
+  // Store the extension URI for later use
   private static extensionUri: vscode.Uri;
   private static htmlCache: HtmlCache | null = null;
   private static readonly CACHE_TTL = 1000 * 60 * 5; // 5 minutes cache TTL
@@ -35,13 +36,26 @@ export class EnhancedWebviewProvider {
   /**
    * Send the current server status to the webview
    */
-  private static sendServerStatus(): void {
-    // Send gateway server status
-    this.postMessage({
-      command: 'serverStatus',
-      server: 'gateway',
-      status: isGatewayServerRunning() ? 'running' : 'stopped'
-    });
+  private static async sendServerStatus(): Promise<void> {
+    try {
+      // Send gateway server status
+      const gatewayRunning = await isGatewayServerRunning();
+      this.postMessage({
+        command: 'serverStatus',
+        server: 'gateway',
+        status: gatewayRunning ? 'running' : 'stopped'
+      });
+
+      // Send MCP server status
+      const mcpRunning = await isMCPServerRunning();
+      this.postMessage({
+        command: 'serverStatus',
+        server: 'mcp',
+        status: mcpRunning ? 'running' : 'stopped'
+      });
+    } catch (error) {
+      console.error('Error checking server status:', error);
+    }
   }
 
   /**
@@ -95,19 +109,47 @@ export class EnhancedWebviewProvider {
             return;
           case 'startGatewayServer':
             vscode.commands.executeCommand('clay.startGatewayServer')
-              .then(() => this.sendServerStatus());
+              .then(() => {
+                // Update server status after command completes
+                setTimeout(() => {
+                  this.sendServerStatus().catch((error: Error) => {
+                    console.error('Error updating server status:', error);
+                  });
+                }, 500);
+              });
             return;
           case 'stopGatewayServer':
             vscode.commands.executeCommand('clay.stopGatewayServer')
-              .then(() => this.sendServerStatus());
+              .then(() => {
+                // Update server status after command completes
+                setTimeout(() => {
+                  this.sendServerStatus().catch((error: Error) => {
+                    console.error('Error updating server status:', error);
+                  });
+                }, 500);
+              });
             return;
           case 'startMCPServer':
             vscode.commands.executeCommand('clay.startMCPServer')
-              .then(() => this.sendServerStatus());
+              .then(() => {
+                // Update server status after command completes
+                setTimeout(() => {
+                  this.sendServerStatus().catch((error: Error) => {
+                    console.error('Error updating server status:', error);
+                  });
+                }, 500);
+              });
             return;
           case 'stopMCPServer':
             vscode.commands.executeCommand('clay.stopMCPServer')
-              .then(() => this.sendServerStatus());
+              .then(() => {
+                // Update server status after command completes
+                setTimeout(() => {
+                  this.sendServerStatus().catch((error: Error) => {
+                    console.error('Error updating server status:', error);
+                  });
+                }, 500);
+              });
             return;
           case 'openRoutesManager':
             vscode.commands.executeCommand('clay.openRoutesManager');
@@ -119,7 +161,9 @@ export class EnhancedWebviewProvider {
             return;
           case 'getServerStatus':
             // Send the current server status
-            this.sendServerStatus();
+            this.sendServerStatus().catch((error: Error) => {
+              console.error('Error sending server status:', error);
+            });
             return;
         }
       },
@@ -128,7 +172,9 @@ export class EnhancedWebviewProvider {
     );
 
     // Send initial server status
-    this.sendServerStatus();
+    this.sendServerStatus().catch((error: Error) => {
+      console.error('Error sending initial server status:', error);
+    });
   }
 
   /**

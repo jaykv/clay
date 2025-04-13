@@ -145,8 +145,8 @@
     "dev-webview": "cd webview-ui && npm run dev",
     "compile-all": "npm run compile:prod && npm run build-webview",
     "copy-deps": "node copy-dependencies.js",
-    "vsce:package": "npm run compile-all && npm run copy-deps && npx @vscode/vsce package --no-dependencies",
-    "vsce:publish": "npm run compile-all && npm run copy-deps && npx @vscode/vsce publish --no-dependencies"
+    "vsce:package": "npm run copy-deps && npx @vscode/vsce package --no-dependencies",
+    "vsce:publish": "npm run copy-deps && npx @vscode/vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

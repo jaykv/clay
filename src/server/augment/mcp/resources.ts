@@ -8,8 +8,6 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
  * @param server The MCP server
  */
 export function registerAugmentMCPResources(server: McpServer): void {
-  logger.info('Registering Augment Context Engine MCP resources');
-
   // Add codebase file resource
   server.resource(
     'codebase-file',
@@ -109,7 +107,6 @@ export function registerAugmentMCPResources(server: McpServer): void {
     }
   );
 
-  logger.info('Augment Context Engine MCP resources registered');
 }
 
 /**

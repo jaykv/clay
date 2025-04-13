@@ -1,4 +1,4 @@
-import { startMCPServer } from './standalone';
+import { startMCPServer, stopMCPServer } from './standalone';
 import { ExpressMCPServer } from './express-server';
 
-export { startMCPServer, ExpressMCPServer };
+export { startMCPServer, stopMCPServer, ExpressMCPServer };

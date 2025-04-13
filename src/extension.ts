@@ -1,32 +1,61 @@
 import * as vscode from 'vscode';
-import { registerCommands, serverStatusEmitter, isMCPServerRunning } from './commands';
+import { registerCommands, isMCPServerRunning, isGatewayServerRunning } from './commands';
+import { serverStatusEmitter } from './globals';
 import { EnhancedWebviewProvider } from './webview/WebviewProvider';
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
 import { getConfig } from './server/utils/config';
 import { startMCPServer } from './server/mcp';
+import { logger } from './server/utils/logger';
 
 export async function activate(context: vscode.ExtensionContext) {
+  // Console log is kept for immediate feedback in the debug console
   console.log('Clay extension is now active');
+
+  // Initialize the output channel for logging
+  const outputChannel = vscode.window.createOutputChannel('Clay');
+  context.subscriptions.push(outputChannel);
+  logger.setOutputChannel(outputChannel);
+  logger.info('Clay extension activated');
 
   // Load configuration from YAML file
   // Configuration is loaded automatically when getConfig() is called
+  logger.info('Loading configuration...');
 
   // Register commands
+  logger.info('Registering commands...');
   registerCommands(context);
 
-  // Autostart MCP server if enabled
+  // Check if servers are already running
   const mcpConfig = getConfig().mcp;
-  if (mcpConfig.autostart && !isMCPServerRunning()) {
-    console.log(`Autostarting MCP server on port ${mcpConfig.port}...`);
+  const gatewayConfig = getConfig().gateway;
+
+  // Check MCP server
+  const mcpRunning = await isMCPServerRunning();
+  if (mcpConfig.autostart && !mcpRunning) {
+    logger.info(`Autostarting MCP server on port ${mcpConfig.port}...`);
     try {
-      const mcpServer = await startMCPServer();
-      if (mcpServer) {
-        serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
-        console.log(`MCP server started on port ${mcpConfig.port}`);
-      }
+      // The server implementation will set the global reference
+      await startMCPServer();
+      // Emit event for immediate UI update (faster than waiting for health checks)
+      serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
+      logger.info(`MCP server started on port ${mcpConfig.port}`);
     } catch (error) {
-      console.error('Failed to autostart MCP server:', error);
+      logger.error('Failed to autostart MCP server:', error);
     }
+  } else if (mcpRunning) {
+    // If the server is running but we don't have an instance, update the status
+    logger.info(`MCP server already running on port ${mcpConfig.port}`);
+    // Emit event for immediate UI update (faster than waiting for health checks)
+    serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
+  }
+
+  // Check Gateway server
+  const gatewayRunning = await isGatewayServerRunning();
+  if (gatewayRunning) {
+    // If the server is running but we don't have an instance, update the status
+    logger.info(`Gateway server already running on port ${gatewayConfig.port}`);
+    // Emit event for immediate UI update (faster than waiting for health checks)
+    serverStatusEmitter.fire({ type: 'gateway', status: 'started' });
   }
 
   // Register gateway provider
@@ -36,9 +65,11 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Listen for server status changes and update the webview
+  // Listen for server status changes and immediately update the webview
+  // This provides faster UI updates than waiting for health checks
   context.subscriptions.push(
-    serverStatusEmitter.event(({ type, status }) => {~
+    serverStatusEmitter.event(({ type, status }) => {
+      logger.debug(`Sending immediate server status update: ${type} is ${status}`);
       EnhancedWebviewProvider.postMessage({
         command: 'serverStatus',
         server: type,

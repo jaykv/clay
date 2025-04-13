@@ -2,26 +2,58 @@ import * as vscode from 'vscode';
 
 // Import server functions directly
 import { startServer as startGatewayServer, stopServer as stopGatewayServer } from './server/gateway';
-import { startMCPServer } from './server/mcp';
+import { startMCPServer, stopMCPServer } from './server/mcp';
+import { isMCPServer, isGatewayServer } from './server/utils/port';
+import { getConfig } from './server/utils/config';
+import { logger } from './server/utils/logger';
 
-// Server instances
-let gatewayServerInstance: any = null;
-let mcpServerInstance: any = null;
-let registryServerInstance: any = null;
-
-// Event emitters for server status changes
-export const serverStatusEmitter = new vscode.EventEmitter<{
-  type: 'gateway' | 'mcp' | 'registry';
-  status: 'started' | 'stopped';
-}>();
+// Import globals
+import {
+  gatewayServerInstance,
+  mcpServerInstance,
+  registryServerInstance,
+  setGatewayServerInstance,
+  setMCPServerInstance,
+  serverStatusEmitter
+} from './globals';
 
 // Check if servers are running
-export function isGatewayServerRunning(): boolean {
-  return gatewayServerInstance !== null;
+export async function isGatewayServerRunning(): Promise<boolean> {
+  const config = getConfig().gateway;
+
+  // First check if there's a Gateway server actually running on the configured port
+  const isRunning = await isGatewayServer(config.port, config.host);
+
+  // If the server is not running but we have an instance reference, clear it
+  if (!isRunning && gatewayServerInstance !== null) {
+    logger.warn('Gateway server instance reference exists but server is not running. Clearing reference.');
+    setGatewayServerInstance(null);
+    return false;
+  }
+
+  // If the server is running but we don't have an instance reference, that's fine
+  // The dashboard will still show it as running based on the health check
+
+  return isRunning;
 }
 
-export function isMCPServerRunning(): boolean {
-  return mcpServerInstance !== null;
+export async function isMCPServerRunning(): Promise<boolean> {
+  const config = getConfig().mcp;
+
+  // First check if there's an MCP server actually running on the configured port
+  const isRunning = await isMCPServer(config.port, config.host);
+
+  // If the server is not running but we have an instance reference, clear it
+  if (!isRunning && mcpServerInstance !== null) {
+    logger.warn('MCP server instance reference exists but server is not running. Clearing reference.');
+    setMCPServerInstance(null);
+    return false;
+  }
+
+  // If the server is running but we don't have an instance reference, that's fine
+  // The dashboard will still show it as running based on the health check
+
+  return isRunning;
 }
 
 export function isRegistryServerRunning(): boolean {
@@ -32,16 +64,18 @@ export function registerCommands(context: vscode.ExtensionContext) {
   // Start Gateway Server command
   context.subscriptions.push(
     vscode.commands.registerCommand('clay.startGatewayServer', async () => {
-      if (gatewayServerInstance) {
+      if (await isGatewayServerRunning()) {
         vscode.window.showInformationMessage('Gateway server is already running');
         return;
       }
 
       try {
         // Start the gateway server directly
-        gatewayServerInstance = startGatewayServer();
+        // The server implementation will set the global reference
+        await startGatewayServer();
 
         vscode.window.showInformationMessage('Gateway server started successfully');
+        // Emit event for immediate UI update (faster than waiting for health checks)
         serverStatusEmitter.fire({ type: 'gateway', status: 'started' });
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to start gateway server: ${error}`);
@@ -52,15 +86,10 @@ export function registerCommands(context: vscode.ExtensionContext) {
   // Stop Gateway Server command
   context.subscriptions.push(
     vscode.commands.registerCommand('clay.stopGatewayServer', async () => {
-      if (!gatewayServerInstance) {
-        vscode.window.showInformationMessage('Gateway server is not running');
-        return;
-      }
-
       try {
-        // Stop the gateway server directly
-        stopGatewayServer();
-        gatewayServerInstance = null;
+        // Stop the gateway server with force option to ensure it's fully stopped
+        await stopGatewayServer(true);
+        setGatewayServerInstance(null);
 
         vscode.window.showInformationMessage('Gateway server stopped successfully');
         serverStatusEmitter.fire({ type: 'gateway', status: 'stopped' });
@@ -73,16 +102,18 @@ export function registerCommands(context: vscode.ExtensionContext) {
   // Start MCP Server command
   context.subscriptions.push(
     vscode.commands.registerCommand('clay.startMCPServer', async () => {
-      if (mcpServerInstance) {
+      if (await isMCPServerRunning()) {
         vscode.window.showInformationMessage('MCP server is already running');
         return mcpServerInstance;
       }
 
       try {
         // Start the MCP server directly
-        mcpServerInstance = await startMCPServer();
+        // The server implementation will set the global reference
+        await startMCPServer();
 
         vscode.window.showInformationMessage('MCP server started successfully');
+        // Emit event for immediate UI update (faster than waiting for health checks)
         serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
         return mcpServerInstance;
       } catch (error) {
@@ -95,15 +126,10 @@ export function registerCommands(context: vscode.ExtensionContext) {
   // Stop MCP Server command
   context.subscriptions.push(
     vscode.commands.registerCommand('clay.stopMCPServer', async () => {
-      if (!mcpServerInstance) {
-        vscode.window.showInformationMessage('MCP server is not running');
-        return;
-      }
-
       try {
-        // For now, we'll just set the instance to null
-        // In the future, we might want to add a stop method to the MCP server
-        mcpServerInstance = null;
+        // Stop the MCP server with force option to ensure it's fully stopped
+        await stopMCPServer(true);
+        setMCPServerInstance(null);
 
         vscode.window.showInformationMessage('MCP server stopped successfully');
         serverStatusEmitter.fire({ type: 'mcp', status: 'stopped' });

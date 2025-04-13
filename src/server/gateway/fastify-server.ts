@@ -107,6 +107,34 @@ export class FastifyGatewayServer {
       return { status: 'ok' };
     });
 
+    // Admin endpoint to stop the server
+    this.server.route({
+      method: 'POST',
+      url: '/admin/stopServer',
+      schema: {
+        // Define an empty schema to allow empty request bodies
+        body: {
+          type: 'object',
+          properties: {},
+          additionalProperties: true
+        }
+      },
+      handler: async (request, reply) => {
+        logger.info('Received request to stop gateway server via admin endpoint');
+
+        // Send response before stopping the server
+        reply.send({ status: 'stopping' });
+
+        // Stop the server after a short delay to allow the response to be sent
+        setTimeout(() => {
+          logger.info('Stopping gateway server via admin endpoint');
+          this.stop().catch(error => {
+            logger.error('Error stopping gateway server:', error);
+          });
+        }, 100);
+      }
+    });
+
     // API version endpoint
     this.server.get('/api/version', async (request, reply) => {
       return { version: '1.0.0' };
@@ -346,8 +374,6 @@ export class FastifyGatewayServer {
         port: this.config.port,
         host: this.config.host
       });
-      logger.info(`Fastify gateway server is running on http://${this.config.host}:${this.config.port}`);
-      logger.info(`Proxy is ${this.config.proxyEnabled ? 'enabled' : 'disabled'}`);
 
     } catch (error) {
       logger.error('Failed to start Fastify gateway server:', error);

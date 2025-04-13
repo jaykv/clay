@@ -1,20 +1,52 @@
 import express from 'express';
 import { Request, Response } from 'express';
+import cors from 'cors'; // Used in app.use(cors())
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { z } from 'zod';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
+import { registerAugmentMCP } from '../augment/mcp';
+
+export interface MCPResourceInfo {
+  id: string;
+  template: string;
+}
+
+export interface MCPToolInfo {
+  id: string;
+  parameters: Record<string, any>;
+  description?: string;
+}
+
+export interface MCPPromptInfo {
+  id: string;
+  parameters: Record<string, any>;
+}
+
+export interface MCPServerInfo {
+  name: string;
+  version: string;
+  resources: MCPResourceInfo[];
+  tools: MCPToolInfo[];
+  prompts: MCPPromptInfo[];
+}
 
 export class ExpressMCPServer {
-  private server: McpServer;
+  private mcpServer: McpServer;
   private app: express.Application;
+  private httpServer: any;
   private config = getConfig().mcp;
   private transports: Record<string, SSEServerTransport> = {};
 
+  // Keep track of registered capabilities
+  private resources: MCPResourceInfo[] = [];
+  private tools: MCPToolInfo[] = [];
+  private prompts: MCPPromptInfo[] = [];
+
   constructor() {
     // Create the MCP server
-    this.server = new McpServer({
+    this.mcpServer = new McpServer({
       name: this.config.name,
       version: this.config.version
     });
@@ -22,10 +54,20 @@ export class ExpressMCPServer {
     // Create the Express application
     this.app = express();
 
+    this.app.use(cors());
+
     // Setup MCP server capabilities
     this.setupResources();
     this.setupTools();
     this.setupPrompts();
+
+    // Register Augment Context Engine MCP components
+    try {
+      registerAugmentMCP(this.mcpServer);
+      logger.info('Augment Context Engine MCP components registered successfully');
+    } catch (error) {
+      logger.error('Failed to register Augment Context Engine MCP components:', error);
+    }
 
     // Setup Express routes
     this.setupRoutes();
@@ -33,10 +75,10 @@ export class ExpressMCPServer {
 
   private setupResources() {
     // Add a simple file resource
-    this.server.resource(
+    this.mcpServer.resource(
       'file',
       'file://{path}',
-      async (uri, params: any) => {
+      async (uri: URL, params: any) => {
         try {
           // In a real implementation, we would read the file from the filesystem
           // For now, we'll just return a mock response
@@ -52,9 +94,14 @@ export class ExpressMCPServer {
         }
       }
     );
+    // Track the resource
+    this.resources.push({
+      id: 'file',
+      template: 'file://{path}'
+    });
 
     // Add a workspace resource
-    this.server.resource(
+    this.mcpServer.resource(
       'workspace',
       'workspace://current',
       async (uri) => {
@@ -66,20 +113,31 @@ export class ExpressMCPServer {
         };
       }
     );
+    // Track the resource
+    this.resources.push({
+      id: 'workspace',
+      template: 'workspace://current'
+    });
   }
 
   private setupTools() {
     // Add a simple echo tool
-    this.server.tool(
+    this.mcpServer.tool(
       'echo',
       { message: z.string() },
       async ({ message }) => ({
         content: [{ type: 'text', text: `Echo: ${message}` }]
       })
     );
+    // Track the tool
+    this.tools.push({
+      id: 'echo',
+      parameters: { message: 'string' },
+      description: 'Echoes back the provided message'
+    });
 
     // Add a code completion tool
-    this.server.tool(
+    this.mcpServer.tool(
       'complete-code',
       {
         code: z.string(),
@@ -100,11 +158,21 @@ export class ExpressMCPServer {
         };
       }
     );
+    // Track the tool
+    this.tools.push({
+      id: 'complete-code',
+      parameters: {
+        code: 'string',
+        language: 'string',
+        position: { line: 'number', character: 'number' }
+      },
+      description: 'Provides code completion suggestions'
+    });
   }
 
   private setupPrompts() {
     // Add a code review prompt
-    this.server.prompt(
+    this.mcpServer.prompt(
       'review-code',
       { code: z.string() },
       ({ code }) => ({
@@ -117,9 +185,14 @@ export class ExpressMCPServer {
         }]
       })
     );
+    // Track the prompt
+    this.prompts.push({
+      id: 'review-code',
+      parameters: { code: 'string' }
+    });
 
     // Add a documentation generation prompt
-    this.server.prompt(
+    this.mcpServer.prompt(
       'generate-docs',
       {
         code: z.string(),
@@ -135,11 +208,37 @@ export class ExpressMCPServer {
         }]
       })
     );
+    // Track the prompt
+    this.prompts.push({
+      id: 'generate-docs',
+      parameters: { code: 'string', language: 'string' }
+    });
   }
 
   private setupRoutes() {
     this.app.get('/health', async (_req, res) => {
       res.json({ status: 'ok' });
+    });
+
+    // Admin endpoint to stop the server
+    this.app.post('/admin/stopServer', express.json({ strict: false }), async (_req, res) => {
+      logger.info('Received request to stop MCP server via admin endpoint');
+
+      // Send response before stopping the server
+      res.json({ status: 'stopping' });
+
+      // Stop the server after a short delay to allow the response to be sent
+      setTimeout(() => {
+        logger.info('Stopping MCP server via admin endpoint');
+        this.stop().catch(error => {
+          logger.error('Error stopping MCP server:', error);
+        });
+      }, 100);
+    });
+
+    this.app.get('/info', async (_req, res) => {
+      logger.info('MCP server info requested');
+      res.json(this.getServerInfo());
     });
 
     this.app.get('/sse', async (_req, res) => {
@@ -153,7 +252,7 @@ export class ExpressMCPServer {
         delete this.transports[transport.sessionId];
       });
 
-      await this.server.connect(transport).catch(error => {
+      await this.mcpServer.connect(transport).catch(error => {
         logger.error('Error connecting MCP transport:', error);
       });
     });
@@ -178,19 +277,65 @@ export class ExpressMCPServer {
     });
   }
 
+  /**
+   * Get information about the MCP server
+   * @returns Information about the MCP server
+   */
+  public getServerInfo(): MCPServerInfo {
+    return {
+      name: this.config.name,
+      version: this.config.version,
+      resources: this.resources,
+      tools: this.tools,
+      prompts: this.prompts
+    };
+  }
+
   public async start(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const server = this.app.listen(this.config.port, this.config.host, () => {
+        this.httpServer = this.app.listen(this.config.port, this.config.host, () => {
           resolve();
         });
 
-        server.on('error', (error) => {
+        this.httpServer.on('error', (error: Error) => {
           logger.error('Failed to start MCP server:', error);
           reject(error);
         });
       } catch (error) {
         logger.error('Failed to start MCP server:', error);
+        reject(error);
+      }
+    });
+  }
+
+  public async stop(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.httpServer) {
+        logger.warn('MCP server HTTP server is not running');
+        resolve();
+        return;
+      }
+
+      try {
+        // Close all open connections
+        for (const sessionId in this.transports) {
+          try {
+            logger.info(`Closing MCP transport for session: ${sessionId}`);
+            delete this.transports[sessionId];
+          } catch (err) {
+            logger.warn(`Error closing transport for session ${sessionId}:`, err);
+          }
+        }
+
+        // Close the HTTP server
+        this.httpServer.close(() => {
+          logger.info('MCP HTTP server stopped');
+          this.httpServer = null;
+          resolve();
+        });
+      } catch (error) {
+        logger.error('Failed to stop MCP server:', error);
         reject(error);
       }
     });

@@ -6,13 +6,37 @@ import PerformanceMetrics from '@/components/metrics/PerformanceMetrics';
 import TracesList from '@/components/traces/TracesList';
 import ProxyRoutes from './ProxyRoutes';
 import AugmentContextEngine from '@/components/augment/AugmentContextEngine';
+import MCPServerDetails from '@/components/mcp/MCPServerDetails';
 import { postMessage } from '@/utils/vscode';
+import { checkServerHealth } from '@/lib/api/servers';
 
 const Dashboard: React.FC = () => {
   // Server states
   const [gatewayServerRunning, setGatewayServerRunning] = useState(false);
   const [mcpServerRunning, setMcpServerRunning] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Function to check gateway server health immediately
+  const checkGatewayServerHealth = async () => {
+    try {
+      const isRunning = await checkServerHealth('http://localhost:3000/health');
+      setGatewayServerRunning(isRunning);
+      console.log('Immediate health check for Gateway server:', isRunning ? 'running' : 'stopped');
+    } catch (error) {
+      console.error('Error checking Gateway server health:', error);
+    }
+  };
+
+  // Function to check MCP server health immediately
+  const checkMcpServerHealth = async () => {
+    try {
+      const isRunning = await checkServerHealth('http://localhost:3001/health');
+      setMcpServerRunning(isRunning);
+      console.log('Immediate health check for MCP server:', isRunning ? 'running' : 'stopped');
+    } catch (error) {
+      console.error('Error checking MCP server health:', error);
+    }
+  };
 
   // Check if we're running in browser or VS Code
   const [isVSCodeEnv, setIsVSCodeEnv] = useState(false);
@@ -26,16 +50,32 @@ const Dashboard: React.FC = () => {
     // since we're being served by it
     if (!isVSCodeEnv) {
       setGatewayServerRunning(true);
+    } else {
+      // Initial health checks
+      checkGatewayServerHealth();
+      checkMcpServerHealth();
+
+      // Set up regular health checks every 5 seconds
+      const healthCheckInterval = setInterval(() => {
+        checkGatewayServerHealth();
+        checkMcpServerHealth();
+      }, 5000);
+
+      // Clean up interval on unmount
+      return () => clearInterval(healthCheckInterval);
     }
 
     const messageHandler = (event: MessageEvent) => {
       const message = event.data;
 
-      // Handle server status updates
+      // Handle server status updates (these take priority over health checks)
       if (message.command === 'serverStatus') {
+        console.log(`Received server status update: ${message.server} is ${message.status}`);
         if (message.server === 'gateway') {
+          // Immediately update UI without waiting for next health check
           setGatewayServerRunning(message.status === 'running');
         } else if (message.server === 'mcp') {
+          // Immediately update UI without waiting for next health check
           setMcpServerRunning(message.status === 'running');
         }
       }
@@ -56,6 +96,7 @@ const Dashboard: React.FC = () => {
       postMessage({ command: 'getServerStatus' });
     }
 
+    // Clean up event listeners and intervals
     return () => {
       window.removeEventListener('message', messageHandler);
       window.removeEventListener('switchTab', tabSwitchHandler as EventListener);
@@ -99,6 +140,12 @@ const Dashboard: React.FC = () => {
           >
             Augment
           </button>
+          <button
+            className={`px-3 py-1 text-sm rounded ${activeTab === 'mcp' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            onClick={() => setActiveTab('mcp')}
+          >
+            MCP
+          </button>
         </div>
       </div>
 
@@ -114,6 +161,15 @@ const Dashboard: React.FC = () => {
                 startCommand="startGatewayServer"
                 stopCommand="stopGatewayServer"
                 disableControls={!isVSCodeEnv}
+                adminStopUrl="http://localhost:3000/admin/stopServer"
+                onStopComplete={checkGatewayServerHealth}
+                onStartInitiated={() => {
+                  // Only update if not already running
+                  if (!gatewayServerRunning) {
+                    console.log('Setting Gateway server to running (optimistic update)');
+                    setGatewayServerRunning(true);
+                  }
+                }}
               />
 
               <ServerStatus
@@ -124,7 +180,27 @@ const Dashboard: React.FC = () => {
                 startCommand="startMCPServer"
                 stopCommand="stopMCPServer"
                 disableControls={!isVSCodeEnv}
-              />
+                adminStopUrl="http://localhost:3001/admin/stopServer"
+                onStopComplete={checkMcpServerHealth}
+                onStartInitiated={() => {
+                  // Only update if not already running
+                  if (!mcpServerRunning) {
+                    console.log('Setting MCP server to running (optimistic update)');
+                    setMcpServerRunning(true);
+                  }
+                }}
+              >
+                {mcpServerRunning && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setActiveTab('mcp')}
+                    className="mt-2"
+                  >
+                    View MCP Details
+                  </Button>
+                )}
+              </ServerStatus>
             </div>
           </Card>
 
@@ -173,6 +249,8 @@ const Dashboard: React.FC = () => {
       {activeTab === 'traces' && <TracesList />}
 
       {activeTab === 'augment' && <AugmentContextEngine />}
+
+      {activeTab === 'mcp' && <MCPServerDetails />}
     </div>
   );
 };
