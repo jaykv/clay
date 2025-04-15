@@ -211,6 +211,42 @@ def tool_function(param1: str, param2: int = 0):
 
 The parameter descriptions will be automatically extracted and included in the MCP tool definition, making your tools more user-friendly and easier to use.
 
+## Python Dependencies with Virtual Environment
+
+For Python extensions that require external dependencies, you can use a shared virtual environment to manage them. The MCP server will automatically detect and use this virtual environment if it's available.
+
+### Setting Up the Shared Virtual Environment
+
+1. Create a `.venv` directory in the `.clay/mcp` directory:
+
+```bash
+# Navigate to the MCP extensions directory
+cd .clay/mcp
+
+# Create a virtual environment
+python -m venv .venv
+
+# On Windows, activate the virtual environment
+.venv\Scripts\activate
+
+# On macOS/Linux, activate the virtual environment
+source .venv/bin/activate
+```
+
+2. Install all the dependencies needed by your extensions:
+
+```bash
+# Install dependencies
+pip install pillow numpy requests
+
+# Optionally, create a requirements.txt file
+pip freeze > requirements.txt
+```
+
+3. Create your Python extension files with the necessary imports.
+
+All Python extensions will share this single virtual environment, making it easier to manage dependencies. See `README_venv.md` for more detailed information about using the virtual environment with MCP extensions.
+
 ## Example Extensions
 
 This directory includes several example extensions to help you get started:
@@ -222,6 +258,7 @@ This directory includes several example extensions to help you get started:
 5. `math_tools.py`: Mathematical tools and formulas (Python, dynamic format)
 6. `text_formatter.py`: Text formatting and manipulation tools (Python, dynamic format)
 7. `example_with_param_docs.py`: Example tools with parameter descriptions in docstrings (Python, dynamic format)
+8. `image_generator.py`: Image generation tools using virtual environment dependencies (Python with venv)
 
 ## Loading Extensions
 

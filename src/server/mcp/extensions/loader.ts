@@ -7,6 +7,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { logger } from '../../utils/logger';
 import { getConfig } from '../../utils/config';
 import { MCPToolInfo, MCPResourceInfo, MCPPromptInfo } from '../express-server';
+import * as dotenv from 'dotenv';
 
 /**
  * Interface for MCP extension metadata
@@ -58,6 +59,7 @@ export class MCPExtensionsLoader {
   private server: McpServer;
   private config = getConfig().mcp.extensions;
   private workspaceRoot: string;
+  private envVars: Record<string, string> = {};
 
   // Track loaded extensions
   private loadedExtensionFiles: string[] = [];
@@ -73,6 +75,37 @@ export class MCPExtensionsLoader {
   constructor(server: McpServer, workspaceRoot: string) {
     this.server = server;
     this.workspaceRoot = workspaceRoot;
+    this.loadEnvVars();
+  }
+
+  /**
+   * Load environment variables from .env file
+   */
+  private loadEnvVars(): void {
+    try {
+      const extensionsPath = path.resolve(this.workspaceRoot, this.config.extensionsPath);
+      const envPath = path.join(extensionsPath, '.env');
+
+      if (fs.existsSync(envPath)) {
+        logger.info(`Loading environment variables from ${envPath}`);
+        const result = dotenv.config({ path: envPath });
+
+        if (result.error) {
+          logger.error(`Error loading .env file: ${result.error}`);
+          return;
+        }
+
+        // Store the parsed environment variables
+        this.envVars = result.parsed || {};
+        logger.info(
+          `Loaded ${Object.keys(this.envVars).length} environment variables from .env file`
+        );
+      } else {
+        logger.info(`No .env file found at ${envPath}`);
+      }
+    } catch (error) {
+      logger.error('Failed to load environment variables:', error);
+    }
   }
 
   /**
@@ -204,6 +237,41 @@ export class MCPExtensionsLoader {
   }
 
   /**
+   * Find the Python interpreter in the shared virtual environment
+   * @returns Path to the Python interpreter or null if not found
+   */
+  private findVenvPython(): string | null {
+    try {
+      // Get the MCP extensions directory (.clay/mcp)
+      const mcpDir = path.resolve(this.workspaceRoot, this.config.extensionsPath);
+
+      // Check for a .venv directory
+      const venvDir = path.join(mcpDir, '.venv');
+      if (!fs.existsSync(venvDir) || !fs.statSync(venvDir).isDirectory()) {
+        return null;
+      }
+
+      // Find the Python executable based on the platform
+      const isWindows = process.platform === 'win32';
+      const pythonPath = isWindows
+        ? path.join(venvDir, 'Scripts', 'python.exe')
+        : path.join(venvDir, 'bin', 'python');
+
+      // Check if the Python executable exists
+      if (fs.existsSync(pythonPath) && fs.statSync(pythonPath).isFile()) {
+        // Check if it's executable (not relevant on Windows)
+        if (isWindows || (fs.accessSync(pythonPath, fs.constants.X_OK), true)) {
+          return pythonPath;
+        }
+      }
+    } catch (error) {
+      logger.debug(`Error finding venv Python: ${error}`);
+    }
+
+    return null;
+  }
+
+  /**
    * Load a Python extension
    * @param filePath The path to the extension file
    */
@@ -215,8 +283,16 @@ export class MCPExtensionsLoader {
       // Get the path to the Python loader script
       const loaderScriptPath = path.resolve(__dirname, 'python-loader.py');
 
+      // Check for a virtual environment Python interpreter
+      const venvPython = this.findVenvPython();
+      const pythonCommand = venvPython || 'python';
+
+      if (venvPython) {
+        logger.info(`Using virtual environment Python: ${venvPython}`);
+      }
+
       // Run the Python loader script
-      const pythonProcess = spawn('python', [
+      const pythonProcess = spawn(pythonCommand, [
         '-u', // Unbuffered output for immediate logging
         loaderScriptPath,
         filePath,
@@ -485,21 +561,34 @@ export class MCPExtensionsLoader {
     // Create a temporary file for the parameters
     const paramsPath = `${filePath}.params.json`;
     const resultPath = `${filePath}.result.json`;
+    const envPath = `${filePath}.env.json`;
 
     // Write the parameters to the temporary file
     fs.writeFileSync(paramsPath, JSON.stringify(params));
 
+    // Write the environment variables to a temporary file
+    fs.writeFileSync(envPath, JSON.stringify(this.envVars));
+
     // Get the path to the Python handler script
     const handlerScriptPath = path.resolve(__dirname, 'python-handler.py');
 
+    // Check for a virtual environment Python interpreter
+    const venvPython = this.findVenvPython();
+    const pythonCommand = venvPython || 'python';
+
+    if (venvPython) {
+      logger.debug(`Using virtual environment Python for handler: ${venvPython}`);
+    }
+
     // Run the Python script to call the handler
-    const pythonProcess = spawn('python', [
+    const pythonProcess = spawn(pythonCommand, [
       '-u', // Unbuffered output for immediate logging
       handlerScriptPath,
       filePath,
       handlerType,
       paramsPath,
       resultPath,
+      envPath, // Pass the environment variables file path
     ]);
 
     // Capture Python process output for better debugging
@@ -533,9 +622,13 @@ export class MCPExtensionsLoader {
       });
     });
 
-    // Clean up the parameters file
+    // Clean up the temporary files
     if (fs.existsSync(paramsPath)) {
       fs.unlinkSync(paramsPath);
+    }
+
+    if (fs.existsSync(envPath)) {
+      fs.unlinkSync(envPath);
     }
 
     // Read the result from the temporary file

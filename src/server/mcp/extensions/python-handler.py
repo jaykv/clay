@@ -7,13 +7,26 @@ import importlib.util
 import sys
 import os
 
-def call_handler(file_path, handler_type, params_path, result_path):
+def call_handler(file_path, handler_type, params_path, result_path, env_path=None):
     """Call a handler function in a Python extension"""
     try:
         # Add the directory containing the module to the Python path
         module_dir = os.path.dirname(os.path.abspath(file_path))
         if module_dir not in sys.path:
             sys.path.insert(0, module_dir)
+
+        # Load environment variables if provided
+        if env_path and os.path.exists(env_path):
+            try:
+                with open(env_path, "r") as f:
+                    env_vars = json.load(f)
+
+                # Set environment variables
+                for key, value in env_vars.items():
+                    os.environ[key] = str(value)
+                    print(f"Set environment variable: {key}")
+            except Exception as e:
+                print(f"Error loading environment variables: {e}")
 
         # Load the module
         spec = importlib.util.spec_from_file_location("extension", file_path)
@@ -52,13 +65,14 @@ def call_handler(file_path, handler_type, params_path, result_path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 5:
-        print("Usage: python-handler.py <file_path> <handler_type> <params_path> <result_path>")
+        print("Usage: python-handler.py <file_path> <handler_type> <params_path> <result_path> [env_path]")
         sys.exit(1)
 
     file_path = sys.argv[1]
     handler_type = sys.argv[2]
     params_path = sys.argv[3]
     result_path = sys.argv[4]
+    env_path = sys.argv[5] if len(sys.argv) > 5 else None
 
-    success = call_handler(file_path, handler_type, params_path, result_path)
+    success = call_handler(file_path, handler_type, params_path, result_path, env_path)
     sys.exit(0 if success else 1)
