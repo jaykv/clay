@@ -4,7 +4,6 @@ import * as glob from 'glob';
 import { z } from 'zod';
 import { spawn } from 'child_process';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { logger } from '../../utils/logger';
 import { getConfig } from '../../utils/config';
 import { MCPToolInfo, MCPResourceInfo, MCPPromptInfo } from '../express-server';
@@ -197,8 +196,8 @@ export class MCPExtensionsLoader {
         return;
       }
 
-      // Register the extension
-      this.registerExtension(extension, filePath);
+      // Skip static format extensions
+      logger.warn(`Static format extensions are no longer supported: ${filePath}`);
     } catch (error) {
       logger.error(`Failed to load JavaScript extension ${filePath}:`, error);
     }
@@ -268,33 +267,8 @@ export class MCPExtensionsLoader {
             return;
           }
 
-          // Handle based on format
-          if (extensionJson.format === 'dynamic') {
-            // Process dynamic format with multiple tools/resources/prompts
-            await this.processDynamicPythonExtension(extensionJson, filePath);
-          } else {
-            // Process old-style static format
-            // Create a proxy handler that will call the Python script
-            if (extensionJson.type === 'tool' && extensionJson.has_handler) {
-              extensionJson.handler = async (params: any) => {
-                return this.callPythonHandler(filePath, 'tool', params);
-              };
-            } else if (extensionJson.type === 'resource' && extensionJson.has_handler) {
-              extensionJson.handler = async (uri: URL, params: any) => {
-                return this.callPythonHandler(filePath, 'resource', {
-                  uri: uri.toString(),
-                  params,
-                });
-              };
-            } else if (extensionJson.type === 'prompt' && extensionJson.has_handler) {
-              extensionJson.handler = (params: any) => {
-                return this.callPythonHandler(filePath, 'prompt', params);
-              };
-            }
-
-            // Register the extension
-            this.registerExtension(extensionJson, filePath);
-          }
+          // Process dynamic format with multiple tools/resources/prompts
+          await this.processDynamicPythonExtension(extensionJson, filePath);
         } catch (parseError) {
           logger.error(`Failed to parse Python extension JSON from ${filePath}:`, parseError);
           logger.error(`JSON content: ${tempFileContent}`);
@@ -593,133 +567,7 @@ export class MCPExtensionsLoader {
     }
   }
 
-  /**
-   * Register an extension with the MCP server
-   * @param extension The extension to register
-   * @param filePath The path to the extension file
-   */
-  private registerExtension(extension: any, filePath: string): void {
-    // Validate the extension
-    if (!extension.id || !extension.type) {
-      logger.warn(`Invalid extension in ${filePath}: missing id or type`);
-      return;
-    }
-
-    // Register based on type
-    if (extension.type === 'tool') {
-      this.registerTool(extension, filePath);
-    } else if (extension.type === 'resource') {
-      this.registerResource(extension, filePath);
-    } else if (extension.type === 'prompt') {
-      this.registerPrompt(extension, filePath);
-    } else {
-      logger.warn(`Unknown extension type in ${filePath}: ${extension.type}`);
-    }
-  }
-
-  /**
-   * Register a tool extension
-   * @param tool The tool extension
-   * @param filePath The path to the extension file
-   */
-  private registerTool(tool: MCPToolExtension, filePath: string): void {
-    try {
-      // Validate the tool
-      if (!tool.parameters || !tool.handler) {
-        logger.warn(`Invalid tool extension in ${filePath}: missing parameters or handler`);
-        return;
-      }
-
-      // Register the tool with the MCP server
-      this.server.tool(tool.id, tool.parameters, tool.handler);
-
-      // Track the tool
-      this.loadedTools.push({
-        id: tool.id,
-        parameters: this.convertZodSchemaToSimpleTypes(tool.parameters),
-        description: tool.description,
-      });
-
-      // Track the extension file
-      if (!this.loadedExtensionFiles.includes(filePath)) {
-        this.loadedExtensionFiles.push(filePath);
-      }
-
-      logger.info(`Registered MCP tool: ${tool.id} from ${filePath}`);
-    } catch (error) {
-      logger.error(`Failed to register tool ${tool.id} from ${filePath}:`, error);
-    }
-  }
-
-  /**
-   * Register a resource extension
-   * @param resource The resource extension
-   * @param filePath The path to the extension file
-   */
-  private registerResource(resource: MCPResourceExtension, filePath: string): void {
-    try {
-      // Validate the resource
-      if (!resource.template || !resource.handler) {
-        logger.warn(`Invalid resource extension in ${filePath}: missing template or handler`);
-        return;
-      }
-
-      // Register the resource with the MCP server
-      this.server.resource(
-        resource.id,
-        new ResourceTemplate(resource.template, { list: undefined }),
-        resource.handler
-      );
-
-      // Track the resource
-      this.loadedResources.push({
-        id: resource.id,
-        template: resource.template,
-      });
-
-      // Track the extension file
-      if (!this.loadedExtensionFiles.includes(filePath)) {
-        this.loadedExtensionFiles.push(filePath);
-      }
-
-      logger.info(`Registered MCP resource: ${resource.id} from ${filePath}`);
-    } catch (error) {
-      logger.error(`Failed to register resource ${resource.id} from ${filePath}:`, error);
-    }
-  }
-
-  /**
-   * Register a prompt extension
-   * @param prompt The prompt extension
-   * @param filePath The path to the extension file
-   */
-  private registerPrompt(prompt: MCPPromptExtension, filePath: string): void {
-    try {
-      // Validate the prompt
-      if (!prompt.parameters || !prompt.handler) {
-        logger.warn(`Invalid prompt extension in ${filePath}: missing parameters or handler`);
-        return;
-      }
-
-      // Register the prompt with the MCP server
-      this.server.prompt(prompt.id, prompt.parameters, prompt.handler);
-
-      // Track the prompt
-      this.loadedPrompts.push({
-        id: prompt.id,
-        parameters: this.convertZodSchemaToSimpleTypes(prompt.parameters),
-      });
-
-      // Track the extension file
-      if (!this.loadedExtensionFiles.includes(filePath)) {
-        this.loadedExtensionFiles.push(filePath);
-      }
-
-      logger.info(`Registered MCP prompt: ${prompt.id} from ${filePath}`);
-    } catch (error) {
-      logger.error(`Failed to register prompt ${prompt.id} from ${filePath}:`, error);
-    }
-  }
+  // Static format extension registration methods have been removed
 
   /**
    * Convert a Zod schema to simple types for display
@@ -893,33 +741,53 @@ module.exports = { extension };
 `
     );
 
-    // Create example Python tool
+    // Create example Python tool with dynamic format
     const pythonToolPath = path.join(extensionsPath, 'example-python-tool.py');
     fs.writeFileSync(
       pythonToolPath,
       `"""
-Example MCP tool extension in Python
+Example MCP tool extension in Python using dynamic format
 """
+from typing import Dict, List, Optional
 
-# Define the extension
-extension = {
-    "id": "python-calculator",
-    "type": "tool",
-    "description": "A simple calculator implemented in Python",
-    "author": "Clay",
-    "version": "1.0.0",
-    "parameters": {
-        "expression": "string",
-    },
-    "handler": lambda params: {
-        "content": [
-            {
-                "type": "text",
-                "text": f"Result: {eval(params['expression'])}",
-            },
-        ],
-    },
-}
+def tool_calculate(expression: str) -> Dict:
+    """Evaluates a mathematical expression
+
+    Args:
+        expression: The mathematical expression to evaluate
+    """
+    try:
+        result = eval(expression)
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": f"Result: {result}"
+                }
+            ]
+        }
+    except Exception as e:
+        return {
+            "content": [
+                {
+                    "type": "text",
+                    "text": f"Error: {str(e)}"
+                }
+            ],
+            "isError": True
+        }
+
+def main():
+    """Define the extension"""
+    return {
+        "id": "python-calculator",
+        "description": "A simple calculator implemented in Python",
+        "author": "Clay",
+        "version": "1.0.0",
+        "tools": [tool_calculate],
+        "resources": [],
+        "prompts": []
+    }
 `
     );
 

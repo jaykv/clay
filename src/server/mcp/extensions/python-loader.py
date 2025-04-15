@@ -12,23 +12,43 @@ import os
 from typing import get_type_hints, Any, Optional, List, Dict, Union
 
 def parse_docstring(docstring):
-    """Parse a docstring to extract the description"""
+    """Parse a docstring to extract the description and parameter descriptions"""
     if not docstring:
-        return ""
+        return "", {}
 
-    # Extract just the description (first paragraph)
+    # Extract the description (first paragraph)
     description = ""
+    param_descriptions = {}
+    current_section = "description"
+    current_param = None
 
     if docstring:
         lines = docstring.strip().split('\n')
         for line in lines:
             line = line.strip()
-            # Stop at the first section marker (Args, Returns, etc.)
-            if line.lower().startswith("args:") or line.lower().startswith("arguments:") or line.lower().startswith("returns:"):
-                break
-            description += line + " "
 
-    return description.strip()
+            # Check for section markers
+            if line.lower().startswith("args:") or line.lower().startswith("arguments:"):
+                current_section = "params"
+                continue
+            elif line.lower().startswith("returns:"):
+                current_section = "returns"
+                continue
+
+            # Process based on current section
+            if current_section == "description":
+                description += line + " "
+            elif current_section == "params":
+                # Check if this is a parameter definition
+                param_match = re.match(r'^([\w_]+)\s*(?:\(.*\))?\s*:\s*(.*)$', line)
+                if param_match:
+                    current_param = param_match.group(1)
+                    param_descriptions[current_param] = param_match.group(2).strip()
+                elif current_param and line:
+                    # Continuation of previous parameter description
+                    param_descriptions[current_param] += " " + line
+
+    return description.strip(), param_descriptions
 
 def type_to_zod_schema(py_type):
     """Convert Python type to Zod schema name"""
@@ -51,7 +71,7 @@ def analyze_function(func):
     """Analyze a function and extract its parameter info"""
     sig = inspect.signature(func)
     type_hints = get_type_hints(func)
-    description = parse_docstring(func.__doc__)
+    description, param_descriptions = parse_docstring(func.__doc__)
 
     parameters = {}
     for param_name, param in sig.parameters.items():
@@ -73,13 +93,16 @@ def analyze_function(func):
                 if non_none_args:
                     param_type = non_none_args[0]
 
+        # Get parameter description from docstring
+        param_description = param_descriptions.get(param_name, "")
+
         parameters[param_name] = {
             "type": str(param_type),
             "zod_type": type_to_zod_schema(param_type),
             "has_default": has_default,
             "default_value": param.default if has_default else None,
             "is_optional": is_optional or has_default,
-            "description": "" # No parameter descriptions from docstrings
+            "description": param_description
         }
 
     return {
@@ -102,81 +125,85 @@ def load_extension(file_path, output_path):
         sys.modules["extension"] = module
         spec.loader.exec_module(module)
 
-        # Check for the new-style main() function first
+        # Check for the main() function
         result = {}
-        if hasattr(module, "main") and callable(module.main):
-            # New-style extension with main() function
-            extension_def = module.main()
+        if not hasattr(module, "main") or not callable(module.main):
+            with open(output_path, "w") as f:
+                json.dump({"error": "No main() function found in module"}, f)
+            return False
 
-            # Basic extension info
-            result["id"] = extension_def.get("id", "")
-            result["description"] = extension_def.get("description", "")
-            result["author"] = extension_def.get("author", "")
-            result["version"] = extension_def.get("version", "")
-            result["format"] = "dynamic"
+        # Get the extension definition from main()
+        extension_def = module.main()
 
-            # Process tools
-            tools = []
-            for func in extension_def.get("tools", []):
-                if callable(func):
-                    func_info = analyze_function(func)
-                    tool_name = func_info["name"]
+        # Basic extension info
+        result["id"] = extension_def.get("id", "")
+        result["description"] = extension_def.get("description", "")
+        result["author"] = extension_def.get("author", "")
+        result["version"] = extension_def.get("version", "")
+        result["format"] = "dynamic"
 
-                    # Remove 'tool_' prefix if present
-                    if tool_name.startswith("tool_"):
-                        tool_name = tool_name[5:]
+        # Process tools
+        tools = []
+        for func in extension_def.get("tools", []):
+            if callable(func):
+                func_info = analyze_function(func)
+                tool_name = func_info["name"]
 
-                    tools.append({
-                        "id": f"{result['id']}-{tool_name}" if result['id'] else tool_name,
-                        "function_name": func_info["name"],
-                        "description": func_info["description"],
-                        "parameters": func_info["parameters"]
-                    })
-            result["tools"] = tools
+                # Remove 'tool_' prefix if present
+                if tool_name.startswith("tool_"):
+                    tool_name = tool_name[5:]
 
-            # Process resources
-            resources = []
-            for func in extension_def.get("resources", []):
-                if callable(func):
-                    func_info = analyze_function(func)
-                    resource_name = func_info["name"]
+                tools.append({
+                    "id": f"{result['id']}-{tool_name}" if result['id'] else tool_name,
+                    "function_name": func_info["name"],
+                    "description": func_info["description"],
+                    "parameters": func_info["parameters"]
+                })
+        result["tools"] = tools
 
-                    # Remove 'resource_' prefix if present
-                    if resource_name.startswith("resource_"):
-                        resource_name = resource_name[9:]
+        # Process resources
+        resources = []
+        for func in extension_def.get("resources", []):
+            if callable(func):
+                func_info = analyze_function(func)
+                resource_name = func_info["name"]
 
-                    resources.append({
-                        "id": f"{result['id']}-{resource_name}" if result['id'] else resource_name,
-                        "function_name": func_info["name"],
-                        "description": func_info["description"],
-                        "parameters": func_info["parameters"],
-                        "template": f"{resource_name}://{{path}}"
-                    })
-            result["resources"] = resources
+                # Remove 'resource_' prefix if present
+                if resource_name.startswith("resource_"):
+                    resource_name = resource_name[9:]
 
-            # Process prompts
-            prompts = []
-            for func in extension_def.get("prompts", []):
-                if callable(func):
-                    func_info = analyze_function(func)
-                    prompt_name = func_info["name"]
+                resources.append({
+                    "id": f"{result['id']}-{resource_name}" if result['id'] else resource_name,
+                    "function_name": func_info["name"],
+                    "description": func_info["description"],
+                    "parameters": func_info["parameters"],
+                    "template": f"{resource_name}://{{path}}"
+                })
+        result["resources"] = resources
 
-                    # Remove 'prompt_' prefix if present
-                    if prompt_name.startswith("prompt_"):
-                        prompt_name = prompt_name[7:]
+        # Process prompts
+        prompts = []
+        for func in extension_def.get("prompts", []):
+            if callable(func):
+                func_info = analyze_function(func)
+                prompt_name = func_info["name"]
 
-                    prompts.append({
-                        "id": f"{result['id']}-{prompt_name}" if result['id'] else prompt_name,
-                        "function_name": func_info["name"],
-                        "description": func_info["description"],
-                        "parameters": func_info["parameters"]
-                    })
-            result["prompts"] = prompts
+                # Remove 'prompt_' prefix if present
+                if prompt_name.startswith("prompt_"):
+                    prompt_name = prompt_name[7:]
+
+                prompts.append({
+                    "id": f"{result['id']}-{prompt_name}" if result['id'] else prompt_name,
+                    "function_name": func_info["name"],
+                    "description": func_info["description"],
+                    "parameters": func_info["parameters"]
+                })
+        result["prompts"] = prompts
 
         # Write to output file
         with open(output_path, "w") as f:
             json.dump(result, f)
-            
+
         return True
     except Exception as e:
         # Write error to output file
@@ -188,9 +215,9 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: python-loader.py <file_path> <output_path>")
         sys.exit(1)
-    
+
     file_path = sys.argv[1]
     output_path = sys.argv[2]
-    
+
     success = load_extension(file_path, output_path)
     sys.exit(0 if success else 1)

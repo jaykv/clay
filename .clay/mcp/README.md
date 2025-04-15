@@ -94,7 +94,12 @@ Example MCP extension with dynamic tools
 """
 
 def tool_add_numbers(number1: int, number2: int) -> int:
-    """Adds two numbers together and returns the result"""
+    """Adds two numbers together and returns the result
+
+    Args:
+        number1: The first number to add
+        number2: The second number to add
+    """
     result = number1 + number2
     return {
         "content": [
@@ -106,7 +111,13 @@ def tool_add_numbers(number1: int, number2: int) -> int:
     }
 
 def tool_subtract_numbers(number1: int, number2: int, number3: int = 0) -> int:
-    """Subtracts numbers from each other and returns the result"""
+    """Subtracts numbers from each other and returns the result
+
+    Args:
+        number1: The number to subtract from
+        number2: The first number to subtract
+        number3: The second number to subtract (optional)
+    """
     result = number1 - number2 - number3
     return {
         "content": [
@@ -118,7 +129,11 @@ def tool_subtract_numbers(number1: int, number2: int, number3: int = 0) -> int:
     }
 
 def prompt_math_professor():
-    """Creates a prompt for a math professor persona"""
+    """Creates a prompt for a math professor persona
+
+    Args:
+        None
+    """
     return {
         "messages": [
             {
@@ -132,7 +147,11 @@ def prompt_math_professor():
     }
 
 def resource_math_formula(formula_name: str = "pythagorean"):
-    """Provides common mathematical formulas"""
+    """Provides common mathematical formulas
+
+    Args:
+        formula_name: The name of the formula to retrieve (pythagorean, quadratic)
+    """
     formulas = {
         "pythagorean": "a² + b² = c²",
         "quadratic": "x = (-b ± √(b² - 4ac)) / 2a"
@@ -166,72 +185,31 @@ With this format:
 
 - Function parameters are automatically converted to MCP parameters
 - Type annotations are used to determine parameter types
-- Simple docstrings are used for function descriptions
+- Docstrings are used for function and parameter descriptions
 - Default values become optional parameters with the specified defaults
 - Function names are used for tool/resource/prompt IDs (prefixes like `tool_`, `resource_`, and `prompt_` are removed)
 
-#### Static Format (Legacy)
+### Parameter Descriptions
 
-Create a Python (.py) file with the following structure:
+The MCP server now supports extracting parameter descriptions from Python docstrings. This allows you to provide detailed information about each parameter that will be displayed in the MCP dashboard and made available to MCP clients.
+
+To add parameter descriptions, use the standard Python docstring format with an Args section:
 
 ```python
-"""
-Example MCP extension in Python
-"""
+def tool_function(param1: str, param2: int = 0):
+    """Function description
 
-# Define the extension
-extension = {
-    "id": "your-python-extension-id",
-    "type": "tool",  # 'tool', 'resource', or 'prompt'
-    "description": "Description of your Python extension",
-    "author": "Your Name",
-    "version": "1.0.0",
+    Args:
+        param1: Description of the first parameter
+        param2: Description of the second parameter with default value
 
-    # For tools and prompts: Define parameters
-    "parameters": {
-        "param1": "string",
-        "param2": "number",
-        # Add more parameters as needed
-    },
-
-    # For resources: Define the URI template
-    # "template": "your-scheme://{param1}/{param2}",
-
-    # Handler function for the extension
-    "handler": lambda params: {
-        # For tools: Return content
-        "content": [
-            {
-                "type": "text",
-                "text": f"Result: {params['param1']}",
-            },
-        ],
-    },
-
-    # For resources:
-    # "handler": lambda uri, params: {
-    #     "contents": [
-    #         {
-    #             "uri": uri,
-    #             "text": "Resource content",
-    #         },
-    #     ],
-    # },
-
-    # For prompts:
-    # "handler": lambda params: {
-    #     "messages": [
-    #         {
-    #             "role": "user",
-    #             "content": {
-    #                 "type": "text",
-    #                 "text": f"Prompt with {params['param1']}",
-    #             },
-    #         },
-    #     ],
-    # },
-}
+    Returns:
+        Description of the return value
+    """
+    # Function implementation
 ```
+
+The parameter descriptions will be automatically extracted and included in the MCP tool definition, making your tools more user-friendly and easier to use.
 
 ## Example Extensions
 
@@ -240,8 +218,10 @@ This directory includes several example extensions to help you get started:
 1. `example-tool.js`: A simple tool that reverses text (JavaScript, static format)
 2. `example-resource.js`: A resource that provides the current date and time (JavaScript, static format)
 3. `example-prompt.js`: A prompt for summarizing text (JavaScript, static format)
-4. `example-python-tool.py`: A simple calculator implemented in Python (Python, static format)
+4. `example-python-tool.py`: A simple calculator implemented in Python (Python, dynamic format)
 5. `math_tools.py`: Mathematical tools and formulas (Python, dynamic format)
+6. `text_formatter.py`: Text formatting and manipulation tools (Python, dynamic format)
+7. `example_with_param_docs.py`: Example tools with parameter descriptions in docstrings (Python, dynamic format)
 
 ## Loading Extensions
 

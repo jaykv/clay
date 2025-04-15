@@ -6,12 +6,17 @@ import json
 from typing import List, Dict, Union, Optional, Literal
 
 def tool_format_case(
-    text: str, 
+    text: str,
     case_type: Literal["upper", "lower", "title", "sentence", "camel", "snake", "kebab"] = "title"
 ) -> Dict:
-    """Converts text to different case formats"""
+    """Converts text to different case formats
+
+    Args:
+        text: The input text to convert
+        case_type: The case format to convert to (upper, lower, title, sentence, camel, snake, kebab)
+    """
     result = text
-    
+
     if case_type == "upper":
         result = text.upper()
     elif case_type == "lower":
@@ -33,7 +38,7 @@ def tool_format_case(
         # Convert to kebab-case
         words = re.findall(r'[A-Za-z0-9]+', text.lower())
         result = '-'.join(words)
-    
+
     return {
         "content": [
             {
@@ -44,18 +49,24 @@ def tool_format_case(
     }
 
 def tool_format_json(
-    json_text: str, 
-    indent: int = 2, 
+    json_text: str,
+    indent: int = 2,
     sort_keys: bool = False
 ) -> Dict:
-    """Formats JSON text with proper indentation and optional sorting"""
+    """Formats JSON text with proper indentation and optional sorting
+
+    Args:
+        json_text: The JSON string to format
+        indent: Number of spaces for indentation
+        sort_keys: Whether to sort keys alphabetically
+    """
     try:
         # Parse the JSON
         parsed = json.loads(json_text)
-        
+
         # Format it with the specified options
         formatted = json.dumps(parsed, indent=indent, sort_keys=sort_keys)
-        
+
         return {
             "content": [
                 {
@@ -76,11 +87,17 @@ def tool_format_json(
         }
 
 def tool_truncate_text(
-    text: str, 
-    max_length: int = 100, 
+    text: str,
+    max_length: int = 100,
     add_ellipsis: bool = True
 ) -> Dict:
-    """Truncates text to a specified maximum length"""
+    """Truncates text to a specified maximum length
+
+    Args:
+        text: The text to truncate
+        max_length: Maximum length of the truncated text
+        add_ellipsis: Whether to add "..." at the end of truncated text
+    """
     if len(text) <= max_length:
         return {
             "content": [
@@ -90,11 +107,11 @@ def tool_truncate_text(
                 }
             ]
         }
-    
+
     truncated = text[:max_length]
     if add_ellipsis:
         truncated += "..."
-    
+
     return {
         "content": [
             {
@@ -105,17 +122,21 @@ def tool_truncate_text(
     }
 
 def tool_count_words(text: str) -> Dict:
-    """Counts the number of words, characters, and lines in text"""
+    """Counts the number of words, characters, and lines in text
+
+    Args:
+        text: The text to analyze
+    """
     words = len(re.findall(r'\b\w+\b', text))
     chars = len(text)
     chars_no_spaces = len(text.replace(" ", ""))
     lines = len(text.split("\n"))
-    
+
     result = f"""Word count: {words}
 Character count (with spaces): {chars}
 Character count (without spaces): {chars_no_spaces}
 Line count: {lines}"""
-    
+
     return {
         "content": [
             {
@@ -126,13 +147,21 @@ Line count: {lines}"""
     }
 
 def tool_find_replace(
-    text: str, 
-    find: str, 
-    replace: str, 
+    text: str,
+    find: str,
+    replace: str,
     case_sensitive: bool = True,
     all_occurrences: bool = True
 ) -> Dict:
-    """Finds and replaces text within a string"""
+    """Finds and replaces text within a string
+
+    Args:
+        text: The input text to search in
+        find: The text to find
+        replace: The text to replace with
+        case_sensitive: Whether the search should be case-sensitive
+        all_occurrences: Whether to replace all occurrences or just the first one
+    """
     if not case_sensitive:
         if all_occurrences:
             result = re.sub(re.escape(find), replace, text, flags=re.IGNORECASE)
@@ -143,7 +172,7 @@ def tool_find_replace(
             result = text.replace(find, replace)
         else:
             result = text.replace(find, replace, 1)
-    
+
     return {
         "content": [
             {
@@ -154,14 +183,20 @@ def tool_find_replace(
     }
 
 def tool_extract_regex(
-    text: str, 
+    text: str,
     pattern: str,
     group: int = 0
 ) -> Dict:
-    """Extracts text matching a regular expression pattern"""
+    """Extracts text matching a regular expression pattern
+
+    Args:
+        text: The text to search in
+        pattern: The regular expression pattern to match
+        group: The capture group to extract (0 for the entire match)
+    """
     try:
         matches = re.findall(pattern, text)
-        
+
         if not matches:
             return {
                 "content": [
@@ -171,7 +206,7 @@ def tool_extract_regex(
                     }
                 ]
             }
-        
+
         # Handle different match types
         if isinstance(matches[0], tuple) and group < len(matches[0]):
             # If matches are tuples (groups), extract the requested group
@@ -189,7 +224,7 @@ def tool_extract_regex(
                 ],
                 "isError": True
             }
-        
+
         formatted_results = "\n".join(results)
         return {
             "content": [

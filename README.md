@@ -21,6 +21,7 @@ The extension implements an MCP server that:
 - Provides resources, tools, and prompts for LLM applications
 - Integrates with the proxy server for request handling
 - Uses the official MCP TypeScript SDK
+- Supports dynamic loading of custom MCP extensions from JavaScript, TypeScript, and Python
 
 ### 3. MCP Registry
 
@@ -67,6 +68,42 @@ The MCP server is integrated into the proxy server and is available at `http://l
 - `/mcp/messages` - Endpoint for MCP clients to send messages
 
 You can also run the MCP server as a standalone service on `http://localhost:3001` if needed.
+
+#### Custom MCP Extensions
+
+The MCP server supports loading custom extensions from JavaScript, TypeScript, and Python files placed in the `.clay/mcp/` directory. These extensions can define tools, resources, and prompts that will be automatically registered with the MCP server.
+
+##### Python Extensions
+
+Python extensions can be created by defining functions with appropriate docstrings and a `main()` function that returns the extension definition:
+
+```python
+def tool_example(param1: str, param2: int = 0) -> dict:
+    """Example tool function
+
+    Args:
+        param1: Description of the first parameter
+        param2: Description of the second parameter
+    """
+    # Tool implementation
+    return {
+        "content": [{"type": "text", "text": f"Result: {param1}, {param2}"}]
+    }
+
+def main():
+    """Define the extension"""
+    return {
+        "id": "example-extension",
+        "description": "Example extension with tools",
+        "version": "1.0.0",
+        "author": "Your Name",
+        "tools": [tool_example],
+        "resources": [],
+        "prompts": []
+    }
+```
+
+The MCP server will automatically extract parameter descriptions from docstrings using the standard Python docstring format with Args sections.
 
 ### Registry
 
@@ -125,11 +162,16 @@ npm run vsce:package
 ### Project Structure
 
 - `/extension` - VSCode extension code
-- `/server` - Server implementations
-  - `/proxy` - Fastify-based proxy server with tracing
-  - `/mcp` - MCP server implementation
-  - `/augment` - Augment Context Engine implementation
-- `/server/utils` - Shared utilities
+- `/src` - Source code
+  - `/server` - Server implementations
+    - `/gateway` - Fastify-based gateway server with tracing
+    - `/mcp` - MCP server implementation
+      - `/extensions` - MCP extensions loader and handlers
+    - `/augment` - Augment Context Engine implementation
+  - `/utils` - Shared utilities
+- `/webview-ui` - Dashboard UI implementation
+- `/.clay` - Configuration and extensions directory
+  - `/mcp` - Custom MCP extensions
 
 ## License
 

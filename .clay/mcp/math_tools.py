@@ -3,17 +3,32 @@ Example MCP extension with dynamic tools
 """
 
 def tool_add_numbers(number1: int, number2: int) -> int:
-    """Adds two numbers together and returns the result"""
+    """Adds two numbers together and returns the result
+
+    Args:
+        number1: The first number to add
+        number2: The second number to add
+    """
     result = number1 + number2
     return result
 
 def tool_subtract_numbers(number1: int, number2: int, number3: int = 0) -> int:
-    """Subtracts numbers from each other and returns the result"""
+    """Subtracts numbers from each other and returns the result
+
+    Args:
+        number1: The number to subtract from
+        number2: The first number to subtract
+        number3: The second number to subtract (optional)
+    """
     result = number1 - number2 - number3
     return result
 
 def prompt_math_professor():
-    """Creates a prompt for a math professor persona"""
+    """Creates a prompt for a math professor persona
+
+    Args:
+        None
+    """
     return {
         "messages": [
             {
@@ -27,7 +42,11 @@ def prompt_math_professor():
     }
 
 def resource_math_formula(formula_name: str = "pythagorean"):
-    """Provides common mathematical formulas"""
+    """Provides common mathematical formulas
+
+    Args:
+        formula_name: The name of the formula to retrieve (pythagorean, quadratic, area_circle, volume_sphere)
+    """
     formulas = {
         "pythagorean": "a² + b² = c²",
         "quadratic": "x = (-b ± √(b² - 4ac)) / 2a",
