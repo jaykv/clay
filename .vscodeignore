@@ -13,6 +13,7 @@ server/tsconfig.json
 !dist/server/**/*
 test-extension.js
 .github/**
+.clay/**
 
 # Webview UI source files (exclude everything except dist)
 webview-ui/src/**

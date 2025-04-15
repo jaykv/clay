@@ -4,9 +4,17 @@ import cors from 'cors'; // Used in app.use(cors())
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { z } from 'zod';
+
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
 import { registerAugmentMCP } from '../augment/mcp';
+import { workspaceRootPath } from '../../globals';
+import {
+  initializeMCPExtensions,
+  getLoadedTools,
+  getLoadedResources,
+  getLoadedPrompts,
+} from './extensions';
 
 export interface MCPResourceInfo {
   id: string;
@@ -276,18 +284,33 @@ export class ExpressMCPServer {
    * @returns Information about the MCP server
    */
   public getServerInfo(): MCPServerInfo {
+    // Get dynamically loaded extensions
+    const dynamicTools = getLoadedTools();
+    const dynamicResources = getLoadedResources();
+    const dynamicPrompts = getLoadedPrompts();
+
     return {
       name: this.config.name,
       version: this.config.version,
-      resources: this.resources,
-      tools: this.tools,
-      prompts: this.prompts,
+      resources: [...this.resources, ...dynamicResources],
+      tools: [...this.tools, ...dynamicTools],
+      prompts: [...this.prompts, ...dynamicPrompts],
     };
   }
 
   public async start(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
+        // Get the workspace root path from globals
+        // This will be set by the VS Code extension or default to process.cwd()
+        const workspaceRoot = workspaceRootPath;
+
+        // Initialize MCP extensions
+        if (this.config.extensions.enabled) {
+          logger.info('Loading MCP extensions...');
+          await initializeMCPExtensions(this.mcpServer, workspaceRoot);
+        }
+
         this.httpServer = this.app.listen(this.config.port, this.config.host, () => {
           resolve();
         });

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { registerCommands, isMCPServerRunning, isGatewayServerRunning } from './commands';
-import { serverStatusEmitter, ServerStatusEvent } from './globals';
+import { serverStatusEmitter, ServerStatusEvent, setWorkspaceRootPath } from './globals';
 import { EnhancedWebviewProvider } from './webview/WebviewProvider';
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
 import { getConfig } from './server/utils/config';
@@ -20,6 +20,16 @@ export async function activate(context: vscode.ExtensionContext) {
   // Load configuration from YAML file
   // Configuration is loaded automatically when getConfig() is called
   logger.info('Loading configuration...');
+
+  // Set workspace root path if available
+  if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    const workspaceFolder = vscode.workspace.workspaceFolders[0];
+    const workspaceRoot = workspaceFolder.uri.fsPath;
+    setWorkspaceRootPath(workspaceRoot);
+    logger.info(`Workspace root path set to: ${workspaceRoot}`);
+  } else {
+    logger.warn('No workspace folder found, using current directory as workspace root');
+  }
 
   // Register commands
   logger.info('Registering commands...');

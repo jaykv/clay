@@ -13,12 +13,20 @@ export interface GatewayConfig {
   mcpEnabled: boolean;
 }
 
+export interface MCPExtensionsConfig {
+  enabled: boolean;
+  extensionsPath: string;
+  include: string[];
+  exclude: string[];
+}
+
 export interface MCPConfig {
   port: number;
   host: string;
   name: string;
   version: string;
   autostart: boolean;
+  extensions: MCPExtensionsConfig;
 }
 
 export interface RegistryConfig {
@@ -56,6 +64,12 @@ const defaultConfig: Config = {
     name: 'VSCode MCP Server',
     version: '1.0.0',
     autostart: true,
+    extensions: {
+      enabled: true,
+      extensionsPath: '.clay/mcp',
+      include: ['**/*.{js,ts,py}'],
+      exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'],
+    },
   },
   registry: {
     port: 3002,

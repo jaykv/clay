@@ -22,6 +22,9 @@ export let gatewayServerInstance: any = null;
 export let mcpServerInstance: any = null;
 export let registryServerInstance: any = null;
 
+// Workspace root path
+export let workspaceRootPath: string = process.cwd();
+
 // Define the event type for server status updates
 export type ServerStatusEvent = {
   type: 'gateway' | 'mcp' | 'registry';
@@ -70,4 +73,12 @@ export function setMCPServerInstance(instance: any): void {
  */
 export function setRegistryServerInstance(instance: any): void {
   registryServerInstance = instance;
+}
+
+/**
+ * Set the workspace root path
+ * @param path The workspace root path
+ */
+export function setWorkspaceRootPath(path: string): void {
+  workspaceRootPath = path;
 }

@@ -4,7 +4,7 @@ import { ExpressMCPServer } from './express-server';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
 import { isMCPServer, killProcessByPort } from '../utils/port';
-import { mcpServerInstance, setMCPServerInstance } from '../../globals';
+import { mcpServerInstance, setMCPServerInstance, workspaceRootPath } from '../../globals';
 
 /**
  * Start the MCP server
