@@ -79,12 +79,9 @@
     "views": {
       "clay": [
         {
-          "id": "clay-servers",
-          "name": "Servers"
-        },
-        {
-          "id": "clay-registry",
-          "name": "MCP Registry"
+          "id": "clay.sidebar.dashboard",
+          "type": "webview",
+          "name": "Gateway Dashboard"
         }
       ]
     },

@@ -48,6 +48,8 @@ const NavigationHandler: React.FC = () => {
 
 const App: React.FC = () => {
   const [isVSCode, setIsVSCode] = useState<boolean | null>(null);
+  const [isSidebar, setIsSidebar] = useState<boolean>(false);
+  const [initialTab, setInitialTab] = useState<string>('overview');
 
   useEffect(() => {
     // Initialize VS Code API and determine environment
@@ -61,6 +63,17 @@ const App: React.FC = () => {
     if (!inVSCode) {
       document.body.classList.add('browser-mode');
     }
+
+    // Check if we're in the sidebar view
+    const sidebarMeta = document.querySelector('meta[name="vscode-view-type"][content="sidebar"]');
+    if (sidebarMeta) {
+      setIsSidebar(true);
+      document.body.classList.add('vscode-sidebar-view');
+
+      // We're in the sidebar, so we'll just use the default tab
+      console.log('Running in sidebar mode');
+      setInitialTab('overview');
+    }
   }, []);
 
   // Wait until we've determined the environment before rendering
@@ -68,6 +81,19 @@ const App: React.FC = () => {
     return <div className="loading">Loading...</div>;
   }
 
+  // Create a common dashboard component with appropriate styling
+  const dashboardComponent = <Dashboard initialTab={initialTab} isSidebar={isSidebar} />;
+
+  // If we're in the sidebar, render just the dashboard without the layout
+  if (isSidebar) {
+    return (
+      <TracesProvider>
+        <div className="sidebar-container">{dashboardComponent}</div>
+      </TracesProvider>
+    );
+  }
+
+  // Otherwise, render the normal dashboard with layout
   return (
     <TracesProvider>
       <Router>
@@ -79,7 +105,7 @@ const App: React.FC = () => {
             </div>
           )}
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={dashboardComponent} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </DashboardLayout>

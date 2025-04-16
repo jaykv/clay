@@ -30,6 +30,8 @@ export type VSCodeCommand =
   | { command: 'clay.getSymbolDefinition' }
   | { command: 'clay.findReferences' }
   | { command: 'clay.reindexCodebase' }
+  | { command: 'clay.chatMessage'; message: string }
+  | { command: 'clay.openSettings' }
   | { command: string }; // Allow for dynamic command strings
 
 /**

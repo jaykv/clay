@@ -4,17 +4,23 @@ import Button from '@/components/ui/Button';
 import ServerStatus from '@/components/servers/ServerStatus';
 import PerformanceMetrics from '@/components/metrics/PerformanceMetrics';
 import TracesList from '@/components/traces/TracesList';
+import SidebarTracesList from '@/components/traces/SidebarTracesList';
 import ProxyRoutes from './ProxyRoutes';
 import AugmentContextEngine from '@/components/augment/AugmentContextEngine';
 import MCPServerDetails from '@/components/mcp/MCPServerDetails';
 import { postMessage } from '@/utils/vscode';
 import { checkServerHealth } from '@/lib/api/servers';
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  initialTab?: string;
+  isSidebar?: boolean;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ initialTab = 'overview', isSidebar = false }) => {
   // Server states
   const [gatewayServerRunning, setGatewayServerRunning] = useState(false);
   const [mcpServerRunning, setMcpServerRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Function to check gateway server health immediately
   const checkGatewayServerHealth = async () => {
@@ -105,48 +111,50 @@ const Dashboard: React.FC = () => {
 
   // No longer needed as we have a tab for routes
 
+  // Adjust the layout based on whether we're in the sidebar or not
+  const containerClass = isSidebar
+    ? 'space-y-4 overflow-auto p-2 sidebar-dashboard'
+    : 'space-y-6 overflow-auto';
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Clay Gateway</h1>
-        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg overflow-x-auto">
-          <button
-            className={`px-3 py-1 text-sm rounded ${activeTab === 'overview' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            Overview
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded ${activeTab === 'routes' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-            onClick={() => setActiveTab('routes')}
-          >
-            Proxy Routes
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded ${activeTab === 'metrics' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-            onClick={() => setActiveTab('metrics')}
-          >
-            Metrics
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded ${activeTab === 'traces' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-            onClick={() => setActiveTab('traces')}
-          >
-            Traces
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded ${activeTab === 'augment' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-            onClick={() => setActiveTab('augment')}
-          >
-            Augment
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded ${activeTab === 'mcp' ? 'bg-white dark:bg-gray-700 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-            onClick={() => setActiveTab('mcp')}
-          >
-            MCP
-          </button>
-        </div>
+    <div className={containerClass}>
+      <div className="tab-container mb-4">
+        <button
+          className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          Overview
+        </button>
+        <button
+          className={`tab ${activeTab === 'routes' ? 'active' : ''}`}
+          onClick={() => setActiveTab('routes')}
+        >
+          Proxy Routes
+        </button>
+        <button
+          className={`tab ${activeTab === 'metrics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('metrics')}
+        >
+          Metrics
+        </button>
+        <button
+          className={`tab ${activeTab === 'traces' ? 'active' : ''}`}
+          onClick={() => setActiveTab('traces')}
+        >
+          Traces
+        </button>
+        <button
+          className={`tab ${activeTab === 'augment' ? 'active' : ''}`}
+          onClick={() => setActiveTab('augment')}
+        >
+          Augment
+        </button>
+        <button
+          className={`tab ${activeTab === 'mcp' ? 'active' : ''}`}
+          onClick={() => setActiveTab('mcp')}
+        >
+          MCP
+        </button>
       </div>
 
       {activeTab === 'overview' && (
@@ -243,7 +251,7 @@ const Dashboard: React.FC = () => {
 
       {activeTab === 'metrics' && <PerformanceMetrics />}
 
-      {activeTab === 'traces' && <TracesList />}
+      {activeTab === 'traces' && (isSidebar ? <SidebarTracesList /> : <TracesList />)}
 
       {activeTab === 'augment' && <AugmentContextEngine />}
 

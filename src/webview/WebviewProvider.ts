@@ -280,12 +280,25 @@ export class EnhancedWebviewProvider {
         console.log('No CSS file found, CSS might be inlined in JS');
       }
 
-      // Add CSP
+      // Add CSP and scrolling styles
       const nonce = this.getNonce();
       indexHtml = indexHtml.replace(
         /<head>/,
         `<head>
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*; ">`
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*; ">
+        <style>
+          html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: auto !important;
+          }
+          #root {
+            height: 100%;
+            overflow: auto !important;
+          }
+        </style>`
       );
 
       // Add nonce to scripts

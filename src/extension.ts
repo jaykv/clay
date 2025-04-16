@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { registerCommands, isMCPServerRunning, isGatewayServerRunning } from './commands';
 import { serverStatusEmitter, ServerStatusEvent, setWorkspaceRootPath } from './globals';
 import { EnhancedWebviewProvider } from './webview/WebviewProvider';
+import { SidebarWebviewProvider } from './webview/SidebarWebviewProvider';
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
 import { getConfig } from './server/utils/config';
 import { startMCPServer } from './server/mcp';
@@ -112,6 +113,27 @@ export async function activate(context: vscode.ExtensionContext) {
       EnhancedWebviewProvider.postMessage({
         command: 'switchTab',
         tab: 'augment',
+      });
+    })
+  );
+
+  // Register sidebar webview provider
+  const sidebarProvider = new SidebarWebviewProvider(context.extensionUri);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('clay.sidebar.dashboard', sidebarProvider)
+  );
+
+  // Listen for server status changes and update the sidebar webview
+  context.subscriptions.push(
+    serverStatusEmitter.event((event: ServerStatusEvent) => {
+      logger.debug(
+        `Sending immediate server status update to sidebar: ${event.type} is ${event.status}`
+      );
+
+      sidebarProvider.postMessage({
+        command: 'serverStatus',
+        server: event.type,
+        status: event.status === 'started' ? 'running' : 'stopped',
       });
     })
   );
