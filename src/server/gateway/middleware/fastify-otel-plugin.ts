@@ -8,6 +8,7 @@ import {
   getTraceStats,
   generateTraceId,
   addTrace,
+  TraceData,
 } from '../../utils/telemetry';
 import { logger } from '../../utils/logger';
 import { broadcastNewTrace } from '../../gateway/websocket';
@@ -15,7 +16,7 @@ import { broadcastNewTrace } from '../../gateway/websocket';
 // Extend FastifyRequest to include trace property
 declare module 'fastify' {
   interface FastifyRequest {
-    trace?: any;
+    trace?: TraceData;
   }
 }
 

@@ -26,10 +26,10 @@ const SidebarTracesList: React.FC = () => {
 
   // Convert OtelSpan to TraceData for display
   const convertedTraces = traces.map(otelSpanToTraceData);
-  
+
   // Get the selected trace data
-  const selectedTraceData = selectedTrace 
-    ? convertedTraces.find(t => t.id === selectedTrace) 
+  const selectedTraceData = selectedTrace
+    ? convertedTraces.find(t => t.id === selectedTrace)
     : null;
 
   // Format date for display
@@ -83,10 +83,10 @@ const SidebarTracesList: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedTrace || !convertedTraces.length) return;
-      
+
       const currentIndex = convertedTraces.findIndex(t => t.id === selectedTrace);
       if (currentIndex === -1) return;
-      
+
       if (e.key === 'ArrowDown' || e.key === 'j') {
         // Move to next trace
         if (currentIndex < convertedTraces.length - 1) {
@@ -290,7 +290,14 @@ const SidebarTracesList: React.FC = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="request" className="flex-1 overflow-hidden flex flex-col">
+      <Tabs
+        defaultValue="request"
+        className="flex-1 overflow-hidden flex flex-col"
+        onValueChange={() => {
+          // Prevent any state changes when switching tabs
+          // This helps prevent unwanted refreshes
+        }}
+      >
         <TabsList className="w-full justify-start bg-transparent p-0 mb-2">
           <TabsTrigger
             value="request"
@@ -397,11 +404,18 @@ const SidebarTracesList: React.FC = () => {
         <div className="flex items-center space-x-1">
           {/* View mode controls */}
           <ViewModeControls />
-          
+
           {/* Action buttons */}
           <div className="flex space-x-1 ml-2">
             <button
-              onClick={() => loadTraces()}
+              onClick={() => {
+                // If a trace is selected, only refresh if we're in list view
+                if (selectedTrace && viewMode !== 'list') {
+                  // Don't refresh when viewing a trace detail to avoid disruption
+                  return;
+                }
+                loadTraces();
+              }}
               className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
               title="Refresh"
             >
