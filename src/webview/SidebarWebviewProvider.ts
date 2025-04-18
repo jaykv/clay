@@ -53,6 +53,7 @@ export class SidebarWebviewProvider implements vscode.WebviewViewProvider {
         vscode.Uri.joinPath(this.extensionUri, 'webview-ui'),
         vscode.Uri.joinPath(this.extensionUri, 'webview-ui', 'dist'),
         vscode.Uri.joinPath(this.extensionUri, 'webview-ui', 'dist', 'assets'),
+        vscode.Uri.joinPath(this.extensionUri, 'webview-ui', 'dist', 'fonts'),
       ],
     };
 
@@ -73,6 +74,15 @@ export class SidebarWebviewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(
       message => {
         logger.debug('Received message from sidebar webview:', message);
+
+        // Handle commands that start with 'clay.'
+        if (message.command && message.command.startsWith('clay.')) {
+          // Forward these commands directly to VS Code
+          vscode.commands.executeCommand(message.command, message);
+          return;
+        }
+
+        // Handle other specific commands
         switch (message.command) {
           case 'alert':
             vscode.window.showErrorMessage(message.text);
@@ -130,10 +140,6 @@ export class SidebarWebviewProvider implements vscode.WebviewViewProvider {
             this.sendServerStatus().catch((error: Error) => {
               logger.error('Error sending server status:', error);
             });
-            return;
-          case 'clay.openSettings':
-            // Open settings
-            vscode.commands.executeCommand('workbench.action.openSettings', 'clay');
             return;
         }
       },
@@ -219,7 +225,22 @@ export class SidebarWebviewProvider implements vscode.WebviewViewProvider {
       );
     }
 
-    // Construct the HTML with direct script and style tags
+    // Create URI for the Material Icons CSS
+    const materialIconsCssUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(
+        this.extensionUri,
+        'webview-ui',
+        'dist',
+        'fonts',
+        'material-icons',
+        'material-icons.css'
+      )
+    );
+
+    // Generate a nonce for CSP
+    const nonce = this.getNonce();
+
+    // Construct the HTML with direct script and style tags and CSP
     html = `
       <!DOCTYPE html>
       <html lang="en">
@@ -227,12 +248,14 @@ export class SidebarWebviewProvider implements vscode.WebviewViewProvider {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="vscode-view-type" content="sidebar" />
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource}; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;" />
         <title>Clay Dashboard</title>
         ${styleUri ? `<link rel="stylesheet" type="text/css" href="${styleUri}" />` : ''}
+        <link rel="stylesheet" type="text/css" href="${materialIconsCssUri}" />
       </head>
       <body class="vscode-sidebar-view">
         <div id="root"></div>
-        <script type="module" src="${scriptUri}"></script>
+        <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
       </body>
       </html>
     `;
@@ -272,5 +295,17 @@ export class SidebarWebviewProvider implements vscode.WebviewViewProvider {
       </body>
       </html>
     `;
+  }
+
+  /**
+   * Generates a nonce string for CSP
+   */
+  private getNonce(): string {
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 32; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
   }
 }

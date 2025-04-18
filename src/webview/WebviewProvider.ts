@@ -107,6 +107,15 @@ export class EnhancedWebviewProvider {
     panel.webview.onDidReceiveMessage(
       message => {
         console.log('Received message from webview:', message);
+
+        // Handle commands that start with 'clay.'
+        if (message.command && message.command.startsWith('clay.')) {
+          // Forward these commands directly to VS Code
+          vscode.commands.executeCommand(message.command, message);
+          return;
+        }
+
+        // Handle other specific commands
         switch (message.command) {
           case 'alert':
             vscode.window.showErrorMessage(message.text);

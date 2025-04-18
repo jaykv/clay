@@ -65,6 +65,10 @@
       {
         "command": "clay.reindexCodebase",
         "title": "Clay: Reindex Codebase"
+      },
+      {
+        "command": "clay.openFile",
+        "title": "Clay: Open File at Location"
       }
     ],
     "viewsContainers": {

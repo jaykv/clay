@@ -286,4 +286,57 @@ function registerAugmentCommands(
       }
     })
   );
+
+  // Register command to open a file at a specific location
+  context.subscriptions.push(
+    vscode.commands.registerCommand('clay.openFile', async args => {
+      try {
+        // Extract parameters - handle both direct args and message format
+        let filePath, startLine, endLine;
+
+        if (args.command && args.command === 'clay.openFile') {
+          // This is a message from the webview
+          filePath = args.filePath;
+          startLine = args.startLine || 1;
+          endLine = args.endLine || startLine;
+        } else {
+          // This is a direct command call
+          filePath = args.filePath;
+          startLine = args.startLine || 1;
+          endLine = args.endLine || startLine;
+        }
+
+        if (!filePath) {
+          vscode.window.showErrorMessage('No file path provided');
+          return;
+        }
+
+        // Log the file opening attempt
+        console.log(`Opening file: ${filePath} at lines ${startLine}-${endLine}`);
+
+        // Create a URI for the file
+        const uri = vscode.Uri.file(filePath);
+
+        // Open the document
+        const document = await vscode.workspace.openTextDocument(uri);
+        const editor = await vscode.window.showTextDocument(document);
+
+        // Select the range
+        const startPosition = new vscode.Position(startLine - 1, 0);
+        const endPosition = new vscode.Position(
+          endLine - 1,
+          document.lineAt(endLine - 1).text.length
+        );
+
+        editor.selection = new vscode.Selection(startPosition, endPosition);
+        editor.revealRange(
+          new vscode.Range(startPosition, endPosition),
+          vscode.TextEditorRevealType.InCenter
+        );
+      } catch (error) {
+        console.error('Error opening file:', error);
+        vscode.window.showErrorMessage(`Error opening file: ${error}`);
+      }
+    })
+  );
 }
