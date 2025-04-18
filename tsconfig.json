@@ -12,5 +12,6 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules", ".vscode-test", "server", "webview-ui-next", "webview-ui"]
+  "files": [],
+  "references": [{ "path": "./src/extension" }]
 }

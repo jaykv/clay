@@ -18,6 +18,17 @@ const config = {
     // Exclude native modules and problematic modules
     fsevents: 'commonjs fsevents',
     chokidar: 'commonjs chokidar',
+    // Add other native modules that might cause issues
+    'node-fetch': 'commonjs node-fetch',
+    ws: 'commonjs ws',
+    express: 'commonjs express',
+    fastify: 'commonjs fastify',
+    '@fastify/cors': 'commonjs @fastify/cors',
+    '@fastify/http-proxy': 'commonjs @fastify/http-proxy',
+    '@fastify/sensible': 'commonjs @fastify/sensible',
+    '@fastify/static': 'commonjs @fastify/static',
+    '@fastify/websocket': 'commonjs @fastify/websocket',
+    '@modelcontextprotocol/sdk': 'commonjs @modelcontextprotocol/sdk',
   },
   resolve: {
     extensions: ['.ts', '.js'],

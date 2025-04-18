@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { registerCommands, isMCPServerRunning, isGatewayServerRunning } from './commands';
-import { serverStatusEmitter, ServerStatusEvent, setWorkspaceRootPath } from './globals';
+import { serverStatusEmitter, ServerStatusEvent } from './globals';
+import { initializeServerContext } from './server/utils/server-bridge';
 import { EnhancedWebviewProvider } from './webview/WebviewProvider';
 import { SidebarWebviewProvider } from './webview/SidebarWebviewProvider';
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
@@ -26,7 +27,8 @@ export async function activate(context: vscode.ExtensionContext) {
   if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
     const workspaceFolder = vscode.workspace.workspaceFolders[0];
     const workspaceRoot = workspaceFolder.uri.fsPath;
-    setWorkspaceRootPath(workspaceRoot);
+    // Initialize both global and server contexts with the workspace root path
+    initializeServerContext(workspaceRoot);
     logger.info(`Workspace root path set to: ${workspaceRoot}`);
   } else {
     logger.warn('No workspace folder found, using current directory as workspace root');

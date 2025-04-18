@@ -10,6 +10,15 @@ import { MCPToolInfo, MCPResourceInfo, MCPPromptInfo } from '../express-server';
 import * as dotenv from 'dotenv';
 
 /**
+ * Get python script path
+ * @param scriptName
+ * @returns
+ */
+function findPythonScript(scriptName: string): string {
+  return path.resolve(__dirname, 'python', scriptName);
+}
+
+/**
  * Interface for MCP extension metadata
  */
 export interface MCPExtensionMeta {
@@ -281,7 +290,7 @@ export class MCPExtensionsLoader {
       const tempJsonPath = `${filePath}.json`;
 
       // Get the path to the Python loader script
-      const loaderScriptPath = path.resolve(__dirname, 'python-loader.py');
+      const loaderScriptPath = findPythonScript('python-loader.py');
 
       // Check for a virtual environment Python interpreter
       const venvPython = this.findVenvPython();
@@ -570,7 +579,7 @@ export class MCPExtensionsLoader {
     fs.writeFileSync(envPath, JSON.stringify(this.envVars));
 
     // Get the path to the Python handler script
-    const handlerScriptPath = path.resolve(__dirname, 'python-handler.py');
+    const handlerScriptPath = findPythonScript('python-handler.py');
 
     // Check for a virtual environment Python interpreter
     const venvPython = this.findVenvPython();

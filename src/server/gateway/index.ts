@@ -2,7 +2,7 @@ import { FastifyGatewayServer } from './fastify-server';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
 import { killProcessByPort, isGatewayServer } from '../utils/port';
-import { gatewayServerInstance, setGatewayServerInstance } from '../../globals';
+import { gatewayServerInstance, setGatewayServerInstance } from '../utils/server-context';
 
 /**
  * Start the Fastify gateway server

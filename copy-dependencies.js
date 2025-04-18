@@ -3,21 +3,38 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 // Define the dependencies we need to include
+// Only include the absolute minimum required dependencies
 const dependencies = [
+  // File system and path handling
   'chokidar',
   'fsevents',
   'glob',
-  'js-yaml',
-  '@modelcontextprotocol/sdk',
-  'node-fetch',
-  'zod',
-  'express',
   'readdirp',
+
+  // Data formats and validation
+  'js-yaml',
+  'zod',
+
+  // HTTP and networking
+  'node-fetch',
+  'express',
   'fastify',
+  'ws',
+
+  // Fastify plugins
   '@fastify/cors',
   '@fastify/http-proxy',
   '@fastify/sensible',
   '@fastify/static',
+  '@fastify/websocket',
+
+  // MCP SDK
+  '@modelcontextprotocol/sdk',
+
+  // Other utilities
+  'fast-json-stringify',
+  'on-finished',
+  'raw-body',
 ];
 
 // Create a temporary package.json for installing only the required dependencies

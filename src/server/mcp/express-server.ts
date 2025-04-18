@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
 import { registerAugmentMCP } from '../augment/mcp';
-import { workspaceRootPath } from '../../globals';
+import { workspaceRootPath } from '../utils/server-context';
 import {
   initializeMCPExtensions,
   getLoadedTools,

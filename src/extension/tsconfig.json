@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2022",
+    "outDir": "../../dist",
+    "lib": ["ES2022", "DOM"],
+    "sourceMap": true,
+    "rootDir": "../..",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "../../src/commands.ts",
+    "../../src/globals.ts",
+    "../../src/extension.ts",
+    "../../src/webview/**/*.ts",
+    "../../src/server/utils/server-bridge.ts",
+    "../../src/server/utils/server-context.ts",
+    "../../src/server/utils/logger.ts",
+    "../../src/server/utils/config.ts",
+    "../../src/server/utils/port.ts",
+    "../../src/server/mcp/index.ts",
+    "../../src/server/gateway/index.ts",
+    "../../src/server/augment/vscode-extension.ts"
+  ],
+  "exclude": ["node_modules", ".vscode-test"]
+}

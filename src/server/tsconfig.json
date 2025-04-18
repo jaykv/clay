@@ -10,8 +10,17 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "composite": true,
+    "declaration": true
   },
-  "include": ["./**/*", "../globals.ts"],
-  "exclude": ["node_modules", ".vscode-test"]
+  "include": ["./**/*"],
+  "exclude": [
+    "node_modules",
+    ".vscode-test",
+    "./utils/server-bridge.ts",
+    "./mcp/index.ts",
+    "./gateway/index.ts",
+    "./augment/vscode-extension.ts"
+  ]
 }

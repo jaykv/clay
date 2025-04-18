@@ -11,14 +11,16 @@ import { getConfig } from './server/utils/config';
 import { logger } from './server/utils/logger';
 
 // Import globals
+import { serverStatusEmitter } from './globals';
+
+// Import server bridge
 import {
-  gatewayServerInstance,
-  mcpServerInstance,
-  registryServerInstance,
+  getGatewayServerInstance,
+  getMCPServerInstance,
+  getRegistryServerInstance,
   setGatewayServerInstance,
   setMCPServerInstance,
-  serverStatusEmitter,
-} from './globals';
+} from './server/utils/server-bridge';
 
 // Check if servers are running
 export async function isGatewayServerRunning(): Promise<boolean> {
@@ -28,6 +30,7 @@ export async function isGatewayServerRunning(): Promise<boolean> {
   const isRunning = await isGatewayServer(config.port, config.host);
 
   // If the server is not running but we have an instance reference, clear it
+  const gatewayServerInstance = getGatewayServerInstance();
   if (!isRunning && gatewayServerInstance !== null) {
     logger.warn(
       'Gateway server instance reference exists but server is not running. Clearing reference.'
@@ -49,6 +52,7 @@ export async function isMCPServerRunning(): Promise<boolean> {
   const isRunning = await isMCPServer(config.port, config.host);
 
   // If the server is not running but we have an instance reference, clear it
+  const mcpServerInstance = getMCPServerInstance();
   if (!isRunning && mcpServerInstance !== null) {
     logger.warn(
       'MCP server instance reference exists but server is not running. Clearing reference.'
@@ -64,7 +68,7 @@ export async function isMCPServerRunning(): Promise<boolean> {
 }
 
 export function isRegistryServerRunning(): boolean {
-  return registryServerInstance !== null;
+  return getRegistryServerInstance() !== null;
 }
 
 export function registerCommands(context: vscode.ExtensionContext) {
@@ -111,7 +115,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('clay.startMCPServer', async () => {
       if (await isMCPServerRunning()) {
         vscode.window.showInformationMessage('MCP server is already running');
-        return mcpServerInstance;
+        return getMCPServerInstance();
       }
 
       try {
@@ -122,7 +126,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('MCP server started successfully');
         // Emit event for immediate UI update (faster than waiting for health checks)
         serverStatusEmitter.fire({ type: 'mcp', status: 'started' });
-        return mcpServerInstance;
+        return getMCPServerInstance();
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to start MCP server: ${error}`);
         return null;

@@ -6,14 +6,28 @@ node_modules/**
 webpack.config.js
 .eslintrc.json
 tsconfig.json
-server/tsconfig.json
+src/server/tsconfig.json
+src/extension/tsconfig.json
 **/*.ts
 **/*.map
-!dist/**/*
-!dist/server/**/*
+!dist/extension.js
+!dist/extension.js.map
+!dist/commands.js
+!dist/commands.js.map
+!dist/globals.js
+!dist/globals.js.map
+!dist/server/**/*.js
+!dist/server/**/*.js.map
+!dist/server/utils/server-bridge.js
+!dist/server/utils/server-bridge.js.map
+!dist/server/utils/server-context.js
+!dist/server/utils/server-context.js.map
+!dist/python/**/*
+!**/*.py
 test-extension.js
 .github/**
 .clay/**
+.clay/mcp/**
 
 # Webview UI source files (exclude everything except dist)
 webview-ui/src/**
