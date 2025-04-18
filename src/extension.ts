@@ -117,11 +117,18 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Register sidebar webview provider
+  // Register sidebar webview provider with persistence options
   const sidebarProvider = new SidebarWebviewProvider(context.extensionUri);
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider('clay.sidebar.dashboard', sidebarProvider)
+    vscode.window.registerWebviewViewProvider('clay.sidebar.dashboard', sidebarProvider, {
+      webviewOptions: {
+        retainContextWhenHidden: true, // This is crucial for performance and state persistence
+      },
+    })
   );
+
+  // Log that the sidebar provider is registered
+  logger.info('Clay sidebar webview provider registered with persistence enabled');
 
   // Listen for server status changes and update the sidebar webview
   context.subscriptions.push(
