@@ -14,6 +14,7 @@ export interface TraceData {
   duration?: number;
   status?: number;
   response?: any;
+  responseHeaders?: Record<string, string>;
   responseTruncated?: boolean;
   error?: Error;
 }
