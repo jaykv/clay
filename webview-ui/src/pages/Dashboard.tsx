@@ -4,7 +4,6 @@ import Button from '@/components/ui/Button';
 import ServerStatus from '@/components/servers/ServerStatus';
 import PerformanceMetrics from '@/components/metrics/PerformanceMetrics';
 import TracesList from '@/components/traces/TracesList';
-import SidebarTracesList from '@/components/traces/SidebarTracesList';
 import ProxyRoutes from './ProxyRoutes';
 import AugmentContextEngine from '@/components/augment/AugmentContextEngine';
 import MCPServerDetails from '@/components/mcp/MCPServerDetails';
@@ -27,7 +26,6 @@ const Dashboard: React.FC<DashboardProps> = ({ initialTab = 'overview', isSideba
     try {
       const isRunning = await checkServerHealth('http://localhost:3000/health');
       setGatewayServerRunning(isRunning);
-      console.log('Immediate health check for Gateway server:', isRunning ? 'running' : 'stopped');
     } catch (error) {
       console.error('Error checking Gateway server health:', error);
     }
@@ -38,7 +36,6 @@ const Dashboard: React.FC<DashboardProps> = ({ initialTab = 'overview', isSideba
     try {
       const isRunning = await checkServerHealth('http://localhost:3001/health');
       setMcpServerRunning(isRunning);
-      console.log('Immediate health check for MCP server:', isRunning ? 'running' : 'stopped');
     } catch (error) {
       console.error('Error checking MCP server health:', error);
     }
@@ -65,7 +62,7 @@ const Dashboard: React.FC<DashboardProps> = ({ initialTab = 'overview', isSideba
       const healthCheckInterval = setInterval(() => {
         checkGatewayServerHealth();
         checkMcpServerHealth();
-      }, 5000);
+      }, 20000);
 
       // Clean up interval on unmount
       return () => clearInterval(healthCheckInterval);
@@ -251,7 +248,7 @@ const Dashboard: React.FC<DashboardProps> = ({ initialTab = 'overview', isSideba
 
       {activeTab === 'metrics' && <PerformanceMetrics />}
 
-      {activeTab === 'traces' && (isSidebar ? <SidebarTracesList /> : <TracesList />)}
+      {activeTab === 'traces' && <TracesList />}
 
       {activeTab === 'augment' && <AugmentContextEngine />}
 

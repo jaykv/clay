@@ -32,6 +32,7 @@ export type VSCodeCommand =
   | { command: 'clay.reindexCodebase' }
   | { command: 'clay.chatMessage'; message: string }
   | { command: 'clay.openSettings' }
+  | { command: 'clay.openFile'; filePath: string; startLine?: number; endLine?: number }
   | { command: string }; // Allow for dynamic command strings
 
 /**

@@ -67,7 +67,36 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const data = await getTraces(page, limit);
 
         if (data.traces.length > 0) {
-          setTraces(data.traces);
+          // Update traces while preserving the selected trace
+          setTraces(prevTraces => {
+            const newTraces = data.traces;
+
+            // If we have a selected trace, make sure it's still in the new traces
+            if (selectedTrace) {
+              const selectedTraceStillExists = newTraces.some(
+                (trace: OtelSpan) =>
+                  trace.id === selectedTrace ||
+                  (trace.spanContext && trace.spanContext().traceId === selectedTrace)
+              );
+
+              // If the selected trace is no longer in the new traces, keep it in the list
+              if (!selectedTraceStillExists) {
+                const selectedTraceData = prevTraces.find(
+                  trace =>
+                    trace.id === selectedTrace ||
+                    (trace.spanContext && trace.spanContext().traceId === selectedTrace)
+                );
+
+                if (selectedTraceData) {
+                  // Add the selected trace to the new traces to prevent it from disappearing
+                  return [...newTraces, selectedTraceData];
+                }
+              }
+            }
+
+            return newTraces;
+          });
+
           setPagination(data.pagination);
         }
 
@@ -79,7 +108,7 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setLoading(false);
       }
     },
-    [pagination.page, pagination.limit]
+    [pagination.page, pagination.limit, selectedTrace]
   );
 
   // Load stats from the server
@@ -115,30 +144,86 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [loadStats]);
 
   // Handle new trace from WebSocket
-  const handleNewTrace = useCallback((message: any) => {
-    if (message.data) {
-      // Add the new trace to the beginning of the array
-      setTraces(prevTraces => [message.data, ...prevTraces.slice(0, 49)]);
+  const handleNewTrace = useCallback(
+    (message: any) => {
+      if (message.data) {
+        // Add the new trace to the beginning of the array
+        setTraces(prevTraces => {
+          // Don't refresh the list if we're viewing a trace detail
+          // This prevents the UI from refreshing while viewing a trace
+          if (selectedTrace) {
+            // Just add the new trace without refreshing the entire list
+            const existingTraceIndex = prevTraces.findIndex(
+              trace =>
+                trace.id === selectedTrace ||
+                (trace.spanContext && trace.spanContext().traceId === selectedTrace)
+            );
 
-      // Update pagination total
-      setPagination(prev => ({
-        ...prev,
-        total: prev.total + 1,
-      }));
+            if (existingTraceIndex >= 0) {
+              // Keep the selected trace in its current position
+              const newTraces = [...prevTraces];
+              newTraces.splice(0, 0, message.data);
+              return newTraces.slice(0, 50); // Keep max 50 traces
+            }
+          }
 
-      // Update last updated time
-      setLastUpdated(new Date());
-    }
-  }, []);
+          // Normal case - add to beginning and limit to 50 traces
+          return [message.data, ...prevTraces.slice(0, 49)];
+        });
+
+        // Update pagination total
+        setPagination(prev => ({
+          ...prev,
+          total: prev.total + 1,
+        }));
+
+        // Update last updated time
+        setLastUpdated(new Date());
+      }
+    },
+    [selectedTrace]
+  );
 
   // Handle traces update from WebSocket
-  const handleTracesUpdate = useCallback((message: any) => {
-    if (message.data && message.data.traces) {
-      setTraces(message.data.traces);
-      setPagination(message.data.pagination);
-      setLastUpdated(new Date());
-    }
-  }, []);
+  const handleTracesUpdate = useCallback(
+    (message: any) => {
+      if (message.data && message.data.traces) {
+        // Update traces while preserving the selected trace
+        setTraces(prevTraces => {
+          const newTraces = message.data.traces;
+
+          // If we have a selected trace, make sure it's still in the new traces
+          if (selectedTrace) {
+            const selectedTraceStillExists = newTraces.some(
+              (trace: OtelSpan) =>
+                trace.id === selectedTrace ||
+                (trace.spanContext && trace.spanContext().traceId === selectedTrace)
+            );
+
+            // If the selected trace is no longer in the new traces, keep it in the list
+            if (!selectedTraceStillExists) {
+              const selectedTraceData = prevTraces.find(
+                trace =>
+                  trace.id === selectedTrace ||
+                  (trace.spanContext && trace.spanContext().traceId === selectedTrace)
+              );
+
+              if (selectedTraceData) {
+                // Add the selected trace to the new traces to prevent it from disappearing
+                return [...newTraces, selectedTraceData];
+              }
+            }
+          }
+
+          return newTraces;
+        });
+
+        setPagination(message.data.pagination);
+        setLastUpdated(new Date());
+      }
+    },
+    [selectedTrace]
+  );
 
   // Handle stats update from WebSocket
   const handleStatsUpdate = useCallback((message: any) => {
@@ -162,22 +247,9 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     loadTraces();
     loadStats();
 
-    // Set up polling for data if WebSocket is not connected
-    const interval = setInterval(() => {
-      if (wsClient.getStatus() === 'connected') {
-        // Use rate limiting for stats
-        wsClient.getStats(false);
-
-        // Only reload traces if we're on the first page to avoid
-        // disrupting pagination navigation
-        if (pagination.page === 1) {
-          loadTraces(1, pagination.limit);
-        }
-      }
-    }, 10000); // Poll every 10 seconds
+    // No polling - rely on WebSocket updates only
 
     return () => {
-      clearInterval(interval);
       wsClient.off('newTrace', handleNewTrace);
       wsClient.off('traces', handleTracesUpdate);
       wsClient.off('stats', handleStatsUpdate);
@@ -190,6 +262,7 @@ export const TracesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     loadStats,
     pagination.page,
     pagination.limit,
+    selectedTrace, // Add selectedTrace as a dependency
   ]);
 
   // Provide the context value

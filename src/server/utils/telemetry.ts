@@ -1,7 +1,7 @@
 import { logger } from './logger';
 
 // In-memory storage for traces
-interface TraceData {
+export interface TraceData {
   id: string;
   method: string;
   path: string;
@@ -14,6 +14,7 @@ interface TraceData {
   duration?: number;
   status?: number;
   response?: any;
+  responseHeaders?: Record<string, string>;
   responseTruncated?: boolean;
   error?: Error;
 }

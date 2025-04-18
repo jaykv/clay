@@ -1,8 +1,29 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import FastifyWebSocket from '@fastify/websocket';
 import { logger } from '../utils/logger';
-import { getTraces, getTraceById, clearTraces, getTraceStats } from '../utils/telemetry';
+import { getTraces, getTraceById, clearTraces, getTraceStats, TraceData } from '../utils/tracing';
 import WebSocket from 'ws';
+
+/**
+ * Safely stringify a value, handling circular references
+ */
+function safeStringify(obj: any): string {
+  try {
+    // Use standard JSON.stringify with circular reference handling
+    const cache: any[] = [];
+    return JSON.stringify(obj, (_key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.includes(value)) {
+          return '[Circular]';
+        }
+        cache.push(value);
+      }
+      return value;
+    });
+  } catch (error) {
+    return '[Error: Could not stringify]';
+  }
+}
 
 // Store active WebSocket connections for broadcasting
 const activeConnections = new Set<WebSocket>();
@@ -29,7 +50,7 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
 
       // Send initial connection message
       socket.send(
-        JSON.stringify({
+        safeStringify({
           type: 'connection',
           message: 'Connected to Clay Gateway',
         })
@@ -41,7 +62,7 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
           // Send trace stats
           const stats = getTraceStats();
           socket.send(
-            JSON.stringify({
+            safeStringify({
               type: 'stats',
               data: stats,
             })
@@ -50,7 +71,7 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
           // Send recent traces
           const traces = getTraces(50, 1);
           socket.send(
-            JSON.stringify({
+            safeStringify({
               type: 'traces',
               data: traces,
             })
@@ -83,7 +104,7 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
               break;
             case 'ping':
               socket.send(
-                JSON.stringify({
+                safeStringify({
                   type: 'pong',
                   timestamp: Date.now(),
                 })
@@ -91,7 +112,7 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
               break;
             default:
               socket.send(
-                JSON.stringify({
+                safeStringify({
                   type: 'error',
                   message: `Unknown message type: ${data.type}`,
                 })
@@ -100,7 +121,7 @@ export function registerWebSocketRoutes(fastify: FastifyInstance) {
         } catch (error) {
           logger.error('Error handling WebSocket message:', error);
           socket.send(
-            JSON.stringify({
+            safeStringify({
               type: 'error',
               message: 'Invalid message format',
             })
@@ -128,7 +149,7 @@ function handleGetTraces(socket: WebSocket, data: any) {
     const tracesData = getTraces(limit, page);
 
     socket.send(
-      JSON.stringify({
+      safeStringify({
         type: 'traces',
         data: tracesData,
       })
@@ -136,7 +157,7 @@ function handleGetTraces(socket: WebSocket, data: any) {
   } catch (error) {
     logger.error('Error fetching traces:', error);
     socket.send(
-      JSON.stringify({
+      safeStringify({
         type: 'error',
         message: 'Failed to fetch traces',
       })
@@ -151,7 +172,7 @@ function handleGetTrace(socket: WebSocket, data: any) {
   try {
     if (!data.id) {
       socket.send(
-        JSON.stringify({
+        safeStringify({
           type: 'error',
           message: 'Trace ID is required',
         })
@@ -163,7 +184,7 @@ function handleGetTrace(socket: WebSocket, data: any) {
 
     if (!trace) {
       socket.send(
-        JSON.stringify({
+        safeStringify({
           type: 'error',
           message: 'Trace not found',
         })
@@ -172,7 +193,7 @@ function handleGetTrace(socket: WebSocket, data: any) {
     }
 
     socket.send(
-      JSON.stringify({
+      safeStringify({
         type: 'trace',
         data: trace,
       })
@@ -180,7 +201,7 @@ function handleGetTrace(socket: WebSocket, data: any) {
   } catch (error) {
     logger.error(`Error fetching trace ${data.id}:`, error);
     socket.send(
-      JSON.stringify({
+      safeStringify({
         type: 'error',
         message: 'Failed to fetch trace',
       })
@@ -195,7 +216,7 @@ function handleClearTraces(socket: WebSocket) {
   try {
     clearTraces();
     socket.send(
-      JSON.stringify({
+      safeStringify({
         type: 'tracesCleared',
         success: true,
       })
@@ -203,7 +224,7 @@ function handleClearTraces(socket: WebSocket) {
   } catch (error) {
     logger.error('Error clearing traces:', error);
     socket.send(
-      JSON.stringify({
+      safeStringify({
         type: 'error',
         message: 'Failed to clear traces',
       })
@@ -231,7 +252,7 @@ function handleGetStats(socket: WebSocket) {
   try {
     const stats = getTraceStats();
     socket.send(
-      JSON.stringify({
+      safeStringify({
         type: 'stats',
         data: stats,
       })
@@ -239,7 +260,7 @@ function handleGetStats(socket: WebSocket) {
   } catch (error) {
     // Don't log errors for stats to reduce spam
     socket.send(
-      JSON.stringify({
+      safeStringify({
         type: 'error',
         message: 'Failed to fetch stats',
       })
@@ -250,21 +271,34 @@ function handleGetStats(socket: WebSocket) {
 /**
  * Broadcast a new trace to all connected clients
  */
-export function broadcastNewTrace(trace: any) {
-  logger.info(`Broadcasting new trace: ${trace.id}`);
+export function broadcastNewTrace(trace: TraceData) {
+  // Only log at debug level to reduce log spam
+  logger.debug(`Broadcasting new trace: ${trace.id}`);
 
-  const message = JSON.stringify({
+  const message = safeStringify({
     type: 'newTrace',
     data: trace,
   });
 
-  for (const socket of activeConnections) {
+  // Use more efficient broadcasting with error handling
+  activeConnections.forEach(socket => {
     if (socket.readyState === WebSocket.OPEN) {
       try {
         socket.send(message);
       } catch (error) {
-        logger.error('Error broadcasting trace:', error);
+        logger.error(
+          `Error broadcasting trace to client: ${error instanceof Error ? error.message : String(error)}`
+        );
+
+        // Remove problematic connections
+        try {
+          socket.close();
+        } catch (closeError) {
+          // Ignore close errors
+        } finally {
+          activeConnections.delete(socket);
+        }
       }
     }
-  }
+  });
 }

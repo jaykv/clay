@@ -65,6 +65,10 @@
       {
         "command": "clay.reindexCodebase",
         "title": "Clay: Reindex Codebase"
+      },
+      {
+        "command": "clay.openFile",
+        "title": "Clay: Open File at Location"
       }
     ],
     "viewsContainers": {
@@ -152,10 +156,12 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/glob": "^8.1.0",
+    "@types/http-proxy": "^1.17.16",
     "@types/js-yaml": "^4.0.9",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
     "@types/node-fetch": "^2.6.12",
+    "@types/on-finished": "^2.3.4",
     "@types/vscode": "^1.80.0",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
@@ -186,10 +192,15 @@
     "chokidar": "^3.5.3",
     "dotenv": "^16.5.0",
     "express": "^4.18.2",
+    "fast-json-stringify": "^5.9.1",
     "fastify": "^5.2.2",
+    "fastify-plugin": "^4.5.1",
     "glob": "^10.3.10",
+    "http-proxy": "^1.18.1",
     "js-yaml": "^4.1.0",
     "node-fetch": "^2.7.0",
+    "on-finished": "^2.4.1",
+    "raw-body": "^3.0.0",
     "readdirp": "^3.6.0",
     "zod": "^3.22.4"
   }

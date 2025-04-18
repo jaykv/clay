@@ -11,7 +11,7 @@ import { getProxyRoutes } from './routes';
 import { registerProxyRoutesAPI } from './fastify-api';
 import { registerAugmentAPI } from './augment-api';
 import { augmentEngine } from '../augment';
-import otelPlugin from './middleware/fastify-otel-plugin';
+import enhancedTracingPlugin from './middleware/enhanced-tracing-plugin';
 import { ssePlugin } from './middleware/fastify-sse';
 import { registerWebSocketRoutes } from './websocket';
 // MCP server is now standalone
@@ -79,8 +79,8 @@ export class FastifyGatewayServer {
     // Register sensible plugin for better error handling
     this.server.register(fastifySensible);
 
-    // Register OpenTelemetry plugin
-    this.server.register(otelPlugin);
+    // Register enhanced tracing plugin
+    this.server.register(enhancedTracingPlugin);
 
     // Set up error handler
     this.server.setErrorHandler((error, request, reply) => {
