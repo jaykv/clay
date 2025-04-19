@@ -106,6 +106,70 @@ body.vscode-sidebar-view {
   border-left: 2px solid var(--accent-blue);
 }
 
+/* Sidebar MCP styles */
+.sidebar-dashboard .mcp-item {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--message-border);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-dashboard .mcp-item:hover {
+  background-color: var(--message-bg);
+}
+
+.sidebar-dashboard .mcp-item.selected {
+  background-color: var(--message-bg);
+  border-left: 2px solid var(--accent-blue);
+}
+
+.sidebar-dashboard .mcp-search {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-dashboard .mcp-tabs {
+  font-size: 0.8rem;
+}
+
+/* Sidebar Overview styles */
+.sidebar-dashboard [data-state='open'] > [data-radix-accordion-content] {
+  animation: slideDown 0.3s ease-out;
+}
+
+.sidebar-dashboard [data-state='closed'] > [data-radix-accordion-content] {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+.sidebar-dashboard .quick-action {
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.sidebar-dashboard .quick-action:hover {
+  transform: translateY(-2px);
+  background-color: var(--accent-blue);
+  color: white;
+}
+
 .sidebar-dashboard .trace-details {
   background-color: var(--message-bg);
   border: 1px solid var(--message-border);

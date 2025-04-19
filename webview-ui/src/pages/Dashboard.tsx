@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import ServerStatus from '@/components/servers/ServerStatus';
-import PerformanceMetrics from '@/components/metrics/PerformanceMetrics';
-import TracesList from '@/components/traces/TracesList';
+import { PerformanceMetrics, MetricsSidebarView } from '@/components/metrics';
+import { TracesList, TracesSidebarView } from '@/components/traces';
 import ProxyRoutes from './ProxyRoutes';
-import AugmentContextEngine from '@/components/augment/AugmentContextEngine';
-import MCPServerDetails from '@/components/mcp/MCPServerDetails';
+import { AugmentContextEngine, AugmentSidebarView } from '@/components/augment';
+import { MCPServerDetails, MCPSidebarView } from '@/components/mcp';
+import { OverviewSidebarView } from '@/components/overview';
+import { ProxyRoutesSidebarView } from '@/components/routes';
 import { postMessage } from '@/utils/vscode';
 import { checkServerHealth } from '@/lib/api/servers';
 
@@ -154,105 +156,108 @@ const Dashboard: React.FC<DashboardProps> = ({ initialTab = 'overview', isSideba
         </button>
       </div>
 
-      {activeTab === 'overview' && (
-        <>
-          <Card title="Servers">
-            <div className="space-y-4">
-              <ServerStatus
-                name="Gateway Server"
-                description="Main server that handles gateway, proxy, and MCP functionality"
-                isRunning={gatewayServerRunning}
-                port={3000}
-                startCommand="startGatewayServer"
-                stopCommand="stopGatewayServer"
-                disableControls={!isVSCodeEnv}
-                adminStopUrl="http://localhost:3000/admin/stopServer"
-                onStopComplete={checkGatewayServerHealth}
-                onStartInitiated={() => {
-                  // Only update if not already running
-                  if (!gatewayServerRunning) {
-                    console.log('Setting Gateway server to running (optimistic update)');
-                    setGatewayServerRunning(true);
-                  }
-                }}
-              />
+      {activeTab === 'overview' &&
+        (isSidebar ? (
+          <OverviewSidebarView />
+        ) : (
+          <>
+            <Card title="Servers">
+              <div className="space-y-4">
+                <ServerStatus
+                  name="Gateway Server"
+                  description="Main server that handles gateway, proxy, and MCP functionality"
+                  isRunning={gatewayServerRunning}
+                  port={3000}
+                  startCommand="startGatewayServer"
+                  stopCommand="stopGatewayServer"
+                  disableControls={!isVSCodeEnv}
+                  adminStopUrl="http://localhost:3000/admin/stopServer"
+                  onStopComplete={checkGatewayServerHealth}
+                  onStartInitiated={() => {
+                    // Only update if not already running
+                    if (!gatewayServerRunning) {
+                      console.log('Setting Gateway server to running (optimistic update)');
+                      setGatewayServerRunning(true);
+                    }
+                  }}
+                />
 
-              <ServerStatus
-                name="MCP Server"
-                description="Model Context Protocol server for AI/LLM tools"
-                isRunning={mcpServerRunning}
-                port={3001}
-                startCommand="startMCPServer"
-                stopCommand="stopMCPServer"
-                disableControls={!isVSCodeEnv}
-                adminStopUrl="http://localhost:3001/admin/stopServer"
-                onStopComplete={checkMcpServerHealth}
-                onStartInitiated={() => {
-                  // Only update if not already running
-                  if (!mcpServerRunning) {
-                    console.log('Setting MCP server to running (optimistic update)');
-                    setMcpServerRunning(true);
-                  }
-                }}
-              >
-                {mcpServerRunning && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setActiveTab('mcp')}
-                    className="mt-2"
-                  >
-                    View MCP Details
-                  </Button>
-                )}
-              </ServerStatus>
-            </div>
-          </Card>
-
-          <Card title="Proxy Routes">
-            <p className="mb-4">
-              Configure custom proxy routes to forward requests to external services.
-            </p>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
-              <div>
-                <h3 className="font-medium">Proxy Routes Manager</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Add, edit, and delete proxy routes to forward requests to external services.
-                </p>
+                <ServerStatus
+                  name="MCP Server"
+                  description="Model Context Protocol server for AI/LLM tools"
+                  isRunning={mcpServerRunning}
+                  port={3001}
+                  startCommand="startMCPServer"
+                  stopCommand="stopMCPServer"
+                  disableControls={!isVSCodeEnv}
+                  adminStopUrl="http://localhost:3001/admin/stopServer"
+                  onStopComplete={checkMcpServerHealth}
+                  onStartInitiated={() => {
+                    // Only update if not already running
+                    if (!mcpServerRunning) {
+                      console.log('Setting MCP server to running (optimistic update)');
+                      setMcpServerRunning(true);
+                    }
+                  }}
+                >
+                  {mcpServerRunning && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setActiveTab('mcp')}
+                      className="mt-2"
+                    >
+                      View MCP Details
+                    </Button>
+                  )}
+                </ServerStatus>
               </div>
-              <Button onClick={() => setActiveTab('routes')}>Go to Routes Manager</Button>
-            </div>
-          </Card>
+            </Card>
 
-          <Card title="Augment Context Engine">
-            <p className="mb-4">
-              Access powerful code intelligence features to help you navigate and understand your
-              codebase.
-            </p>
+            <Card title="Routes">
+              <p className="mb-4">
+                Configure custom proxy routes to forward requests to external services.
+              </p>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
-              <div>
-                <h3 className="font-medium">Augment Context Engine</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Search your codebase, navigate to symbol definitions, find references, and more.
-                </p>
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div>
+                  <h3 className="font-medium">Proxy Routes Manager</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Add, edit, and delete proxy routes to forward requests to external services.
+                  </p>
+                </div>
+                <Button onClick={() => setActiveTab('routes')}>Go to Routes Manager</Button>
               </div>
-              <Button onClick={() => setActiveTab('augment')}>Open Augment</Button>
-            </div>
-          </Card>
-        </>
-      )}
+            </Card>
 
-      {activeTab === 'routes' && <ProxyRoutes />}
+            <Card title="Augment Context Engine">
+              <p className="mb-4">
+                Access powerful code intelligence features to help you navigate and understand your
+                codebase.
+              </p>
 
-      {activeTab === 'metrics' && <PerformanceMetrics />}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div>
+                  <h3 className="font-medium">Augment Context Engine</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Search your codebase, navigate to symbol definitions, find references, and more.
+                  </p>
+                </div>
+                <Button onClick={() => setActiveTab('augment')}>Open Augment</Button>
+              </div>
+            </Card>
+          </>
+        ))}
 
-      {activeTab === 'traces' && <TracesList />}
+      {activeTab === 'routes' && (isSidebar ? <ProxyRoutesSidebarView /> : <ProxyRoutes />)}
 
-      {activeTab === 'augment' && <AugmentContextEngine />}
+      {activeTab === 'metrics' && (isSidebar ? <MetricsSidebarView /> : <PerformanceMetrics />)}
 
-      {activeTab === 'mcp' && <MCPServerDetails />}
+      {activeTab === 'traces' && (isSidebar ? <TracesSidebarView /> : <TracesList />)}
+
+      {activeTab === 'augment' && (isSidebar ? <AugmentSidebarView /> : <AugmentContextEngine />)}
+
+      {activeTab === 'mcp' && (isSidebar ? <MCPSidebarView /> : <MCPServerDetails />)}
     </div>
   );
 };
