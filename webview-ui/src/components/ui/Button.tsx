@@ -9,7 +9,7 @@ const buttonVariants = cva(
       variant: {
         primary: 'bg-vscode-button-bg text-vscode-button-fg hover:bg-vscode-button-hover-bg',
         secondary:
-          'bg-vscode-list-hoverBackground text-vscode-input-fg border border-vscode-input-border hover:bg-vscode-list-active-bg hover:text-vscode-button-fg',
+          'bg-vscode-button-secondary-bg text-vscode-button-secondary-fg border border-vscode-input-border hover:bg-vscode-button-bg hover:text-vscode-button-fg',
         danger: 'bg-vscode-errorForeground text-white hover:bg-vscode-errorForeground hover:opacity-90',
         success:
           'bg-vscode-button-bg text-vscode-button-fg hover:bg-vscode-button-hover-bg',

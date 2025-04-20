@@ -164,7 +164,7 @@ const OverviewSidebarView: React.FC = () => {
       {server.isRunning ? (
         <button
           onClick={() => handleStopServer(server)}
-          className="px-2 py-1 text-xs bg-vscode-errorForeground text-white rounded hover:opacity-90 transition-colors"
+          className="px-2 py-1 text-xs bg-vscode-button-secondary-bg text-vscode-button-secondary-fg rounded hover:opacity-90 transition-colors"
         >
           Stop Server
         </button>

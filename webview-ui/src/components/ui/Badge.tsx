@@ -12,7 +12,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', cla
     default: 'bg-vscode-badge-background text-vscode-badge-foreground',
     outline:
       'bg-transparent border border-vscode-panel-border text-vscode-fg',
-    secondary: 'bg-vscode-list-hoverBackground text-vscode-input-foreground',
+    secondary: 'bg-vscode-button-secondary-bg text-vscode-button-secondary-fg hover:bg-vscode-button-secondary-bg',
     success: 'bg-vscode-button-bg text-vscode-button-fg',
     warning: 'bg-vscode-editorWarning-foreground text-white',
     danger: 'bg-vscode-errorForeground text-white',
