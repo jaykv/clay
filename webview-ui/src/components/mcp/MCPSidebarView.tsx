@@ -182,11 +182,11 @@ const MCPSidebarView: React.FC = () => {
     }
 
     return (
-      <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md mt-2 border border-gray-200 dark:border-gray-700">
+      <div className="p-3 bg-vscode-input-bg text-vscode-input-fg rounded-md mt-2 border border-vscode-panel-border">
         <div className="flex justify-between items-start">
           <h3 className="font-medium text-sm">{item.id}</h3>
           <button
-            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-xs text-vscode-link-fg hover:text-vscode-link-active-fg hover:underline"
             onClick={() => setSelectedItem(null)}
           >
             Close
@@ -215,7 +215,7 @@ const MCPSidebarView: React.FC = () => {
 
         <div className="mt-3 flex gap-2">
           <button
-            className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800"
+            className="text-xs px-2 py-1 bg-vscode-button-bg bg-opacity-20 text-vscode-button-fg rounded hover:bg-opacity-30"
             onClick={() => {
               navigator.clipboard.writeText(item.id);
               // Show toast or feedback here
@@ -226,7 +226,7 @@ const MCPSidebarView: React.FC = () => {
 
           {activeTab !== 'resources' && (
             <button
-              className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-800"
+              className="text-xs px-2 py-1 bg-vscode-button-bg bg-opacity-20 text-vscode-button-fg rounded hover:bg-opacity-30"
               onClick={() => {
                 // Find definition in code
                 // First show a message to the user
@@ -276,7 +276,7 @@ const MCPSidebarView: React.FC = () => {
           </div>
           <button
             onClick={startMCPServer}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="px-3 py-1.5 text-sm bg-vscode-button-bg text-vscode-button-fg rounded hover:bg-vscode-button-hover-bg transition-colors"
           >
             Start MCP Server
           </button>
@@ -290,7 +290,7 @@ const MCPSidebarView: React.FC = () => {
           <p className="text-sm mb-2">{error}</p>
           <button
             onClick={fetchMCPServerInfo}
-            className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            className="px-3 py-1 text-sm bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg"
           >
             Try Again
           </button>
@@ -322,7 +322,7 @@ const MCPSidebarView: React.FC = () => {
           </div>
           <button
             onClick={fetchMCPServerInfo}
-            className="p-1.5 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+            className="p-1.5 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg flex items-center"
             title="Refresh"
           >
             {loading ? (
@@ -410,21 +410,21 @@ const MCPSidebarView: React.FC = () => {
             <TabsList className="w-full justify-start bg-transparent p-0 mb-2">
               <TabsTrigger
                 value="tools"
-                className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+                className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
                 onClick={() => setSelectedItem(null)}
               >
                 Tools
               </TabsTrigger>
               <TabsTrigger
                 value="prompts"
-                className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+                className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
                 onClick={() => setSelectedItem(null)}
               >
                 Prompts
               </TabsTrigger>
               <TabsTrigger
                 value="resources"
-                className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+                className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
                 onClick={() => setSelectedItem(null)}
               >
                 Resources
@@ -440,7 +440,7 @@ const MCPSidebarView: React.FC = () => {
               {!selectedItem && (
                 <div className="space-y-1">
                   {getFilteredItems().length === 0 ? (
-                    <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                    <div className="text-center py-4 text-vscode-descriptionForeground text-sm">
                       {searchQuery
                         ? `No ${activeTab} found matching "${searchQuery}"`
                         : `No ${activeTab} available`}
@@ -449,12 +449,12 @@ const MCPSidebarView: React.FC = () => {
                     getFilteredItems().map(item => (
                       <div
                         key={item.id}
-                        className="p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 text-sm mcp-item"
+                        className="p-2 rounded cursor-pointer hover:bg-vscode-list-hover-bg text-sm mcp-item"
                         onClick={() => setSelectedItem(item.id)}
                       >
                         <div className="font-medium truncate">{item.id}</div>
                         {'description' in item && typeof item.description === 'string' && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          <div className="text-xs text-vscode-descriptionForeground truncate">
                             {String(item.description)}
                           </div>
                         )}

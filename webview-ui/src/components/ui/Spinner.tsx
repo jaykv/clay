@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -16,7 +16,7 @@ export const Spinner: React.FC<SpinnerProps> = ({ size = 'md', className }) => {
   return (
     <div
       className={cn(
-        'animate-spin rounded-full border-solid border-gray-300 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500',
+        'animate-spin rounded-full border-solid border-vscode-panel-border border-t-vscode-button-bg',
         sizeClasses[size],
         className
       )}

@@ -56,11 +56,11 @@ const MetricsSidebarView: React.FC = () => {
           <div
             className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}
           ></div>
-          <span className="text-xs text-gray-500">{connectionStatus}</span>
+          <span className="text-xs text-vscode-descriptionForeground">{connectionStatus}</span>
         </div>
         <button
           onClick={loadStats}
-          className="p-1.5 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+          className="p-1.5 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg flex items-center"
           title="Refresh Metrics"
         >
           {loading && !stats ? (
@@ -75,7 +75,7 @@ const MetricsSidebarView: React.FC = () => {
 
       {/* WebSocket connection status and reconnect button */}
       {connectionStatus !== 'connected' && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 mb-3 flex items-center justify-between">
+        <div className="bg-vscode-button-bg bg-opacity-10 border border-vscode-button-bg rounded-md p-2 mb-3 flex items-center justify-between">
           <div className="flex items-center">
             <svg
               className="h-4 w-4 text-blue-500 mr-2"
@@ -91,7 +91,7 @@ const MetricsSidebarView: React.FC = () => {
                 d="M13 10V3L4 14h7v7l9-11h-7z"
               />
             </svg>
-            <span className="text-xs text-blue-700 dark:text-blue-300">
+            <span className="text-xs text-vscode-button-bg">
               {connectionStatus === 'connecting'
                 ? 'Connecting to server...'
                 : 'WebSocket disconnected. Data may be stale.'}
@@ -99,7 +99,7 @@ const MetricsSidebarView: React.FC = () => {
           </div>
           <button
             onClick={handleReconnect}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+            className="px-2 py-1 text-xs bg-vscode-button-bg text-vscode-button-fg rounded hover:bg-vscode-button-hover-bg flex items-center"
             disabled={connectionStatus === 'connecting'}
           >
             {connectionStatus === 'connecting' && <Spinner size="sm" className="mr-1" />}
@@ -109,7 +109,7 @@ const MetricsSidebarView: React.FC = () => {
       )}
 
       {loading && !stats && (
-        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+        <div className="py-8 text-center text-vscode-descriptionForeground">
           <Spinner size="md" className="mx-auto mb-2" />
           <p className="text-sm">Loading metrics...</p>
         </div>
@@ -120,7 +120,7 @@ const MetricsSidebarView: React.FC = () => {
           <p className="text-sm">{error}</p>
           <button
             onClick={loadStats}
-            className="mt-2 px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            className="mt-2 px-3 py-1 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg"
           >
             Try Again
           </button>
@@ -130,23 +130,23 @@ const MetricsSidebarView: React.FC = () => {
       {stats && (
         <div className="space-y-4">
           {/* Summary Stats */}
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+          <div className="bg-vscode-input-bg text-vscode-input-fg p-3 rounded-md border border-vscode-panel-border">
             <h3 className="text-xs font-medium mb-2">Summary</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Total Requests</p>
+                <p className="text-xs text-vscode-descriptionForeground">Total Requests</p>
                 <p className="text-lg font-semibold">{stats.total}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Success Rate</p>
+                <p className="text-xs text-vscode-descriptionForeground">Success Rate</p>
                 <p className="text-lg font-semibold">{stats.successRate.toFixed(1)}%</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Avg Response Time</p>
+                <p className="text-xs text-vscode-descriptionForeground">Avg Response Time</p>
                 <p className="text-lg font-semibold">{formatDuration(stats.avgResponseTime)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Last Updated</p>
+                <p className="text-xs text-vscode-descriptionForeground">Last Updated</p>
                 <p className="text-sm">
                   {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'}
                 </p>
@@ -155,7 +155,7 @@ const MetricsSidebarView: React.FC = () => {
           </div>
 
           {/* Method Distribution */}
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+          <div className="bg-vscode-input-bg text-vscode-input-fg p-3 rounded-md border border-vscode-panel-border">
             <h3 className="text-xs font-medium mb-2">Requests by Method</h3>
             {methodChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={150}>
@@ -179,14 +179,14 @@ const MetricsSidebarView: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[150px] flex items-center justify-center text-gray-500 text-xs">
+              <div className="h-[150px] flex items-center justify-center text-vscode-descriptionForeground text-xs">
                 No data available
               </div>
             )}
           </div>
 
           {/* Status Code Distribution */}
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+          <div className="bg-vscode-input-bg text-vscode-input-fg p-3 rounded-md border border-vscode-panel-border">
             <h3 className="text-xs font-medium mb-2">Status Code Distribution</h3>
             {statusChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={150}>
@@ -220,23 +220,23 @@ const MetricsSidebarView: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[150px] flex items-center justify-center text-gray-500 text-xs">
+              <div className="h-[150px] flex items-center justify-center text-vscode-descriptionForeground text-xs">
                 No data available
               </div>
             )}
           </div>
 
           {/* Truncation Stats */}
-          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+          <div className="bg-vscode-input-bg text-vscode-input-fg p-3 rounded-md border border-vscode-panel-border">
             <h3 className="text-xs font-medium mb-2">Truncation Statistics</h3>
             {stats.truncated ? (
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col items-center justify-center">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-vscode-descriptionForeground">
                     Truncated Request Bodies
                   </p>
                   <p className="text-lg font-semibold">{stats.truncated.bodies}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-vscode-descriptionForeground">
                     (
                     {stats.total > 0
                       ? ((stats.truncated.bodies / stats.total) * 100).toFixed(1)
@@ -245,11 +245,11 @@ const MetricsSidebarView: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex flex-col items-center justify-center">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-vscode-descriptionForeground">
                     Truncated Response Bodies
                   </p>
                   <p className="text-lg font-semibold">{stats.truncated.responses}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-vscode-descriptionForeground">
                     (
                     {stats.total > 0
                       ? ((stats.truncated.responses / stats.total) * 100).toFixed(1)
@@ -259,14 +259,14 @@ const MetricsSidebarView: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="h-[80px] flex items-center justify-center text-gray-500 text-xs">
+              <div className="h-[80px] flex items-center justify-center text-vscode-descriptionForeground text-xs">
                 No truncation data available
               </div>
             )}
           </div>
 
           {/* Additional information */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          <div className="text-xs text-vscode-descriptionForeground mt-2">
             <p>
               Metrics are updated automatically every 10 seconds when the WebSocket connection is
               active.

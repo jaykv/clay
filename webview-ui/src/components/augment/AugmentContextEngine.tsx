@@ -46,15 +46,15 @@ const AugmentContextEngine: React.FC = () => {
       case 'about':
         return (
           <div className="p-4 space-y-4">
-            <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-              <h3 className="font-medium mb-2 text-blue-700 dark:text-blue-400">
+            <div className="p-4 border border-vscode-panel-border rounded-lg bg-vscode-button-bg bg-opacity-10">
+              <h3 className="font-medium mb-2 text-vscode-button-bg">
                 About Augment Context Engine
               </h3>
-              <p className="text-sm text-blue-600 dark:text-blue-300 mb-2">
+              <p className="text-sm text-vscode-button-bg mb-2">
                 The Augment Context Engine provides powerful code intelligence features to help you
                 navigate and understand your codebase.
               </p>
-              <ul className="list-disc list-inside text-sm text-blue-600 dark:text-blue-300 space-y-1">
+              <ul className="list-disc list-inside text-sm text-vscode-button-bg space-y-1">
                 <li>Intelligent code search across your entire codebase</li>
                 <li>Symbol definition and reference finding</li>
                 <li>Integration with VS Code's language services</li>
@@ -67,25 +67,25 @@ const AugmentContextEngine: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Search Codebase</span>
-                  <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+                  <span className="text-xs bg-vscode-input-bg text-vscode-input-fg px-2 py-1 rounded border border-vscode-panel-border">
                     Ctrl+Shift+F / Cmd+Shift+F
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Go to Definition</span>
-                  <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+                  <span className="text-xs bg-vscode-input-bg text-vscode-input-fg px-2 py-1 rounded border border-vscode-panel-border">
                     Ctrl+Shift+G / Cmd+Shift+G
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Find References</span>
-                  <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+                  <span className="text-xs bg-vscode-input-bg text-vscode-input-fg px-2 py-1 rounded border border-vscode-panel-border">
                     Ctrl+Shift+R / Cmd+Shift+R
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Reindex Codebase</span>
-                  <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+                  <span className="text-xs bg-vscode-input-bg text-vscode-input-fg px-2 py-1 rounded border border-vscode-panel-border">
                     Ctrl+Shift+I / Cmd+Shift+I
                   </span>
                 </div>

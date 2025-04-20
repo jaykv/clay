@@ -11,6 +11,8 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import Dashboard from '@/pages/Dashboard';
 import { initVSCodeAPI } from '@/utils/vscode';
 import { TracesProvider } from '@/contexts/TracesContext';
+import { onThemeChange, getVSCodeThemeType } from '@/utils/theme';
+import { applyContrastText } from '@/utils/contrast';
 
 // Component to handle navigation messages from the extension
 const NavigationHandler: React.FC = () => {
@@ -70,16 +72,63 @@ const App: React.FC = () => {
     }
 
     // Check if we're in the sidebar view
+    console.log('Checking if running in sidebar view...');
+    console.log('Body classes:', document.body.className);
+
+    // Try multiple methods to detect sidebar view
     const sidebarMeta = document.querySelector('meta[name="vscode-view-type"][content="sidebar"]');
-    if (sidebarMeta) {
+    const hasSidebarClass = document.body.classList.contains('vscode-sidebar-view');
+
+    console.log('Sidebar meta element:', sidebarMeta);
+    console.log('Has sidebar class:', hasSidebarClass);
+
+    // Check if the body already has the sidebar class (might be added by the extension)
+    if (sidebarMeta || hasSidebarClass) {
       setIsSidebar(true);
-      document.body.classList.add('vscode-sidebar-view');
+      document.body.classList.add('vscode-sidebar-view'); // Ensure the class is added
 
       // We're in the sidebar, so we'll just use the default tab
       console.log('Running in sidebar mode');
       setInitialTab('overview');
+    } else {
+      // Additional check - look at the window size, sidebars are typically narrow
+      const isNarrowViewport = window.innerWidth < 500;
+      console.log('Window width:', window.innerWidth, 'Is narrow viewport:', isNarrowViewport);
+
+      if (isNarrowViewport && inVSCode) {
+        console.log('Detected narrow viewport in VS Code, assuming sidebar view');
+        setIsSidebar(true);
+        document.body.classList.add('vscode-sidebar-view');
+        setInitialTab('overview');
+      } else {
+        console.log('Not running in sidebar mode');
+      }
     }
   }, []);
+
+  // Set up theme change listener in a separate useEffect
+  useEffect(() => {
+    if (isVSCode) {
+      // Log the current VS Code theme
+      const themeType = getVSCodeThemeType();
+      console.log(`Current VS Code theme type: ${themeType}`);
+
+      // Apply contrast to the body element
+      applyContrastText(document.body, 'editor-background');
+
+      // Set up theme change listener
+      const removeThemeListener = onThemeChange(() => {
+        const newThemeType = getVSCodeThemeType();
+        console.log(`VS Code theme changed to: ${newThemeType}`);
+
+        // Re-apply contrast when theme changes
+        applyContrastText(document.body, 'editor-background');
+      });
+
+      // Clean up the listener when component unmounts
+      return () => removeThemeListener();
+    }
+  }, [isVSCode]);
 
   // Wait until we've determined the environment before rendering
   if (isVSCode === null) {
@@ -89,8 +138,12 @@ const App: React.FC = () => {
   // Create a common dashboard component with appropriate styling
   const dashboardComponent = <Dashboard initialTab={initialTab} isSidebar={isSidebar} />;
 
+  // Log the current state for debugging
+  console.log('Rendering with isSidebar:', isSidebar, 'initialTab:', initialTab);
+
   // If we're in the sidebar, render just the dashboard without the layout
   if (isSidebar) {
+    console.log('Rendering sidebar view');
     return (
       <TracesProvider>
         <div className="sidebar-container">{dashboardComponent}</div>

@@ -13,7 +13,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-vscode-fg mb-1">
             {label}
           </label>
         )}
@@ -25,8 +25,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           <input
             className={cn(
-              'flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
-              'placeholder:text-gray-400 dark:placeholder:text-gray-500 placeholder:opacity-100',
+              'flex h-10 w-full rounded-md border border-vscode-input-border bg-vscode-input-bg px-3 py-2 text-sm text-vscode-input-fg focus:outline-none focus:ring-2 focus:ring-vscode-focus-border focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
+              'placeholder:text-vscode-description-fg placeholder:opacity-70',
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
               error && 'border-red-500 focus:ring-red-500',
@@ -41,7 +41,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {error && <p className="mt-1 text-sm text-red-600 dark:text-red-500">{error}</p>}
+        {error && <p className="mt-1 text-sm text-vscode-errorForeground">{error}</p>}
       </div>
     );
   }

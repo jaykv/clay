@@ -84,25 +84,25 @@ const ServerStatus: React.FC<ServerStatusProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm">
+    <div className="flex items-center justify-between p-4 border border-vscode-panel-border rounded-lg bg-vscode-bg text-vscode-fg shadow-sm">
       <div className="flex-1">
         <div className="flex items-center">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">{name}</h3>
+          <h3 className="text-lg font-medium text-vscode-fg">{name}</h3>
           <div className="ml-2 flex-shrink-0 flex">
             <p
               className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                 isRunning
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                  ? 'bg-vscode-button-bg text-vscode-button-fg'
+                  : 'bg-vscode-input-bg text-vscode-input-foreground'
               }`}
             >
               {isRunning ? 'Running' : 'Stopped'}
             </p>
           </div>
         </div>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        <p className="mt-1 text-sm text-vscode-descriptionForeground">{description}</p>
         {isRunning && port && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-vscode-descriptionForeground">
             Running on port: <span className="font-mono">{port}</span>
           </p>
         )}
@@ -110,7 +110,7 @@ const ServerStatus: React.FC<ServerStatusProps> = ({
       </div>
       <div className="ml-4">
         {disableControls ? (
-          <div className="text-xs text-gray-500 dark:text-gray-400 italic">
+          <div className="text-xs text-vscode-descriptionForeground italic">
             {isRunning ? 'Running in browser mode' : 'Controls disabled'}
           </div>
         ) : isRunning ? (

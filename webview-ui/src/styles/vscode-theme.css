@@ -1,0 +1,169 @@
+/**
+ * VS Code theme variables for use in components
+ * This file provides CSS classes that use VS Code theme variables
+ */
+
+/* Text colors */
+.vscode-text {
+  color: var(--vscode-editor-foreground) !important;
+}
+
+.vscode-text-light {
+  color: var(--vscode-descriptionForeground) !important;
+}
+
+.vscode-text-error {
+  color: var(--vscode-errorForeground) !important;
+}
+
+.vscode-text-warning {
+  color: var(--vscode-editorWarning-foreground) !important;
+}
+
+.vscode-text-info {
+  color: var(--vscode-editorInfo-foreground) !important;
+}
+
+.vscode-text-link {
+  color: var(--vscode-textLink-foreground) !important;
+}
+
+/* Force text colors for specific elements */
+h1, h2, h3, h4, h5, h6, p, span, div, li, a {
+  color: inherit;
+}
+
+/* Background colors */
+.vscode-bg {
+  background-color: var(--vscode-editor-background) !important;
+}
+
+.vscode-bg-sidebar {
+  background-color: var(--vscode-sideBar-background) !important;
+}
+
+.vscode-bg-header {
+  background-color: var(--vscode-editorGroupHeader-tabsBackground) !important;
+}
+
+.vscode-bg-input {
+  background-color: var(--vscode-input-background) !important;
+}
+
+.vscode-bg-hover {
+  background-color: var(--vscode-list-hoverBackground) !important;
+}
+
+.vscode-bg-active {
+  background-color: var(--vscode-list-activeSelectionBackground) !important;
+  color: var(--vscode-list-activeSelectionForeground) !important;
+}
+
+.vscode-bg-inactive {
+  background-color: var(--vscode-list-inactiveSelectionBackground) !important;
+}
+
+/* Border colors */
+.vscode-border {
+  border-color: var(--vscode-panel-border);
+}
+
+.vscode-border-input {
+  border-color: var(--vscode-input-border);
+}
+
+.vscode-focus-border {
+  border-color: var(--vscode-focusBorder);
+}
+
+/* Button styles */
+.vscode-button {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  padding: 4px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.vscode-button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.vscode-button-secondary {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  padding: 4px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.vscode-button-secondary:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Input styles */
+.vscode-input {
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.vscode-input:focus {
+  border-color: var(--vscode-focusBorder);
+  outline: none;
+}
+
+/* Link styles */
+.vscode-link {
+  color: var(--vscode-textLink-foreground);
+  text-decoration: none;
+}
+
+.vscode-link:hover {
+  color: var(--vscode-textLink-activeForeground);
+  text-decoration: underline;
+}
+
+/* Badge styles */
+.vscode-badge {
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.8em;
+}
+
+/* Card/panel styles */
+.vscode-card {
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  padding: 12px;
+}
+
+/* Container styles with text color */
+.vscode-container {
+  color: var(--vscode-editor-foreground);
+}
+
+/* Sidebar container */
+.vscode-sidebar-container {
+  background-color: var(--vscode-sideBar-background);
+  color: var(--vscode-sideBar-foreground);
+}
+
+/* High contrast mode adjustments */
+body.vscode-high-contrast .vscode-button,
+body.vscode-high-contrast .vscode-button-secondary {
+  border: 1px solid var(--vscode-contrastBorder);
+}
+
+body.vscode-high-contrast .vscode-card,
+body.vscode-high-contrast .vscode-input {
+  border: 1px solid var(--vscode-contrastBorder);
+}

@@ -58,12 +58,12 @@ const PerformanceMetrics: React.FC = () => {
             <div
               className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}
             ></div>
-            <span className="text-xs text-gray-500">{connectionStatus}</span>
+            <span className="text-xs text-vscode-descriptionForeground">{connectionStatus}</span>
           </div>
           <div className="space-x-2">
             <button
               onClick={loadStats}
-              className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+              className="px-3 py-1 text-sm bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg flex items-center"
               disabled={loading && !stats}
             >
               {loading && !stats && <Spinner size="sm" className="mr-2" />}
@@ -74,10 +74,10 @@ const PerformanceMetrics: React.FC = () => {
 
         {/* WebSocket connection status and reconnect button */}
         {connectionStatus !== 'connected' && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4 flex items-center justify-between">
+          <div className="bg-vscode-button-bg bg-opacity-10 border border-vscode-button-bg rounded-md p-3 mb-4 flex items-center justify-between">
             <div className="flex items-center">
               <svg
-                className="h-5 w-5 text-blue-500 mr-2"
+                className="h-5 w-5 text-vscode-button-bg mr-2"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -90,7 +90,7 @@ const PerformanceMetrics: React.FC = () => {
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              <span className="text-sm text-blue-700 dark:text-blue-300">
+              <span className="text-sm text-vscode-button-bg">
                 {connectionStatus === 'connecting'
                   ? 'Connecting to server...'
                   : 'WebSocket disconnected. Data may be stale.'}
@@ -98,7 +98,7 @@ const PerformanceMetrics: React.FC = () => {
             </div>
             <button
               onClick={handleReconnect}
-              className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+              className="px-3 py-1 text-sm bg-vscode-button-bg text-vscode-button-fg rounded hover:bg-vscode-button-hover-bg flex items-center"
               disabled={connectionStatus === 'connecting'}
             >
               {connectionStatus === 'connecting' && <Spinner size="sm" className="mr-2" />}
@@ -109,7 +109,7 @@ const PerformanceMetrics: React.FC = () => {
       </div>
 
       {loading && !stats && (
-        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+        <div className="py-8 text-center text-vscode-descriptionForeground">
           <Spinner size="lg" className="mx-auto mb-4" />
           <p>Loading metrics...</p>
         </div>
@@ -126,7 +126,7 @@ const PerformanceMetrics: React.FC = () => {
           <p>{error}</p>
           <button
             onClick={loadStats}
-            className="mt-4 px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            className="mt-4 px-3 py-1 text-sm bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg"
           >
             Try Again
           </button>
@@ -137,23 +137,23 @@ const PerformanceMetrics: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Summary Stats */}
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+            <div className="bg-vscode-input-bg text-vscode-input-fg p-4 rounded-lg border border-vscode-panel-border">
               <h4 className="text-sm font-medium mb-3">Summary</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Requests</p>
+                  <p className="text-xs text-vscode-descriptionForeground">Total Requests</p>
                   <p className="text-2xl font-semibold">{stats.total}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Success Rate</p>
+                  <p className="text-xs text-vscode-descriptionForeground">Success Rate</p>
                   <p className="text-2xl font-semibold">{stats.successRate.toFixed(1)}%</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Avg Response Time</p>
+                  <p className="text-xs text-vscode-descriptionForeground">Avg Response Time</p>
                   <p className="text-2xl font-semibold">{formatDuration(stats.avgResponseTime)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Last Updated</p>
+                  <p className="text-xs text-vscode-descriptionForeground">Last Updated</p>
                   <p className="text-sm">
                     {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'}
                   </p>
@@ -162,7 +162,7 @@ const PerformanceMetrics: React.FC = () => {
             </div>
 
             {/* Method Distribution */}
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+            <div className="bg-vscode-input-bg text-vscode-input-fg p-4 rounded-lg border border-vscode-panel-border">
               <h4 className="text-sm font-medium mb-3">Requests by Method</h4>
               {methodChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
@@ -185,7 +185,7 @@ const PerformanceMetrics: React.FC = () => {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-gray-500">
+                <div className="h-[200px] flex items-center justify-center text-vscode-descriptionForeground">
                   No data available
                 </div>
               )}
@@ -194,7 +194,7 @@ const PerformanceMetrics: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Status Code Distribution */}
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+            <div className="bg-vscode-input-bg text-vscode-input-fg p-4 rounded-lg border border-vscode-panel-border">
               <h4 className="text-sm font-medium mb-3">Status Code Distribution</h4>
               {statusChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
@@ -227,23 +227,23 @@ const PerformanceMetrics: React.FC = () => {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-gray-500">
+                <div className="h-[200px] flex items-center justify-center text-vscode-descriptionForeground">
                   No data available
                 </div>
               )}
             </div>
 
             {/* Truncation Stats */}
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+            <div className="bg-vscode-input-bg text-vscode-input-fg p-4 rounded-lg border border-vscode-panel-border">
               <h4 className="text-sm font-medium mb-3">Truncation Statistics</h4>
               {stats.truncated ? (
                 <div className="grid grid-cols-2 gap-4 h-[200px]">
                   <div className="flex flex-col items-center justify-center">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-vscode-descriptionForeground">
                       Truncated Request Bodies
                     </p>
                     <p className="text-2xl font-semibold">{stats.truncated.bodies}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-vscode-descriptionForeground">
                       (
                       {stats.total > 0
                         ? ((stats.truncated.bodies / stats.total) * 100).toFixed(1)
@@ -252,11 +252,11 @@ const PerformanceMetrics: React.FC = () => {
                     </p>
                   </div>
                   <div className="flex flex-col items-center justify-center">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-vscode-descriptionForeground">
                       Truncated Response Bodies
                     </p>
                     <p className="text-2xl font-semibold">{stats.truncated.responses}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-vscode-descriptionForeground">
                       (
                       {stats.total > 0
                         ? ((stats.truncated.responses / stats.total) * 100).toFixed(1)
@@ -266,7 +266,7 @@ const PerformanceMetrics: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-gray-500">
+                <div className="h-[200px] flex items-center justify-center text-vscode-descriptionForeground">
                   No truncation data available
                 </div>
               )}
@@ -274,7 +274,7 @@ const PerformanceMetrics: React.FC = () => {
           </div>
 
           {/* Additional information */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+          <div className="text-xs text-vscode-descriptionForeground mt-4">
             <p>
               Metrics are updated automatically every 10 seconds when the WebSocket connection is
               active.

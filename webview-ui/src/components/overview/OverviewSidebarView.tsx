@@ -164,14 +164,14 @@ const OverviewSidebarView: React.FC = () => {
       {server.isRunning ? (
         <button
           onClick={() => handleStopServer(server)}
-          className="px-2 py-1 text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+          className="px-2 py-1 text-xs bg-vscode-errorForeground text-white rounded hover:opacity-90 transition-colors"
         >
           Stop Server
         </button>
       ) : (
         <button
           onClick={() => handleStartServer(server)}
-          className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+          className="px-2 py-1 text-xs bg-vscode-button-bg text-vscode-button-fg rounded hover:opacity-90 transition-colors"
         >
           Start Server
         </button>
@@ -180,7 +180,7 @@ const OverviewSidebarView: React.FC = () => {
       {server.name === 'MCP Server' && server.isRunning && (
         <button
           onClick={() => navigateToTab('mcp')}
-          className="ml-2 px-2 py-1 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+          className="ml-2 px-2 py-1 text-xs bg-vscode-button-bg text-vscode-button-fg rounded hover:opacity-90 transition-colors"
         >
           View MCP Details
         </button>
@@ -198,7 +198,7 @@ const OverviewSidebarView: React.FC = () => {
             checkGatewayServerHealth();
             checkMcpServerHealth();
           }}
-          className="p-1.5 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+          className="p-1.5 text-xs bg-vscode-input-bg rounded hover:bg-vscode-list-hover-bg flex items-center"
           title="Refresh Status"
         >
           {checkingStatus ? (
@@ -222,16 +222,16 @@ const OverviewSidebarView: React.FC = () => {
 
         <div className="space-y-3">
           {servers.map((server) => (
-            <div key={server.name} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
+            <div key={server.name} className="p-2 bg-vscode-input-bg text-vscode-input-fg rounded-md">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-medium">{server.name}</h4>
                 {renderStatusBadge(server.isRunning)}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-vscode-descriptionForeground mt-1">
                 {server.description}
               </p>
               {server.isRunning && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-vscode-descriptionForeground mt-1">
                   Port: <span className="font-mono">{server.port}</span>
                 </p>
               )}
@@ -239,7 +239,7 @@ const OverviewSidebarView: React.FC = () => {
             </div>
           ))}
 
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center">
+          <div className="text-xs text-vscode-descriptionForeground mt-1 flex items-center">
             <span className="mr-1">Last checked:</span>
             <span>{checkingStatus ? 'Checking...' : 'Just now'}</span>
           </div>
@@ -258,7 +258,7 @@ const OverviewSidebarView: React.FC = () => {
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => postMessage({ command: 'clay.openFile' })}
-            className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
+            className="p-2 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg hover:text-vscode-button-fg transition-colors flex flex-col items-center quick-action"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -268,7 +268,7 @@ const OverviewSidebarView: React.FC = () => {
 
           <button
             onClick={() => postMessage({ command: 'clay.searchCodebase' })}
-            className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
+            className="p-2 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg hover:text-vscode-button-fg transition-colors flex flex-col items-center quick-action"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -278,7 +278,7 @@ const OverviewSidebarView: React.FC = () => {
 
           <button
             onClick={() => postMessage({ command: 'clay.getSymbolDefinition' })}
-            className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
+            className="p-2 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg hover:text-vscode-button-fg transition-colors flex flex-col items-center quick-action"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -288,7 +288,7 @@ const OverviewSidebarView: React.FC = () => {
 
           <button
             onClick={() => postMessage({ command: 'clay.reindexCodebase' })}
-            className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
+            className="p-2 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg hover:text-vscode-button-fg transition-colors flex flex-col items-center quick-action"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -309,7 +309,7 @@ const OverviewSidebarView: React.FC = () => {
 
         <div className="space-y-2">
           <div
-            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="p-2 bg-vscode-input-bg text-vscode-input-fg rounded-md cursor-pointer hover:bg-vscode-list-hover-bg"
             onClick={() => postMessage({ command: 'clay.openSettings' })}
           >
             <div className="flex items-center justify-between">
@@ -318,13 +318,13 @@ const OverviewSidebarView: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-vscode-descriptionForeground mt-1">
               Manage Model Context Protocol extensions and tools
             </p>
           </div>
 
           <div
-            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="p-2 bg-vscode-input-bg text-vscode-input-fg rounded-md cursor-pointer hover:bg-vscode-list-hover-bg"
             onClick={() => postMessage({ command: 'clay.chatMessage', message: 'Show me how to use the Gemini Image Generator' })}
           >
             <div className="flex items-center justify-between">
@@ -333,13 +333,13 @@ const OverviewSidebarView: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-vscode-descriptionForeground mt-1">
               Generate images using Google's Gemini API
             </p>
           </div>
 
           <div
-            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="p-2 bg-vscode-input-bg text-vscode-input-fg rounded-md cursor-pointer hover:bg-vscode-list-hover-bg"
             onClick={() => navigateToTab('augment')}
           >
             <div className="flex items-center justify-between">
@@ -348,13 +348,13 @@ const OverviewSidebarView: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-vscode-descriptionForeground mt-1">
               Advanced code search and navigation capabilities
             </p>
           </div>
 
           <div
-            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="p-2 bg-vscode-input-bg text-vscode-input-fg rounded-md cursor-pointer hover:bg-vscode-list-hover-bg"
             onClick={() => postMessage({ command: 'clay.openSettings' })}
           >
             <div className="flex items-center justify-between">
@@ -364,7 +364,7 @@ const OverviewSidebarView: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-vscode-descriptionForeground mt-1">
               Configure Clay extension settings and preferences
             </p>
           </div>

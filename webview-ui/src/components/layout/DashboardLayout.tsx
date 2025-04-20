@@ -12,13 +12,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-auto">
-      <header className="bg-header-bg text-white shadow sticky top-0 z-10">
+    <div className="min-h-screen bg-vscode-bg text-vscode-fg overflow-auto">
+      <header className="bg-vscode-header-bg text-vscode-fg shadow sticky top-0 z-10">
         <div className="max-w-7xl mx-auto py-3 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-xl font-semibold">Clay</h1>
           <div className="flex items-center space-x-2">
             <button
-              className="p-1 rounded hover:bg-gray-700"
+              className="p-1 rounded hover:bg-vscode-list-hover-bg"
               title="Settings"
               onClick={() => {
                 // Handle settings click

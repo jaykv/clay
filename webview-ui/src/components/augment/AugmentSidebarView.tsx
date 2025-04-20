@@ -21,15 +21,15 @@ const AugmentSidebarView: React.FC = () => {
         <h2 className="text-sm font-medium">Augment Context Engine</h2>
       </div>
 
-      <Tabs 
-        value={activeTab} 
+      <Tabs
+        value={activeTab}
         onValueChange={setActiveTab}
         className="flex-1 flex flex-col overflow-hidden"
       >
         <TabsList className="w-full justify-start bg-transparent p-0 mb-3">
           <TabsTrigger
             value="search"
-            className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+            className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -38,7 +38,7 @@ const AugmentSidebarView: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger
             value="symbols"
-            className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+            className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -47,7 +47,7 @@ const AugmentSidebarView: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger
             value="index"
-            className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+            className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" />

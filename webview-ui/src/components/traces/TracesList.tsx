@@ -125,7 +125,7 @@ const SidebarTracesList: React.FC = () => {
   if (loading && traces.length === 0) {
     return (
       <Card title="Traces">
-        <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+        <div className="py-4 text-center text-vscode-descriptionForeground">
           <Spinner size="md" className="mx-auto mb-2" />
           <p>Loading traces...</p>
         </div>
@@ -399,7 +399,7 @@ const SidebarTracesList: React.FC = () => {
                   : 'bg-red-500'
             }`}
           ></div>
-          <span className="text-xs text-gray-500">{connectionStatus}</span>
+          <span className="text-xs text-vscode-descriptionForeground">{connectionStatus}</span>
         </div>
         <div className="flex items-center space-x-1">
           {/* View mode controls */}
@@ -462,7 +462,7 @@ const SidebarTracesList: React.FC = () => {
             {connectionStatus !== 'connected' && (
               <button
                 onClick={() => wsClient.connect()}
-                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="p-1 rounded hover:bg-vscode-list-hover-bg bg-vscode-button-bg text-vscode-button-fg"
                 title="Reconnect"
                 disabled={connectionStatus === 'connecting'}
               >
@@ -490,8 +490,49 @@ const SidebarTracesList: React.FC = () => {
         </div>
       </div>
 
+      {/* WebSocket connection status and reconnect button */}
+      {connectionStatus !== 'connected' && (
+        <div className="bg-vscode-button-bg bg-opacity-10 border border-vscode-button-bg rounded-md p-2 mb-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <svg
+              className="h-4 w-4 text-vscode-button-bg mr-2"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+            <span className="text-xs text-vscode-button-bg">
+              {connectionStatus === 'connecting'
+                ? 'Connecting to server...'
+                : 'WebSocket disconnected. Data may be stale.'}
+            </span>
+          </div>
+          <button
+            onClick={() => wsClient.connect()}
+            className="px-2 py-1 text-xs bg-vscode-button-bg text-vscode-button-fg rounded hover:bg-vscode-button-hover-bg"
+            disabled={connectionStatus === 'connecting'}
+          >
+            {connectionStatus === 'connecting' ? (
+              <span className="flex items-center">
+                <Spinner size="sm" className="mr-1" />
+                Connecting...
+              </span>
+            ) : (
+              'Reconnect'
+            )}
+          </button>
+        </div>
+      )}
+
       {pagination.total > 0 && (
-        <div className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mb-2 text-xs text-vscode-descriptionForeground">
           Showing {traces.length} of {pagination.total} traces
         </div>
       )}

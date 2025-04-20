@@ -128,7 +128,7 @@ const TracesSidebarView: React.FC = () => {
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-sm font-medium">Traces</h2>
         </div>
-        <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+        <div className="py-4 text-center text-vscode-descriptionForeground">
           <Spinner size="md" className="mx-auto mb-2" />
           <p className="text-sm">Loading traces...</p>
         </div>
@@ -150,7 +150,7 @@ const TracesSidebarView: React.FC = () => {
                   : 'bg-red-500'
             }`}
           ></div>
-          <span className="text-xs text-gray-500">{connectionStatus}</span>
+          <span className="text-xs text-vscode-descriptionForeground">{connectionStatus}</span>
         </div>
         <div className="flex space-x-1">
           {selectedTrace && (
@@ -159,7 +159,7 @@ const TracesSidebarView: React.FC = () => {
                 setSelectedTrace(null);
                 setActiveTab('list');
               }}
-              className="p-1.5 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+              className="p-1.5 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg flex items-center"
               title="Back to List"
             >
               <svg
@@ -180,7 +180,7 @@ const TracesSidebarView: React.FC = () => {
           )}
           <button
             onClick={() => loadTraces()}
-            className="p-1.5 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+            className="p-1.5 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg flex items-center"
             title="Refresh Traces"
           >
             {loading ? (
@@ -204,7 +204,7 @@ const TracesSidebarView: React.FC = () => {
           </button>
           <button
             onClick={handleClearTraces}
-            className="p-1.5 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+            className="p-1.5 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg flex items-center"
             title="Clear Traces"
           >
             <svg
@@ -225,7 +225,7 @@ const TracesSidebarView: React.FC = () => {
           {connectionStatus !== 'connected' && (
             <button
               onClick={() => wsClient.connect()}
-              className="p-1.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+              className="p-1.5 text-xs bg-vscode-button-bg text-vscode-button-fg rounded hover:bg-vscode-button-hover-bg flex items-center"
               title="Reconnect"
               disabled={connectionStatus === 'connecting'}
             >
@@ -252,8 +252,49 @@ const TracesSidebarView: React.FC = () => {
         </div>
       </div>
 
+      {/* WebSocket connection status and reconnect button */}
+      {connectionStatus !== 'connected' && (
+        <div className="bg-vscode-button-bg bg-opacity-10 border border-vscode-button-bg rounded-md p-2 mb-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <svg
+              className="h-4 w-4 text-vscode-button-bg mr-2"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+            <span className="text-xs text-vscode-button-bg">
+              {connectionStatus === 'connecting'
+                ? 'Connecting to server...'
+                : 'WebSocket disconnected. Data may be stale.'}
+            </span>
+          </div>
+          <button
+            onClick={() => wsClient.connect()}
+            className="px-2 py-1 text-xs bg-vscode-button-bg text-vscode-button-fg rounded hover:bg-vscode-button-hover-bg"
+            disabled={connectionStatus === 'connecting'}
+          >
+            {connectionStatus === 'connecting' ? (
+              <span className="flex items-center">
+                <Spinner size="sm" className="mr-1" />
+                Connecting...
+              </span>
+            ) : (
+              'Reconnect'
+            )}
+          </button>
+        </div>
+      )}
+
       {pagination.total > 0 && (
-        <div className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mb-2 text-xs text-vscode-descriptionForeground">
           Showing {traces.length} of {pagination.total} traces
         </div>
       )}
@@ -312,7 +353,7 @@ const TracesSidebarView: React.FC = () => {
             {/* Traces List */}
             <div ref={listRef} className="overflow-auto flex-1">
               {getFilteredTraces().length === 0 ? (
-                <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+                <div className="py-4 text-center text-vscode-descriptionForeground">
                   {searchQuery
                     ? `No traces found matching "${searchQuery}"`
                     : 'No traces recorded yet.'}
@@ -323,7 +364,7 @@ const TracesSidebarView: React.FC = () => {
                     <div
                       key={trace.id}
                       data-trace-id={trace.id}
-                      className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+                      className="p-2 bg-vscode-input-bg text-vscode-input-fg rounded-md cursor-pointer hover:bg-vscode-list-hover-bg border border-vscode-panel-border"
                       onClick={() => setSelectedTrace(trace.id)}
                     >
                       <div className="flex justify-between items-center">
@@ -341,7 +382,7 @@ const TracesSidebarView: React.FC = () => {
                       <div className="font-mono text-xs truncate" title={trace.path}>
                         {trace.path}
                       </div>
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex justify-between text-xs text-vscode-descriptionForeground">
                         <span>{formatDate(trace.startTime)}</span>
                         <span>{formatDuration(trace.duration || 0)}</span>
                       </div>
@@ -354,7 +395,7 @@ const TracesSidebarView: React.FC = () => {
         ) : (
           // Trace Details View
           <div className="flex-1 flex flex-col">
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-md p-2 mb-3">
+            <div className="bg-vscode-input-bg text-vscode-input-fg rounded-md p-2 mb-3 border border-vscode-panel-border">
               <div className="flex items-center justify-between">
                 <div
                   className={`font-mono text-xs font-medium ${getMethodColor(selectedTraceData!.method)}`}
@@ -370,7 +411,7 @@ const TracesSidebarView: React.FC = () => {
               <div className="font-mono text-xs truncate mt-1" title={selectedTraceData!.path}>
                 {selectedTraceData!.path}
               </div>
-              <div className="flex justify-between text-xs mt-1 text-gray-500 dark:text-gray-400">
+              <div className="flex justify-between text-xs mt-1 text-vscode-descriptionForeground">
                 <span>{formatDate(selectedTraceData!.startTime)}</span>
                 <span>{formatDuration(selectedTraceData!.duration || 0)}</span>
               </div>
@@ -380,19 +421,19 @@ const TracesSidebarView: React.FC = () => {
               <TabsList className="w-full justify-start bg-transparent p-0 mb-2">
                 <TabsTrigger
                   value="request"
-                  className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+                  className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
                 >
                   Request
                 </TabsTrigger>
                 <TabsTrigger
                   value="response"
-                  className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+                  className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
                 >
                   Response
                 </TabsTrigger>
                 <TabsTrigger
                   value="raw"
-                  className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+                  className="text-xs py-1 px-2 data-[state=active]:bg-vscode-input-bg data-[state=active]:text-vscode-input-fg"
                 >
                   Raw
                 </TabsTrigger>
@@ -401,7 +442,7 @@ const TracesSidebarView: React.FC = () => {
               <TabsContent value="request" className="flex-1 overflow-auto m-0">
                 <div className="mb-2">
                   <h5 className="text-xs font-medium mb-1">Headers</h5>
-                  <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded text-xs overflow-auto max-h-32">
+                  <div className="bg-vscode-input-bg p-2 rounded text-xs overflow-auto max-h-32 border border-vscode-panel-border">
                     {selectedTraceData!.headers &&
                     Object.keys(selectedTraceData!.headers).length > 0 ? (
                       <table className="w-full text-left">
@@ -415,20 +456,20 @@ const TracesSidebarView: React.FC = () => {
                         </tbody>
                       </table>
                     ) : (
-                      <p className="text-gray-500 dark:text-gray-400">No headers</p>
+                      <p className="text-vscode-descriptionForeground">No headers</p>
                     )}
                   </div>
                 </div>
 
                 <div>
                   <h5 className="text-xs font-medium mb-1">Body</h5>
-                  <pre className="bg-gray-50 dark:bg-gray-900 p-2 rounded text-xs overflow-auto max-h-64 whitespace-pre-wrap break-words">
+                  <pre className="bg-vscode-input-bg p-2 rounded text-xs overflow-auto max-h-64 whitespace-pre-wrap break-words border border-vscode-panel-border">
                     {selectedTraceData!.body
                       ? JSON.stringify(selectedTraceData!.body, null, 2)
                       : 'No body'}
                   </pre>
                   {selectedTraceData!.bodyTruncated && (
-                    <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                    <div className="mt-1 text-xs text-vscode-editorWarning-foreground">
                       Note: Request body was truncated due to size limits.
                     </div>
                   )}
@@ -447,13 +488,13 @@ const TracesSidebarView: React.FC = () => {
 
                 <div>
                   <h5 className="text-xs font-medium mb-1">Body</h5>
-                  <pre className="bg-gray-50 dark:bg-gray-900 p-2 rounded text-xs overflow-auto max-h-64 whitespace-pre-wrap break-words">
+                  <pre className="bg-vscode-input-bg p-2 rounded text-xs overflow-auto max-h-64 whitespace-pre-wrap break-words border border-vscode-panel-border">
                     {selectedTraceData!.response
                       ? JSON.stringify(selectedTraceData!.response, null, 2)
                       : 'No response'}
                   </pre>
                   {selectedTraceData!.responseTruncated && (
-                    <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                    <div className="mt-1 text-xs text-vscode-editorWarning-foreground">
                       Note: Response body was truncated due to size limits.
                     </div>
                   )}
@@ -461,7 +502,7 @@ const TracesSidebarView: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="raw" className="flex-1 overflow-auto m-0">
-                <pre className="bg-gray-50 dark:bg-gray-900 p-2 rounded text-xs h-full overflow-auto whitespace-pre-wrap break-words">
+                <pre className="bg-vscode-input-bg p-2 rounded text-xs h-full overflow-auto whitespace-pre-wrap break-words border border-vscode-panel-border">
                   {JSON.stringify(selectedTraceData, null, 2)}
                 </pre>
               </TabsContent>

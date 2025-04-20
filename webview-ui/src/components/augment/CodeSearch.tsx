@@ -161,7 +161,7 @@ const CodeSearch: React.FC = () => {
   const renderCodeSnippet = (snippet: CodeSnippet) => {
     return (
       <div className="relative group">
-        <pre className="text-xs overflow-x-auto p-2 bg-gray-100 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+        <pre className="text-xs overflow-x-auto p-2 bg-vscode-input-bg text-vscode-input-fg rounded border border-vscode-panel-border">
           <code>{snippet.content}</code>
         </pre>
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -197,7 +197,7 @@ const CodeSearch: React.FC = () => {
       </form>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-700 rounded-md">
+        <div className="p-4 bg-vscode-errorForeground bg-opacity-10 text-vscode-errorForeground rounded-md">
           <p className="font-medium">Error searching codebase</p>
           <p className="text-sm">{error}</p>
         </div>
@@ -211,19 +211,19 @@ const CodeSearch: React.FC = () => {
       )}
 
       {!loading && debouncedSearchQuery && results.length === 0 && (
-        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+        <div className="p-4 text-center text-vscode-descriptionForeground">
           No results found for "{debouncedSearchQuery}"
         </div>
       )}
 
       {results.length > 0 && (
         <div className="space-y-4">
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
+          <div className="flex border-b border-vscode-panel-border">
             <button
               className={`px-4 py-2 font-medium text-sm ${
                 activeTab === 'snippets'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'text-vscode-button-bg border-b-2 border-vscode-button-bg'
+                  : 'text-vscode-descriptionForeground hover:text-vscode-input-fg'
               }`}
               onClick={() => setActiveTab('snippets')}
             >
@@ -232,8 +232,8 @@ const CodeSearch: React.FC = () => {
             <button
               className={`px-4 py-2 font-medium text-sm ${
                 activeTab === 'symbols'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'text-vscode-button-bg border-b-2 border-vscode-button-bg'
+                  : 'text-vscode-descriptionForeground hover:text-vscode-input-fg'
               }`}
               onClick={() => setActiveTab('symbols')}
             >
@@ -246,19 +246,19 @@ const CodeSearch: React.FC = () => {
               {results.map((result, resultIndex) => (
                 <div
                   key={`result-${resultIndex}`}
-                  className="border rounded-md overflow-hidden bg-white dark:bg-gray-800"
+                  className="border border-vscode-panel-border rounded-md overflow-hidden bg-vscode-input-bg text-vscode-input-fg"
                 >
                   {result.snippets.map((snippet, snippetIndex) => (
                     <div
                       key={`snippet-${resultIndex}-${snippetIndex}`}
-                      className="border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                      className="border-b border-vscode-panel-border last:border-b-0"
                     >
                       <div
-                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-vscode-list-hover-bg"
                         onClick={() => toggleExpanded(`${resultIndex}-${snippetIndex}`)}
                       >
                         <div className="flex items-center space-x-2">
-                          <span className="material-icons text-gray-500 dark:text-gray-400">
+                          <span className="material-icons text-vscode-descriptionForeground">
                             {expandedResults.has(`${resultIndex}-${snippetIndex}`)
                               ? 'expand_more'
                               : 'chevron_right'}
@@ -284,7 +284,7 @@ const CodeSearch: React.FC = () => {
                         </Button>
                       </div>
                       {expandedResults.has(`${resultIndex}-${snippetIndex}`) && (
-                        <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+                        <div className="p-3 border-t border-vscode-panel-border">
                           {renderCodeSnippet(snippet)}
                         </div>
                       )}
@@ -294,43 +294,43 @@ const CodeSearch: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="border rounded-md overflow-hidden bg-white dark:bg-gray-800">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+            <div className="border border-vscode-panel-border rounded-md overflow-hidden bg-vscode-input-bg text-vscode-input-fg">
+              <table className="min-w-full divide-y divide-vscode-panel-border">
+                <thead className="bg-vscode-input-bg">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-vscode-descriptionForeground uppercase tracking-wider">
                       Symbol
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-vscode-descriptionForeground uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-vscode-descriptionForeground uppercase tracking-wider">
                       File
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-vscode-descriptionForeground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="bg-vscode-input-bg divide-y divide-vscode-panel-border">
                   {getAllSymbols().map((symbol, index) => (
-                    <tr key={`symbol-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                    <tr key={`symbol-${index}`} className="hover:bg-vscode-list-hover-bg">
+                      <td className="px-4 py-3 text-sm text-vscode-input-fg">
                         <div className="font-medium">{symbol.name}</div>
                         {symbol.signature && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <div className="text-xs text-vscode-descriptionForeground mt-1">
                             {symbol.signature}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 text-sm text-vscode-descriptionForeground">
                         <Badge variant="outline">{symbol.type}</Badge>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 text-sm text-vscode-descriptionForeground">
                         <div className="truncate max-w-xs">{symbol.filePath}</div>
                         <div className="text-xs">Line {symbol.startLine}</div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 text-sm text-vscode-descriptionForeground">
                         <Button
                           size="sm"
                           variant="secondary"

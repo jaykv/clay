@@ -10,10 +10,10 @@ interface CardProps {
 
 const Card = ({ title, children, actions, className = '' }: CardProps) => {
   return (
-    <div className={cn('bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg', className)}>
+    <div className={cn('bg-vscode-bg border border-vscode-panel-border overflow-hidden rounded-lg', className)}>
       {title && (
         <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">{title}</h3>
+          <h3 className="text-lg leading-6 font-medium text-vscode-fg">{title}</h3>
           {actions && <div>{actions}</div>}
         </div>
       )}

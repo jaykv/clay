@@ -166,7 +166,7 @@ const ProxyRoutesSidebarView: React.FC = () => {
         <div className="flex space-x-2">
           <button
             onClick={loadRoutes}
-            className="p-1.5 text-xs bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center"
+            className="p-1.5 text-xs bg-vscode-input-bg text-vscode-input-fg rounded hover:bg-vscode-list-hover-bg flex items-center"
             title="Refresh Routes"
           >
             {loading ? (
@@ -200,10 +200,10 @@ const ProxyRoutesSidebarView: React.FC = () => {
 
       {/* Error message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-2 mb-3 text-xs">
+        <div className="bg-vscode-errorForeground bg-opacity-10 border-l-4 border-vscode-errorForeground p-2 mb-3 text-xs">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-4 w-4 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-4 w-4 text-vscode-errorForeground" viewBox="0 0 20 20" fill="currentColor">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -212,7 +212,7 @@ const ProxyRoutesSidebarView: React.FC = () => {
               </svg>
             </div>
             <div className="ml-2">
-              <p className="text-xs text-red-700 dark:text-red-200">{error}</p>
+              <p className="text-xs text-vscode-errorForeground">{error}</p>
             </div>
           </div>
         </div>
@@ -220,7 +220,7 @@ const ProxyRoutesSidebarView: React.FC = () => {
 
       {/* Add Route Form */}
       {showForm && (
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3 mb-3">
+        <div className="bg-vscode-input-bg text-vscode-input-fg rounded-md p-3 mb-3 border border-vscode-panel-border">
           <h3 className="text-sm font-medium mb-2">Add New Route</h3>
           <form onSubmit={handleSubmit} className="space-y-3">
             <Input
@@ -231,7 +231,7 @@ const ProxyRoutesSidebarView: React.FC = () => {
               placeholder="e.g., hello or api/v1"
               error={formErrors.path}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
+            <p className="text-xs text-vscode-descriptionForeground -mt-2">
               Will be accessible at http://localhost:3000/proxy/{path}
             </p>
 
@@ -310,21 +310,21 @@ const ProxyRoutesSidebarView: React.FC = () => {
 
       {/* Routes List */}
       <div className="flex-1 overflow-auto">
-        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+        <div className="text-xs text-vscode-descriptionForeground mb-2">
           Routes proxy requests from{' '}
-          <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+          <code className="bg-vscode-input-bg px-1 py-0.5 rounded border border-vscode-panel-border">
             localhost:3000/proxy/path
           </code>{' '}
           to target URL.
         </div>
 
         {loading && routes.length === 0 ? (
-          <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+          <div className="py-4 text-center text-vscode-descriptionForeground">
             <Spinner size="md" className="mx-auto mb-2" />
             <p className="text-sm">Loading routes...</p>
           </div>
         ) : getFilteredRoutes().length === 0 ? (
-          <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+          <div className="py-4 text-center text-vscode-descriptionForeground">
             {searchQuery
               ? `No routes found matching "${searchQuery}"`
               : 'No routes configured yet.'}
@@ -332,7 +332,7 @@ const ProxyRoutesSidebarView: React.FC = () => {
         ) : (
           <div className="space-y-2">
             {getFilteredRoutes().map(route => (
-              <div key={route.path} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
+              <div key={route.path} className="p-2 bg-vscode-input-bg text-vscode-input-fg rounded-md border border-vscode-panel-border">
                 <div className="flex items-center justify-between">
                   <div className="font-medium text-sm truncate">{route.path}</div>
                   <Button
@@ -345,12 +345,12 @@ const ProxyRoutesSidebarView: React.FC = () => {
                   </Button>
                 </div>
 
-                <div className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate mt-1">
+                <div className="text-xs text-vscode-descriptionForeground font-mono truncate mt-1">
                   → {route.target}
                 </div>
 
                 {route.description && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                  <div className="text-xs text-vscode-descriptionForeground mt-1 italic">
                     {route.description}
                   </div>
                 )}
