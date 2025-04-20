@@ -37,6 +37,11 @@ const NavigationHandler: React.FC = () => {
       if (message.command === 'switchTab' && message.tab) {
         window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: message.tab } }));
       }
+
+      // Handle custom event dispatching
+      if (message.command === 'dispatchCustomEvent' && message.eventName) {
+        window.dispatchEvent(new CustomEvent(message.eventName, { detail: message.detail }));
+      }
     };
 
     window.addEventListener('message', messageHandler);

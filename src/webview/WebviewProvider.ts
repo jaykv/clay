@@ -174,6 +174,15 @@ export class EnhancedWebviewProvider {
               console.error('Error sending server status:', error);
             });
             return;
+          case 'switchTab':
+            // Forward the tab switching command back to the webview
+            // We need to send a message that will trigger the custom event in the webview
+            this.postMessage({
+              command: 'dispatchCustomEvent',
+              eventName: 'switchTab',
+              detail: { tab: message.tab }
+            });
+            return;
         }
       },
       undefined,
@@ -264,7 +273,6 @@ export class EnhancedWebviewProvider {
       // Replace the JS reference in the HTML
       // Use a more flexible regex to match any JS file in the assets directory
       indexHtml = indexHtml.replace(/src="[^"]*assets\/[^"]*\.js"/, `src="${jsUri}"`);
-      console.log(`Replaced JS reference with: ${jsUri}`);
 
       // Handle CSS reference
       if (cssUri) {

@@ -14,12 +14,12 @@ interface ServerInfo {
   adminStopUrl: string;
 }
 
-const SimplifiedOverviewSidebarView: React.FC = () => {
+const OverviewSidebarView: React.FC = () => {
   // Server states
   const [gatewayServerRunning, setGatewayServerRunning] = useState(false);
   const [mcpServerRunning, setMcpServerRunning] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
-  
+
   // Define server configurations
   const servers: ServerInfo[] = [
     {
@@ -105,7 +105,7 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
   // Handle server start
   const handleStartServer = (server: ServerInfo) => {
     postMessage({ command: server.startCommand });
-    
+
     // Optimistic update
     if (server.name === 'Gateway Server') {
       setGatewayServerRunning(true);
@@ -123,7 +123,7 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
 
       if (success) {
         console.log(`Server ${server.name} is stopping via admin endpoint`);
-        
+
         // Wait a short time before checking health
         setTimeout(() => {
           if (server.name === 'Gateway Server') {
@@ -132,13 +132,13 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
             checkMcpServerHealth();
           }
         }, 300);
-        
+
         return;
       }
     } catch (error) {
       console.error(`Error stopping server ${server.name} via admin endpoint:`, error);
     }
-    
+
     // Fall back to VS Code command
     postMessage({ command: server.stopCommand });
   };
@@ -150,8 +150,8 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
 
   // Render server status badge
   const renderStatusBadge = (isRunning: boolean) => (
-    <Badge 
-      variant={isRunning ? 'success' : 'secondary'} 
+    <Badge
+      variant={isRunning ? 'success' : 'secondary'}
       className="ml-2 text-xs"
     >
       {isRunning ? 'Running' : 'Stopped'}
@@ -176,7 +176,7 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
           Start Server
         </button>
       )}
-      
+
       {server.name === 'MCP Server' && server.isRunning && (
         <button
           onClick={() => navigateToTab('mcp')}
@@ -210,7 +210,7 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
           )}
         </button>
       </div>
-      
+
       {/* Server Status Section */}
       <div className="mb-4">
         <div className="flex items-center mb-2">
@@ -219,7 +219,7 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
           </svg>
           <h3 className="text-sm font-medium">Servers</h3>
         </div>
-        
+
         <div className="space-y-3">
           {servers.map((server) => (
             <div key={server.name} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
@@ -238,14 +238,14 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
               {renderServerControls(server)}
             </div>
           ))}
-          
+
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center">
             <span className="mr-1">Last checked:</span>
             <span>{checkingStatus ? 'Checking...' : 'Just now'}</span>
           </div>
         </div>
       </div>
-      
+
       {/* Quick Actions Section */}
       <div className="mb-4">
         <div className="flex items-center mb-2">
@@ -254,50 +254,50 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
           </svg>
           <h3 className="text-sm font-medium">Quick Actions</h3>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => navigateToTab('routes')}
+            onClick={() => postMessage({ command: 'clay.openFile' })}
             className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Proxy Routes
+            Open File
           </button>
-          
+
           <button
-            onClick={() => navigateToTab('augment')}
+            onClick={() => postMessage({ command: 'clay.searchCodebase' })}
+            className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Search Code
+          </button>
+
+          <button
+            onClick={() => postMessage({ command: 'clay.getSymbolDefinition' })}
             className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
             </svg>
-            Augment Engine
+            Find Symbol
           </button>
-          
+
           <button
-            onClick={() => navigateToTab('traces')}
+            onClick={() => postMessage({ command: 'clay.reindexCodebase' })}
             className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17l4-4m0 0l4-4m-4 4H3m14 4h2a2 2 0 002-2V5a2 2 0 00-2-2h-2" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Traces
-          </button>
-          
-          <button
-            onClick={() => navigateToTab('metrics')}
-            className="p-2 text-xs bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex flex-col items-center quick-action"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Metrics
+            Reindex
           </button>
         </div>
       </div>
-      
+
       {/* Features Section */}
       <div className="mb-4">
         <div className="flex items-center mb-2">
@@ -306,50 +306,66 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
           </svg>
           <h3 className="text-sm font-medium">Features</h3>
         </div>
-        
+
         <div className="space-y-2">
-          <div 
+          <div
             className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
-            onClick={() => navigateToTab('routes')}
+            onClick={() => postMessage({ command: 'clay.openSettings' })}
           >
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Proxy Routes</h4>
+              <h4 className="text-sm font-medium">MCP Extensions</h4>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Configure custom proxy routes to forward requests
+              Manage Model Context Protocol extensions and tools
             </p>
           </div>
-          
-          <div 
+
+          <div
+            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+            onClick={() => postMessage({ command: 'clay.chatMessage', message: 'Show me how to use the Gemini Image Generator' })}
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">Gemini Image Generator</h4>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Generate images using Google's Gemini API
+            </p>
+          </div>
+
+          <div
             className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
             onClick={() => navigateToTab('augment')}
           >
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Augment Engine</h4>
+              <h4 className="text-sm font-medium">Code Intelligence</h4>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Search and navigate your codebase with AI assistance
+              Advanced code search and navigation capabilities
             </p>
           </div>
-          
-          <div 
+
+          <div
             className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
-            onClick={() => navigateToTab('traces')}
+            onClick={() => postMessage({ command: 'clay.openSettings' })}
           >
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Traces</h4>
+              <h4 className="text-sm font-medium">Settings</h4>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Monitor and debug API requests and responses
+              Configure Clay extension settings and preferences
             </p>
           </div>
         </div>
@@ -358,4 +374,4 @@ const SimplifiedOverviewSidebarView: React.FC = () => {
   );
 };
 
-export default SimplifiedOverviewSidebarView;
+export default OverviewSidebarView;

@@ -141,6 +141,16 @@ export class SidebarWebviewProvider implements vscode.WebviewViewProvider {
               logger.error('Error sending server status:', error);
             });
             return;
+          case 'switchTab':
+            // Forward the tab switching command back to the webview
+            // We need to send a message that will trigger the custom event in the webview
+            logger.debug(`Forwarding switchTab command for tab: ${message.tab}`);
+            this.postMessage({
+              command: 'dispatchCustomEvent',
+              eventName: 'switchTab',
+              detail: { tab: message.tab }
+            });
+            return;
         }
       },
       undefined,
