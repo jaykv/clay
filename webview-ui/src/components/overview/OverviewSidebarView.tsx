@@ -3,6 +3,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Badge } from '@/components/ui/Badge';
 import { postMessage } from '@/utils/vscode';
 import { checkServerHealth } from '@/lib/api/servers';
+import { useTab } from '@/contexts/TabContext';
 
 interface ServerInfo {
   name: string;
@@ -15,6 +16,8 @@ interface ServerInfo {
 }
 
 const OverviewSidebarView: React.FC = () => {
+  // Get tab state from context
+  const { setActiveTab } = useTab();
   // Server states
   const [gatewayServerRunning, setGatewayServerRunning] = useState(false);
   const [mcpServerRunning, setMcpServerRunning] = useState(false);
@@ -145,7 +148,7 @@ const OverviewSidebarView: React.FC = () => {
 
   // Navigate to a specific tab
   const navigateToTab = (tab: string) => {
-    postMessage({ command: 'switchTab', tab });
+    setActiveTab(tab);
   };
 
   // Render server status badge

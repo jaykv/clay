@@ -78,7 +78,7 @@ const MetricsSidebarView: React.FC = () => {
         <div className="bg-vscode-button-bg bg-opacity-10 border border-vscode-button-bg rounded-md p-2 mb-3 flex items-center justify-between">
           <div className="flex items-center">
             <svg
-              className="h-4 w-4 text-blue-500 mr-2"
+              className="h-4 w-4 text-vscode-button-fg mr-2"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -91,7 +91,7 @@ const MetricsSidebarView: React.FC = () => {
                 d="M13 10V3L4 14h7v7l9-11h-7z"
               />
             </svg>
-            <span className="text-xs text-vscode-button-bg">
+            <span className="text-xs text-vscode-button-fg">
               {connectionStatus === 'connecting'
                 ? 'Connecting to server...'
                 : 'WebSocket disconnected. Data may be stale.'}

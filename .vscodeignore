@@ -17,7 +17,6 @@
 
 # Include Python files
 !dist/python/**/*.py
-!**/*.py
 
 # Include webview UI build output
 !webview-ui/dist/**
@@ -38,3 +37,5 @@ webview-ui/**/node_modules/**
 # Exclude temporary build files
 **/*.tsbuildinfo
 **/.DS_Store
+
+.clay/**

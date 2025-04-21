@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTab } from '@/contexts/TabContext';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import ServerStatus from '@/components/servers/ServerStatus';
@@ -17,11 +18,13 @@ interface DashboardProps {
   isSidebar?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ initialTab = 'overview', isSidebar = false }) => {
+const Dashboard: React.FC<DashboardProps> = ({ isSidebar = false }) => {
+  // Get tab state from context
+  const { activeTab, setActiveTab } = useTab();
+
   // Server states
   const [gatewayServerRunning, setGatewayServerRunning] = useState(false);
   const [mcpServerRunning, setMcpServerRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Function to check gateway server health immediately
   const checkGatewayServerHealth = async () => {

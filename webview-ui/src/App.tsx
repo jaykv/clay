@@ -11,6 +11,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import Dashboard from '@/pages/Dashboard';
 import { initVSCodeAPI } from '@/utils/vscode';
 import { TracesProvider } from '@/contexts/TracesContext';
+import { TabProvider } from '@/contexts/TabContext';
 import { onThemeChange, getVSCodeThemeType } from '@/utils/theme';
 import { applyContrastText } from '@/utils/contrast';
 
@@ -146,7 +147,9 @@ const App: React.FC = () => {
     console.log('Rendering sidebar view');
     return (
       <TracesProvider>
-        <div className="sidebar-container">{dashboardComponent}</div>
+        <TabProvider initialTab={initialTab}>
+          <div className="sidebar-container">{dashboardComponent}</div>
+        </TabProvider>
       </TracesProvider>
     );
   }
@@ -154,20 +157,22 @@ const App: React.FC = () => {
   // Otherwise, render the normal dashboard with layout
   return (
     <TracesProvider>
-      <Router>
-        <DashboardLayout>
-          <NavigationHandler />
-          {!isVSCode && (
-            <div className="bg-blue-100 dark:bg-blue-900 p-2 mb-4 rounded text-sm">
-              Running in standalone browser mode. Server controls are disabled.
-            </div>
-          )}
-          <Routes>
-            <Route path="/" element={dashboardComponent} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </DashboardLayout>
-      </Router>
+      <TabProvider initialTab={initialTab}>
+        <Router>
+          <DashboardLayout>
+            <NavigationHandler />
+            {!isVSCode && (
+              <div className="bg-blue-100 dark:bg-blue-900 p-2 mb-4 rounded text-sm">
+                Running in standalone browser mode. Server controls are disabled.
+              </div>
+            )}
+            <Routes>
+              <Route path="/" element={dashboardComponent} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </DashboardLayout>
+        </Router>
+      </TabProvider>
     </TracesProvider>
   );
 };
