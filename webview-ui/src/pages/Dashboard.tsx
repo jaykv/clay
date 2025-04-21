@@ -131,7 +131,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isSidebar = false }) => {
           className={`tab ${activeTab === 'routes' ? 'active' : ''}`}
           onClick={() => setActiveTab('routes')}
         >
-          Proxy Routes
+          Routes
         </button>
         <button
           className={`tab ${activeTab === 'metrics' ? 'active' : ''}`}
