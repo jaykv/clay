@@ -10,3 +10,5 @@ yarn-error.log
 __pycache__
 .env
 .venv
+.temp
+mcp-inspector

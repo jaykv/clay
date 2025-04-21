@@ -4,6 +4,7 @@ import { serverStatusEmitter, ServerStatusEvent } from './globals';
 import { initializeServerContext } from './server/utils/server-bridge';
 import { EnhancedWebviewProvider } from './webview/WebviewProvider';
 import { SidebarWebviewProvider } from './webview/SidebarWebviewProvider';
+import { MCPInspectorWebviewProvider } from './webview/MCPInspectorWebviewProvider';
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
 import { getConfig } from './server/utils/config';
 import { startMCPServer } from './server/mcp';
@@ -116,6 +117,31 @@ export async function activate(context: vscode.ExtensionContext) {
         command: 'switchTab',
         tab: 'augment',
       });
+    })
+  );
+
+  // Register open MCP Inspector command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('clay.openMCPInspector', () => {
+      // Show the MCP Inspector panel
+      MCPInspectorWebviewProvider.createOrShow(context.extensionUri);
+    })
+  );
+
+  // Listen for server status changes and update the MCP Inspector webview
+  context.subscriptions.push(
+    serverStatusEmitter.event((event: ServerStatusEvent) => {
+      if (event.type === 'mcp') {
+        logger.debug(`Sending MCP server status update to MCP Inspector: ${event.status}`);
+        MCPInspectorWebviewProvider.postMessage({
+          command: 'mcpServerStatus',
+          status: event.status === 'started' ? 'running' : 'stopped',
+          config: {
+            host: mcpConfig.host,
+            port: mcpConfig.port
+          }
+        });
+      }
     })
   );
 

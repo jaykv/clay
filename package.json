@@ -51,6 +51,10 @@
         "title": "Clay: Open Augment Context Engine"
       },
       {
+        "command": "clay.openMCPInspector",
+        "title": "Clay: Open MCP Inspector"
+      },
+      {
         "command": "clay.searchCodebase",
         "title": "Clay: Search Codebase"
       },
@@ -122,6 +126,11 @@
         "command": "clay.showGateway",
         "key": "ctrl+shift+d",
         "mac": "cmd+shift+d"
+      },
+      {
+        "command": "clay.openMCPInspector",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m"
       }
     ]
   },
@@ -144,7 +153,8 @@
     "dev-registry": "ts-node src/server/registry/index.ts",
     "build-webview": "cd webview-ui && npm run build",
     "dev-webview": "cd webview-ui && npm run dev",
-    "compile-all": "npm run compile:prod && npm run build-webview",
+    "build-mcp-inspector": "node scripts/build-mcp-inspector.js",
+    "compile-all": "npm run compile:prod && npm run build-webview && npm run build-mcp-inspector",
     "copy-deps": "node copy-dependencies.js && node copy-python-files.js",
     "vsce:package": "npm run copy-deps && npx @vscode/vsce package --no-dependencies",
     "vsce:publish": "npm run copy-deps && npx @vscode/vsce publish --no-dependencies",

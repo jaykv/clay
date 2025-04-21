@@ -21,6 +21,9 @@
 # Include webview UI build output
 !webview-ui/dist/**
 
+# Include MCP Inspector build output
+!mcp-inspector/**
+
 # Include package metadata
 !package.json
 !README.md
@@ -37,5 +40,9 @@ webview-ui/**/node_modules/**
 # Exclude temporary build files
 **/*.tsbuildinfo
 **/.DS_Store
+.temp/**
 
-.clay/**
+# Include .clay directory for MCP extensions
+!.clay/mcp/**
+.clay/mcp/.venv/**
+.clay/mcp/__pycache__/**
