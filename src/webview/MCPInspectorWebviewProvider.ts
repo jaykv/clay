@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { spawn, ChildProcess } from 'child_process';
 import { isMCPServerRunning } from '../commands';
 import { logger } from '../server/utils/logger';
 import { getConfig } from '../server/utils/config';
@@ -9,6 +10,12 @@ import { getConfig } from '../server/utils/config';
 interface HtmlCache {
   html: string;
   timestamp: number;
+}
+
+// MCP Proxy server instance
+interface MCPProxyServer {
+  process: ChildProcess;
+  port: number;
 }
 
 /**
@@ -20,6 +27,7 @@ export class MCPInspectorWebviewProvider {
   private static extensionUri: vscode.Uri;
   private static htmlCache: HtmlCache | null = null;
   private static readonly CACHE_TTL = 1000 * 60 * 5; // 5 minutes cache TTL
+  private static proxyServer: MCPProxyServer | null = null;
 
   /**
    * Send a message to the webview
@@ -32,6 +40,89 @@ export class MCPInspectorWebviewProvider {
   }
 
   /**
+   * Start the MCP proxy server
+   */
+  private static async startProxyServer(): Promise<number> {
+    if (this.proxyServer) {
+      return this.proxyServer.port;
+    }
+
+    const port = 6277; // Default MCP proxy port
+    const mcpConfig = getConfig().mcp;
+    const mcpServerUrl = `http://${mcpConfig.host}:${mcpConfig.port}`;
+
+    try {
+      // Try to find the inspector server (bundled with extension)
+      const possibleServerPaths = [
+        // Bundled server files in extension
+        path.join(this.extensionUri.fsPath, 'mcp-inspector-bundle', 'server', 'index.js'),
+        // Fallback to development scenario
+        path.join(this.extensionUri.fsPath, 'node_modules', '@modelcontextprotocol', 'inspector', 'server', 'build', 'index.js'),
+      ];
+
+      let inspectorServerPath: string | null = null;
+      for (const possiblePath of possibleServerPaths) {
+        if (fs.existsSync(possiblePath)) {
+          inspectorServerPath = possiblePath;
+          logger.debug(`Found MCP Inspector server at: ${inspectorServerPath}`);
+          break;
+        }
+      }
+
+      if (!inspectorServerPath) {
+        throw new Error(`Cannot find MCP Inspector server. Searched paths: ${possibleServerPaths.join(', ')}`);
+      }
+
+      // Start the proxy server process
+      const childProcess = spawn('node', [inspectorServerPath], {
+        env: {
+          ...process.env,
+          PORT: port.toString(),
+          MCP_SERVER_URL: mcpServerUrl,
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      childProcess.stdout?.on('data', (data: Buffer) => {
+        logger.debug(`MCP Proxy stdout: ${data.toString()}`);
+      });
+
+      childProcess.stderr?.on('data', (data: Buffer) => {
+        logger.error(`MCP Proxy stderr: ${data.toString()}`);
+      });
+
+      childProcess.on('error', (error: Error) => {
+        logger.error('MCP Proxy process error:', error);
+        this.proxyServer = null;
+      });
+
+      childProcess.on('exit', (code: number | null) => {
+        logger.info(`MCP Proxy process exited with code ${code}`);
+        this.proxyServer = null;
+      });
+
+      this.proxyServer = { process: childProcess, port };
+      logger.info(`Started MCP proxy server on port ${port}`);
+
+      return port;
+    } catch (error) {
+      logger.error('Failed to start MCP proxy server:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Stop the MCP proxy server
+   */
+  private static stopProxyServer(): void {
+    if (this.proxyServer) {
+      this.proxyServer.process.kill();
+      this.proxyServer = null;
+      logger.info('Stopped MCP proxy server');
+    }
+  }
+
+  /**
    * Send the current MCP server status to the webview
    */
   private static async sendServerStatus(): Promise<void> {
@@ -39,7 +130,7 @@ export class MCPInspectorWebviewProvider {
       // Send MCP server status
       const mcpRunning = await isMCPServerRunning();
       const mcpConfig = getConfig().mcp;
-      
+
       this.postMessage({
         command: 'mcpServerStatus',
         status: mcpRunning ? 'running' : 'stopped',
@@ -56,7 +147,7 @@ export class MCPInspectorWebviewProvider {
   /**
    * Creates and shows the webview panel, or reveals it if it already exists
    */
-  public static createOrShow(extensionUri: vscode.Uri) {
+  public static async createOrShow(extensionUri: vscode.Uri) {
     // Save the extension URI for later use
     this.extensionUri = extensionUri;
 
@@ -66,6 +157,24 @@ export class MCPInspectorWebviewProvider {
       return;
     }
 
+    // Start the proxy server
+    try {
+      await this.startProxyServer();
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to start MCP proxy server: ${error}`);
+      return;
+    }
+
+    // Resource roots for the bundled inspector
+    const possibleResourceRoots = [
+      // Bundled files
+      vscode.Uri.joinPath(extensionUri, 'mcp-inspector-bundle', 'client'),
+      vscode.Uri.joinPath(extensionUri, 'mcp-inspector-bundle', 'client', 'assets'),
+      // Fallback to development scenario
+      vscode.Uri.joinPath(extensionUri, 'node_modules', '@modelcontextprotocol', 'inspector', 'client', 'dist'),
+      vscode.Uri.joinPath(extensionUri, 'node_modules', '@modelcontextprotocol', 'inspector', 'client', 'dist', 'assets'),
+    ];
+
     // Otherwise, create a new panel
     const panel = vscode.window.createWebviewPanel(
       this.viewType,
@@ -74,12 +183,7 @@ export class MCPInspectorWebviewProvider {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: [
-          vscode.Uri.joinPath(extensionUri, 'webview-ui'),
-          vscode.Uri.joinPath(extensionUri, 'webview-ui', 'dist'),
-          vscode.Uri.joinPath(extensionUri, 'webview-ui', 'dist', 'assets'),
-          vscode.Uri.joinPath(extensionUri, 'mcp-inspector'),
-        ],
+        localResourceRoots: possibleResourceRoots,
       }
     );
 
@@ -94,6 +198,8 @@ export class MCPInspectorWebviewProvider {
         this.panel = undefined;
         // Clear the cache when the panel is disposed
         this.htmlCache = null;
+        // Stop the proxy server
+        this.stopProxyServer();
       },
       null,
       []
@@ -178,24 +284,42 @@ export class MCPInspectorWebviewProvider {
 
       logger.debug('Generating fresh HTML content for MCP Inspector webview');
 
-      // Path to the MCP Inspector directory
-      const mcpInspectorPath = path.join(extensionUri.fsPath, 'mcp-inspector');
-      const indexHtmlPath = path.join(mcpInspectorPath, 'index.html');
+      // Use the bundled MCP Inspector UI files
+      const possiblePaths = [
+        // Bundled UI files in extension
+        path.join(extensionUri.fsPath, 'mcp-inspector-bundle', 'client'),
+        // Fallback to development scenario
+        path.join(extensionUri.fsPath, 'node_modules', '@modelcontextprotocol', 'inspector', 'client', 'dist'),
+      ];
+
+      let mcpInspectorPath: string | null = null;
+      let indexHtmlPath: string | null = null;
+
+      // Find the first existing path
+      for (const possiblePath of possiblePaths) {
+        const testIndexPath = path.join(possiblePath, 'index.html');
+        if (fs.existsSync(testIndexPath)) {
+          mcpInspectorPath = possiblePath;
+          indexHtmlPath = testIndexPath;
+          logger.debug(`Found MCP Inspector at: ${mcpInspectorPath}`);
+          break;
+        }
+      }
 
       // Check if index.html exists
-      if (!fs.existsSync(indexHtmlPath)) {
-        return this.getErrorHtml(`Cannot find MCP Inspector index.html at ${indexHtmlPath}. Please run 'npm run build-mcp-inspector' to build the MCP Inspector UI.`);
+      if (!mcpInspectorPath || !indexHtmlPath) {
+        const searchedPaths = possiblePaths.map(p => path.join(p, 'index.html')).join('\n  - ');
+        return this.getErrorHtml(`Cannot find MCP Inspector index.html. Searched paths:\n  - ${searchedPaths}\n\nPlease run 'npm run build-mcp-inspector-ui' to build the bundle.`);
       }
 
       // Read the index.html file
       let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
 
-      // Get the MCP server configuration
-      const mcpConfig = getConfig().mcp;
-      const mcpServerUrl = `http://${mcpConfig.host}:${mcpConfig.port}`;
+      // Get the proxy server port
+      const proxyPort = this.proxyServer?.port || 6277;
 
       // Convert all local paths to webview URIs
-      indexHtml = this.rewriteHtml(indexHtml, webview, extensionUri);
+      indexHtml = this.rewriteHtml(indexHtml, webview, mcpInspectorPath);
 
       // Add CSP and scrolling styles
       const nonce = this.getNonce();
@@ -227,29 +351,29 @@ export class MCPInspectorWebviewProvider {
         `<script nonce="${nonce}">
           // Initialize VS Code API
           const vscode = acquireVsCodeApi();
-          
-          // Store MCP server URL
-          window.MCP_SERVER_URL = "${mcpServerUrl}";
-          
+
+          // Store proxy server URL for MCP Inspector to connect to
+          window.MCP_PROXY_URL = "http://localhost:${proxyPort}";
+
           // Listen for messages from the extension
           window.addEventListener('message', event => {
             const message = event.data;
-            
+
             if (message.command === 'mcpServerStatus') {
               // Update MCP server status
               window.MCP_SERVER_STATUS = message.status;
               window.MCP_SERVER_CONFIG = message.config;
-              
+
               // Dispatch a custom event that the MCP Inspector can listen for
-              window.dispatchEvent(new CustomEvent('mcpServerStatusChanged', { 
-                detail: { 
+              window.dispatchEvent(new CustomEvent('mcpServerStatusChanged', {
+                detail: {
                   status: message.status,
                   config: message.config
-                } 
+                }
               }));
             }
           });
-          
+
           // Function to send messages to the extension
           window.sendMessageToExtension = function(message) {
             vscode.postMessage(message);
@@ -274,7 +398,8 @@ export class MCPInspectorWebviewProvider {
   /**
    * Rewrite HTML to use webview URIs for all local resources
    */
-  private static rewriteHtml(html: string, webview: vscode.Webview, extensionUri: vscode.Uri): string {
+  private static rewriteHtml(html: string, webview: vscode.Webview, inspectorClientPath: string): string {
+
     // Replace script src attributes
     html = html.replace(
       /<script([^>]*) src="([^"]+)"/g,
@@ -283,12 +408,12 @@ export class MCPInspectorWebviewProvider {
           // External URL, don't modify
           return match;
         }
-        
-        // Convert to webview URI
+
+        // Convert to webview URI using the discovered inspector path
         const webviewUri = webview.asWebviewUri(
-          vscode.Uri.joinPath(extensionUri, 'mcp-inspector', src)
+          vscode.Uri.file(path.join(inspectorClientPath, src))
         );
-        
+
         return `<script${attrs} src="${webviewUri}"`;
       }
     );
@@ -301,12 +426,12 @@ export class MCPInspectorWebviewProvider {
           // External URL, don't modify
           return match;
         }
-        
-        // Convert to webview URI
+
+        // Convert to webview URI using the discovered inspector path
         const webviewUri = webview.asWebviewUri(
-          vscode.Uri.joinPath(extensionUri, 'mcp-inspector', href)
+          vscode.Uri.file(path.join(inspectorClientPath, href))
         );
-        
+
         return `<link${attrs} href="${webviewUri}"`;
       }
     );
@@ -319,12 +444,12 @@ export class MCPInspectorWebviewProvider {
           // External URL or data URI, don't modify
           return match;
         }
-        
-        // Convert to webview URI
+
+        // Convert to webview URI using the discovered inspector path
         const webviewUri = webview.asWebviewUri(
-          vscode.Uri.joinPath(extensionUri, 'mcp-inspector', src)
+          vscode.Uri.file(path.join(inspectorClientPath, src))
         );
-        
+
         return `<img${attrs} src="${webviewUri}"`;
       }
     );

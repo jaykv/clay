@@ -21,8 +21,8 @@
 # Include webview UI build output
 !webview-ui/dist/**
 
-# Include MCP Inspector build output
-!mcp-inspector/**
+# Include MCP Inspector bundle (UI + server)
+!mcp-inspector-bundle/**
 
 # Include package metadata
 !package.json
@@ -30,11 +30,10 @@
 !LICENSE.md
 !resources/**
 
-# Include node_modules
-!dist/node_modules
+# Include only essential node_modules
+!dist/node_modules/**
 
 # Exclude node_modules that might be included by the above patterns
-dist/**/node_modules/**
 webview-ui/**/node_modules/**
 
 # Exclude temporary build files
@@ -42,7 +41,13 @@ webview-ui/**/node_modules/**
 **/.DS_Store
 .temp/**
 
-# Include .clay directory for MCP extensions
-!.clay/mcp/**
+# Include only essential .clay files for MCP extensions
+!.clay/mcp/*.md
+!.clay/mcp/*.txt
+!.clay/mcp/*.py
+!.clay/mcp/*.js
+!.clay/mcp/*.ts
+# Exclude heavy directories
 .clay/mcp/.venv/**
 .clay/mcp/__pycache__/**
+.clay/mcp/node_modules/**

@@ -122,9 +122,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register open MCP Inspector command
   context.subscriptions.push(
-    vscode.commands.registerCommand('clay.openMCPInspector', () => {
+    vscode.commands.registerCommand('clay.openMCPInspector', async () => {
       // Show the MCP Inspector panel
-      MCPInspectorWebviewProvider.createOrShow(context.extensionUri);
+      await MCPInspectorWebviewProvider.createOrShow(context.extensionUri);
     })
   );
 
