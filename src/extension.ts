@@ -20,6 +20,10 @@ export async function activate(context: vscode.ExtensionContext) {
   logger.setOutputChannel(outputChannel);
   logger.info('Clay extension activated');
 
+  // Set extension root for server processes to find MCP Inspector
+  process.env.CLAY_EXTENSION_ROOT = context.extensionUri.fsPath;
+  logger.info(`Extension root set to: ${context.extensionUri.fsPath}`);
+
   // Load configuration from YAML file
   // Configuration is loaded automatically when getConfig() is called
   logger.info('Loading configuration...');
@@ -128,22 +132,7 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Listen for server status changes and update the MCP Inspector webview
-  context.subscriptions.push(
-    serverStatusEmitter.event((event: ServerStatusEvent) => {
-      if (event.type === 'mcp') {
-        logger.debug(`Sending MCP server status update to MCP Inspector: ${event.status}`);
-        MCPInspectorWebviewProvider.postMessage({
-          command: 'mcpServerStatus',
-          status: event.status === 'started' ? 'running' : 'stopped',
-          config: {
-            host: mcpConfig.host,
-            port: mcpConfig.port
-          }
-        });
-      }
-    })
-  );
+  // Note: MCP Inspector now loads from gateway server, no need for status updates
 
   // Register sidebar webview provider with persistence options
   const sidebarProvider = new SidebarWebviewProvider(context.extensionUri);

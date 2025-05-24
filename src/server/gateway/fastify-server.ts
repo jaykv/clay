@@ -10,6 +10,7 @@ import { getConfig } from '../utils/config';
 import { getProxyRoutes } from './routes';
 import { registerProxyRoutesAPI } from './fastify-api';
 import { registerAugmentAPI } from './augment-api';
+import { registerMCPInspectorAPI } from './mcp-inspector-api';
 import { augmentEngine } from '../augment';
 import enhancedTracingPlugin from './middleware/enhanced-tracing-plugin';
 import { ssePlugin } from './middleware/fastify-sse';
@@ -153,6 +154,9 @@ export class FastifyGatewayServer {
     if (getConfig().augment.enabled) {
       this.registerAugmentAPI();
     }
+
+    // Register MCP Inspector API
+    this.registerMCPInspectorAPI();
 
     // Serve static assets from the webview-ui/dist directory
     // Check multiple possible paths for the webview-ui/dist directory
@@ -347,6 +351,15 @@ export class FastifyGatewayServer {
     // Register Augment Context Engine API
     this.server.register(registerAugmentAPI);
     logger.info('Augment Context Engine API registered');
+  }
+
+  /**
+   * Register the MCP Inspector API
+   */
+  private registerMCPInspectorAPI() {
+    // Register MCP Inspector API
+    this.server.register(registerMCPInspectorAPI);
+    logger.info('MCP Inspector API registered');
   }
 
   /**

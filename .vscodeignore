@@ -21,8 +21,8 @@
 # Include webview UI build output
 !webview-ui/dist/**
 
-# Include MCP Inspector bundle (UI + server)
-!mcp-inspector-bundle/**
+# Include MCP Inspector UI files (minimal bundle)
+!dist/mcp-inspector-ui/**
 
 # Include package metadata
 !package.json

@@ -28,7 +28,7 @@ const dependencies = [
   '@fastify/static',
   '@fastify/websocket',
 
-  // MCP SDK
+  // MCP SDK only (inspector will be handled separately)
   '@modelcontextprotocol/sdk',
 
   // Other utilities

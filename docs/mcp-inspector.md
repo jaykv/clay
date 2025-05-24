@@ -1,6 +1,6 @@
 # MCP Inspector Integration
 
-The Clay extension includes an integration with the [MCP Inspector](https://github.com/modelcontextprotocol/inspector), a visual testing tool for MCP servers. This integration uses the official npm package `@modelcontextprotocol/inspector` to provide a seamless debugging experience directly within VS Code.
+The Clay extension includes a seamless integration with the [MCP Inspector](https://github.com/modelcontextprotocol/inspector), a visual testing tool for MCP servers. This integration serves the MCP Inspector directly from the Clay gateway server for maximum simplicity and performance.
 
 ## Features
 
@@ -8,53 +8,54 @@ The Clay extension includes an integration with the [MCP Inspector](https://gith
 - Test MCP tools, resources, and prompts
 - Debug MCP server responses
 - Visualize MCP server capabilities
-- Automatic proxy server management
-- No build steps required
+- Zero configuration required
+- Served directly from Clay gateway server
 
 ## Usage
 
-1. Start the MCP server using the Clay extension
-2. Open the MCP Inspector by:
+1. **Start the Clay servers** using the extension (both gateway and MCP servers)
+2. **Open the MCP Inspector** by:
    - Running the command `Clay: Open MCP Inspector` from the command palette (Ctrl+Shift+P / Cmd+Shift+P)
    - Using the keyboard shortcut Ctrl+Shift+M / Cmd+Shift+M
 
-The MCP Inspector will automatically:
-- Start an MCP proxy server
-- Connect to your running Clay MCP server
-- Open the inspector UI in a VS Code webview panel
+The MCP Inspector will automatically load from the gateway server and connect to your Clay MCP server.
 
-## Architecture
+## Simplified Architecture
 
-The integration works by:
-1. **MCP Proxy Server**: Automatically started when the inspector opens (port 6277)
-2. **Inspector UI**: Served from the npm package files via VS Code webview
-3. **Connection Flow**: Inspector UI → MCP Proxy → Clay MCP Server
+The new streamlined integration works by:
+1. **Clay Gateway Server**: Serves the MCP Inspector UI at `/mcp-inspector`
+2. **MCP Proxy Endpoints**: Gateway server forwards MCP requests to Clay MCP server
+3. **VS Code Webview**: Simply loads the inspector from the gateway server
+4. **Connection Flow**: Inspector UI → Gateway Server → Clay MCP Server
 
 ## Installation
 
-The MCP Inspector is automatically built when you run:
+No additional installation or build steps required! The MCP Inspector is automatically available when you:
 ```bash
-npm run compile-all
+npm install  # Installs @modelcontextprotocol/inspector dependency
 ```
 
-This creates a lightweight bundle (~1.4MB) containing only the essential UI and server files, keeping the extension size minimal.
+The inspector UI is served directly from the gateway server using the npm package files.
 
 ## Troubleshooting
 
 If you encounter issues with the MCP Inspector:
 
-1. **MCP Server Not Running**: Make sure the Clay MCP server is started before opening the inspector
-2. **Proxy Server Issues**: Check the VS Code output panel for proxy server error messages
-3. **Connection Problems**: Verify that port 6277 is not being used by another application
-4. **Package Issues**: Ensure `@modelcontextprotocol/inspector` is properly installed by running `npm install`
+1. **Gateway Server Not Running**: Ensure the Clay gateway server is started (it serves the inspector)
+2. **MCP Server Not Running**: Make sure the Clay MCP server is also running
+3. **Connection Issues**: Check that both servers are running on their configured ports
+4. **Package Issues**: Ensure `@modelcontextprotocol/inspector` is installed with `npm install`
+5. **Browser Issues**: Try refreshing the webview or restarting VS Code
 
-## Benefits of the New Integration
+## Benefits of the Simplified Integration
 
-- **Faster Setup**: No git cloning or building from source required
-- **Automatic Updates**: Inspector updates automatically with `npm update`
-- **Better Reliability**: Uses official npm packages instead of git dependencies
-- **Smaller Bundle**: No need to copy built files into the extension
-- **Easier Maintenance**: Leverages official package management
+- **🚀 Zero Build Steps**: No compilation or bundling required
+- **⚡ Instant Loading**: Inspector loads directly from gateway server
+- **🔧 Zero Configuration**: Works out of the box with Clay servers
+- **📦 Minimal Extension Size**: No bundled UI files in extension
+- **🔄 Automatic Updates**: Inspector updates with `npm update`
+- **🛡️ Better Reliability**: Uses standard web server architecture
+- **🎯 Simpler Debugging**: Can test inspector in regular browser at `http://localhost:3000/mcp-inspector`
 
 ## Credits
 
