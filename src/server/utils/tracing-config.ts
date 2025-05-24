@@ -98,12 +98,25 @@ export class TracingConfigManager extends EventEmitter {
 
   /**
    * Check if a path should be excluded from tracing
+   * Only include /proxy/ routes and MCP SSE server traffic
    */
   public shouldExcludePath(path: string): boolean {
     if (!this.currentConfig.enabled) {
       return true;
     }
 
+    // Only trace specific paths we care about
+    const shouldInclude =
+      path.startsWith('/proxy/') ||           // Proxy routes (LLM APIs, etc.)
+      path.startsWith('/sse') ||              // MCP SSE server
+      path.startsWith('/messages');           // MCP SSE messages
+
+    // If it's not in our include list, exclude it
+    if (!shouldInclude) {
+      return true;
+    }
+
+    // Additional exclusions for paths we explicitly don't want
     return this.currentConfig.excludePaths.some(excludePath => {
       if (excludePath.endsWith('/')) {
         return path.startsWith(excludePath);
@@ -213,7 +226,9 @@ export class TracingConfigManager extends EventEmitter {
       maxBodySize: 100 * 1024,
       maxResponseSize: 100 * 1024,
       maxStreamSize: 1 * 1024 * 1024,
-      excludePaths: ['/api/traces', '/api/augment', '/ws/', '/assets/', '/health', '/sse'],
+      // Note: excludePaths is now used as additional exclusions on top of the include-only logic
+      // The main filtering is done by the shouldExcludePath method which only includes /proxy/ and MCP SSE
+      excludePaths: [],
     };
 
     this.updateConfig(defaultConfig);
