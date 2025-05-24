@@ -5,6 +5,7 @@ import { useTraces } from '@/contexts/TracesContext';
 import { wsClient } from '@/lib/api/websocket';
 import { Spinner } from '@/components/ui/Spinner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
+import TracingControls from './TracingControls';
 
 const SidebarTracesList: React.FC = () => {
   // Use the shared traces context
@@ -388,7 +389,38 @@ const SidebarTracesList: React.FC = () => {
   // Main component render
   return (
     <Card title="Traces" className="h-full flex flex-col">
-      <div className="flex justify-between items-center mb-2">
+      <Tabs defaultValue="traces" className="h-full flex flex-col">
+        <TabsList className="w-full justify-start bg-transparent p-0 mb-2">
+          <TabsTrigger
+            value="traces"
+            className="text-sm py-2 px-3 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+          >
+            Traces
+          </TabsTrigger>
+          <TabsTrigger
+            value="settings"
+            className="text-sm py-2 px-3 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+          >
+            Settings
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="traces" className="flex-1 flex flex-col m-0">
+          <TracesContent />
+        </TabsContent>
+
+        <TabsContent value="settings" className="flex-1 overflow-auto m-0">
+          <TracingControls />
+        </TabsContent>
+      </Tabs>
+    </Card>
+  );
+
+  // Traces content component
+  function TracesContent() {
+    return (
+      <>
+        <div className="flex justify-between items-center mb-2">
         <div className="flex items-center gap-2">
           <div
             className={`w-2 h-2 rounded-full ${
@@ -607,8 +639,9 @@ const SidebarTracesList: React.FC = () => {
           </div>
         )}
       </div>
-    </Card>
-  );
+      </>
+    );
+  }
 };
 
 export default SidebarTracesList;

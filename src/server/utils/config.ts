@@ -5,12 +5,23 @@ import * as os from 'os';
 import * as yaml from 'js-yaml';
 import { logger } from './logger';
 
+export interface TracingConfig {
+  enabled: boolean;
+  detailedBodyCapture: boolean;
+  detailedSSECapture: boolean;
+  maxBodySize: number;
+  maxResponseSize: number;
+  maxStreamSize: number;
+  excludePaths: string[];
+}
+
 export interface GatewayConfig {
   port: number;
   host: string;
   logLevel: LogLevel;
   proxyEnabled: boolean;
   mcpEnabled: boolean;
+  tracing: TracingConfig;
 }
 
 export interface MCPExtensionsConfig {
@@ -57,6 +68,15 @@ const defaultConfig: Config = {
     logLevel: LogLevel.INFO,
     proxyEnabled: true,
     mcpEnabled: true,
+    tracing: {
+      enabled: true,
+      detailedBodyCapture: false, // Disabled by default for performance
+      detailedSSECapture: false, // Disabled by default for performance
+      maxBodySize: 100 * 1024, // 100KB
+      maxResponseSize: 100 * 1024, // 100KB
+      maxStreamSize: 1 * 1024 * 1024, // 1MB
+      excludePaths: ['/api/', '/ws/', '/assets/', '/health', '/sse', '/'],
+    },
   },
   mcp: {
     port: 3001,

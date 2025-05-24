@@ -13,21 +13,7 @@ import {
 } from '../../utils/tracing';
 import { logger } from '../../utils/logger';
 import { broadcastNewTrace } from '../websocket';
-
-// Constants for limiting trace data size
-const MAX_BODY_SIZE = 100 * 1024; // 100KB
-const MAX_RESPONSE_SIZE = 100 * 1024; // 100KB
-const MAX_STREAM_SIZE = 500 * 1024; // 500KB for streams
-
-// Paths to exclude from tracing
-const EXCLUDED_PATHS = [
-  /^\/api\//,
-  /^\/ws\//,
-  /^\/assets\//,
-  /^\/health$/,
-  /^\/sse$/,
-  /^\/$/, // Root path
-];
+import { tracingConfig } from '../../utils/tracing-config';
 
 // Extend FastifyRequest to include trace property
 declare module 'fastify' {
@@ -40,7 +26,7 @@ declare module 'fastify' {
  * Check if a path should be excluded from tracing
  */
 function shouldExcludePath(path: string): boolean {
-  return EXCLUDED_PATHS.some(pattern => pattern.test(path));
+  return tracingConfig.shouldExcludePath(path);
 }
 
 /**
@@ -57,11 +43,18 @@ function truncateIfNeeded(str: string, maxSize: number): { value: string; trunca
  * Process request body for tracing
  * Handles different types of body content efficiently
  */
-function processRequestBody(body: any): { body: any; truncated: boolean } {
+function processRequestBody(body: any, request: FastifyRequest): { body: any; truncated: boolean } {
   try {
     if (!body) {
       return { body: undefined, truncated: false };
     }
+
+    // Check if detailed body capture is enabled
+    if (!tracingConfig.shouldCaptureDetailedBody(request)) {
+      return { body: '[Body capture disabled - enable in traces dashboard]', truncated: false };
+    }
+
+    const maxBodySize = tracingConfig.getMaxBodySize();
 
     // Handle different types of body content
     if (typeof body === 'string') {
@@ -70,22 +63,22 @@ function processRequestBody(body: any): { body: any; truncated: boolean } {
         try {
           const parsed = JSON.parse(body);
           const bodyStr = JSON.stringify(parsed);
-          const { value, truncated } = truncateIfNeeded(bodyStr, MAX_BODY_SIZE);
+          const { value, truncated } = truncateIfNeeded(bodyStr, maxBodySize);
           return { body: JSON.parse(value), truncated };
         } catch {
           // If parsing fails, treat as plain string
-          const { value, truncated } = truncateIfNeeded(body, MAX_BODY_SIZE);
+          const { value, truncated } = truncateIfNeeded(body, maxBodySize);
           return { body: value, truncated };
         }
       } else {
         // Plain string that's not JSON
-        const { value, truncated } = truncateIfNeeded(body, MAX_BODY_SIZE);
+        const { value, truncated } = truncateIfNeeded(body, maxBodySize);
         return { body: value, truncated };
       }
     } else if (Buffer.isBuffer(body)) {
       // For Buffer bodies, convert to string and try to parse as JSON
       const bodyStr = body.toString('utf-8');
-      const { value, truncated } = truncateIfNeeded(bodyStr, MAX_BODY_SIZE);
+      const { value, truncated } = truncateIfNeeded(bodyStr, maxBodySize);
       try {
         return { body: JSON.parse(value), truncated };
       } catch {
@@ -94,12 +87,12 @@ function processRequestBody(body: any): { body: any; truncated: boolean } {
     } else if (typeof body === 'object') {
       // For object bodies, stringify and then truncate if needed
       const bodyStr = JSON.stringify(body);
-      const { value, truncated } = truncateIfNeeded(bodyStr, MAX_BODY_SIZE);
+      const { value, truncated } = truncateIfNeeded(bodyStr, maxBodySize);
       return { body: JSON.parse(value), truncated };
     } else {
       // For other types, convert to string
       const bodyStr = String(body);
-      const { value, truncated } = truncateIfNeeded(bodyStr, MAX_BODY_SIZE);
+      const { value, truncated } = truncateIfNeeded(bodyStr, maxBodySize);
       return { body: value, truncated };
     }
   } catch (error) {
@@ -118,7 +111,8 @@ function processRequestBody(body: any): { body: any; truncated: boolean } {
  * @param maxSize Maximum size to capture (in bytes)
  * @returns An object with the cloned stream and a promise that resolves to the captured data
  */
-function createStreamCloner(maxSize: number = MAX_STREAM_SIZE) {
+function createStreamCloner(maxSize?: number) {
+  const streamSize = maxSize || tracingConfig.getMaxStreamSize();
   let capturedData: Buffer[] = [];
   let capturedSize = 0;
   let truncated = false;
@@ -127,18 +121,18 @@ function createStreamCloner(maxSize: number = MAX_STREAM_SIZE) {
   const transform = new Transform({
     transform(chunk, encoding, callback) {
       // Only capture if we haven't exceeded the max size
-      if (!truncated && capturedSize < maxSize) {
+      if (!truncated && capturedSize < streamSize) {
         const buffer = Buffer.isBuffer(chunk)
           ? chunk
           : Buffer.from(chunk, encoding as BufferEncoding);
 
         // Check if adding this chunk would exceed the max size
-        if (capturedSize + buffer.length <= maxSize) {
+        if (capturedSize + buffer.length <= streamSize) {
           capturedData.push(buffer);
           capturedSize += buffer.length;
         } else {
           // Capture as much as we can up to the max size
-          const remainingSpace = maxSize - capturedSize;
+          const remainingSpace = streamSize - capturedSize;
           if (remainingSpace > 0) {
             capturedData.push(buffer.slice(0, remainingSpace));
             capturedSize += remainingSpace;
@@ -178,7 +172,7 @@ async function processStreamData(
   try {
     // Convert buffer to string
     const bodyStr = data.toString('utf-8');
-    const { value, truncated } = truncateIfNeeded(bodyStr, MAX_RESPONSE_SIZE);
+    const { value, truncated } = truncateIfNeeded(bodyStr, tracingConfig.getMaxResponseSize());
 
     // Try to parse as JSON if it's a JSON content type or looks like JSON
     if (
@@ -206,7 +200,7 @@ async function processStreamData(
  * Process response payload for tracing
  * Handles different types of response content efficiently
  */
-function processResponsePayload(payload: any): {
+function processResponsePayload(payload: any, reply: FastifyReply): {
   body: any;
   truncated: boolean;
   streamCloner?: { stream: Transform; dataPromise: Promise<{ data: Buffer; truncated: boolean }> };
@@ -218,6 +212,14 @@ function processResponsePayload(payload: any): {
 
     // Handle Node.js streams (like those from http-proxy)
     if (payload && typeof payload === 'object' && (payload as any)._readableState) {
+      // Check if detailed SSE capture is enabled
+      if (!tracingConfig.shouldCaptureDetailedSSE(reply)) {
+        return {
+          body: '[Stream capture disabled - enable in traces dashboard]',
+          truncated: false,
+        };
+      }
+
       // This is a stream, create a cloner to capture the data
       const streamCloner = createStreamCloner();
       return {
@@ -230,7 +232,7 @@ function processResponsePayload(payload: any): {
     // Handle Buffer objects
     if (Buffer.isBuffer(payload)) {
       const bodyStr = payload.toString('utf-8');
-      const { value, truncated } = truncateIfNeeded(bodyStr, MAX_RESPONSE_SIZE);
+      const { value, truncated } = truncateIfNeeded(bodyStr, tracingConfig.getMaxResponseSize());
 
       // Try to parse as JSON if it looks like JSON
       if (value.trim().startsWith('{') || value.trim().startsWith('[')) {
@@ -246,7 +248,7 @@ function processResponsePayload(payload: any): {
 
     // Handle string payloads
     if (typeof payload === 'string') {
-      const { value, truncated } = truncateIfNeeded(payload, MAX_RESPONSE_SIZE);
+      const { value, truncated } = truncateIfNeeded(payload, tracingConfig.getMaxResponseSize());
 
       // Try to parse as JSON if it looks like JSON
       if (value.trim().startsWith('{') || value.trim().startsWith('[')) {
@@ -263,13 +265,13 @@ function processResponsePayload(payload: any): {
     // Handle object payloads
     if (typeof payload === 'object') {
       const bodyStr = JSON.stringify(payload);
-      const { value, truncated } = truncateIfNeeded(bodyStr, MAX_RESPONSE_SIZE);
+      const { value, truncated } = truncateIfNeeded(bodyStr, tracingConfig.getMaxResponseSize());
       return { body: JSON.parse(value), truncated };
     }
 
     // Default case: convert to string
     const bodyStr = String(payload);
-    const { value, truncated } = truncateIfNeeded(bodyStr, MAX_RESPONSE_SIZE);
+    const { value, truncated } = truncateIfNeeded(bodyStr, tracingConfig.getMaxResponseSize());
     return { body: value, truncated };
   } catch (error) {
     logger.debug(
@@ -344,7 +346,7 @@ const enhancedTracingPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
 
       // Now that Fastify has parsed the body, we can capture it properly
       if (request.body) {
-        const { body, truncated } = processRequestBody(request.body);
+        const { body, truncated } = processRequestBody(request.body, request);
         request.trace.body = body;
         request.trace.bodyTruncated = truncated;
       }
@@ -367,7 +369,7 @@ const enhancedTracingPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
         request.trace.responseHeaders = responseHeaders;
 
         // Process the payload to capture the response
-        const { body, truncated, streamCloner } = processResponsePayload(payload);
+        const { body, truncated, streamCloner } = processResponsePayload(payload, reply);
         request.trace.response = body;
         request.trace.responseTruncated = truncated;
 
@@ -548,6 +550,50 @@ function registerTracingRoutes(fastify: FastifyInstance) {
     } catch (error) {
       logger.error('Error clearing traces:', error);
       return reply.status(500).send({ error: 'Failed to clear traces' });
+    }
+  });
+
+  // Get tracing configuration
+  fastify.get('/api/traces/config', async (_request, reply) => {
+    try {
+      return tracingConfig.getConfig();
+    } catch (error) {
+      logger.error('Error fetching tracing config:', error);
+      return reply.status(500).send({ error: 'Failed to fetch tracing config' });
+    }
+  });
+
+  // Update tracing configuration
+  fastify.patch('/api/traces/config', async (request, reply) => {
+    try {
+      const updates = request.body as any;
+      tracingConfig.updateConfig(updates);
+      return { success: true, config: tracingConfig.getConfig() };
+    } catch (error) {
+      logger.error('Error updating tracing config:', error);
+      return reply.status(500).send({ error: 'Failed to update tracing config' });
+    }
+  });
+
+  // Toggle detailed body capture
+  fastify.post('/api/traces/config/toggle-body-capture', async (_request, reply) => {
+    try {
+      const enabled = tracingConfig.toggleDetailedBodyCapture();
+      return { success: true, detailedBodyCapture: enabled };
+    } catch (error) {
+      logger.error('Error toggling body capture:', error);
+      return reply.status(500).send({ error: 'Failed to toggle body capture' });
+    }
+  });
+
+  // Toggle detailed SSE capture
+  fastify.post('/api/traces/config/toggle-sse-capture', async (_request, reply) => {
+    try {
+      const enabled = tracingConfig.toggleDetailedSSECapture();
+      return { success: true, detailedSSECapture: enabled };
+    } catch (error) {
+      logger.error('Error toggling SSE capture:', error);
+      return reply.status(500).send({ error: 'Failed to toggle SSE capture' });
     }
   });
 }
