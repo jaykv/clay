@@ -14,6 +14,7 @@ import { TracesProvider } from '@/contexts/TracesContext';
 import { TabProvider } from '@/contexts/TabContext';
 import { onThemeChange, getVSCodeThemeType } from '@/utils/theme';
 import { applyContrastText } from '@/utils/contrast';
+import { initializeContext } from '@/utils/context-detection';
 
 // Component to handle navigation messages from the extension
 const NavigationHandler: React.FC = () => {
@@ -60,12 +61,16 @@ const App: React.FC = () => {
   const [initialTab, setInitialTab] = useState<string>('overview');
 
   useEffect(() => {
+    // Initialize context detection first
+    const detectedContext = initializeContext();
+
     // Initialize VS Code API and determine environment
     const inVSCode = initVSCodeAPI();
     setIsVSCode(inVSCode);
 
     // Log the environment for debugging
     console.log(`Running in ${inVSCode ? 'VS Code webview' : 'browser'} mode`);
+    console.log(`Detected context: ${detectedContext}`);
 
     // If running in browser, set a class on the body for potential styling differences
     if (!inVSCode) {

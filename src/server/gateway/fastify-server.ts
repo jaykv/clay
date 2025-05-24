@@ -164,6 +164,7 @@ export class FastifyGatewayServer {
       path.resolve(__dirname, '..', 'webview-ui', 'dist'), // For direct server execution
       path.resolve(__dirname, '..', '..', '..', 'webview-ui', 'dist'), // For VS Code extension
       path.resolve(__dirname, '..', '..', 'webview-ui', 'dist'), // Another possible path
+      path.resolve(__dirname, '..', '..', '..', '..', 'webview-ui', 'dist'), // For compiled dist structure
     ];
 
     // Find the first path that exists
@@ -233,7 +234,11 @@ export class FastifyGatewayServer {
 
           if (fs.existsSync(indexPath)) {
             logger.info('index.html found, serving content');
-            const content = fs.readFileSync(indexPath, 'utf-8');
+            let content = fs.readFileSync(indexPath, 'utf-8');
+
+            // Enhance HTML for web context
+            content = this.enhanceHTMLForWebContext(content, webviewDistPath, request);
+
             reply.type('text/html').send(content);
           } else {
             logger.error(`index.html not found at ${indexPath}`);
@@ -278,7 +283,11 @@ export class FastifyGatewayServer {
 
           if (fs.existsSync(indexPath)) {
             logger.info(`SPA index.html found, serving for route: ${url.pathname}`);
-            const content = fs.readFileSync(indexPath, 'utf-8');
+            let content = fs.readFileSync(indexPath, 'utf-8');
+
+            // Enhance HTML for web context
+            content = this.enhanceHTMLForWebContext(content, webviewDistPath, request);
+
             reply.type('text/html').send(content);
           } else {
             logger.error(`SPA index.html not found at ${indexPath}`);
@@ -375,6 +384,64 @@ export class FastifyGatewayServer {
   private registerSSERoutes() {
     // Register SSE plugin
     this.server.register(ssePlugin);
+  }
+
+  /**
+   * Enhance HTML content for web browser context
+   */
+  private enhanceHTMLForWebContext(content: string, webviewDistPath: string, request: FastifyRequest): string {
+    // Detect if this is a web browser request (not VSCode webview)
+    const userAgent = request.headers['user-agent'] || '';
+    const isWebBrowser = !userAgent.includes('VSCode') && !userAgent.includes('Electron');
+
+    if (isWebBrowser) {
+      // Add meta tag to indicate web context
+      const webContextMeta = '<meta name="app-context" content="web">';
+      content = content.replace('<head>', `<head>\n    ${webContextMeta}`);
+
+      // Add web-specific styling enhancements
+      const webEnhancements = `
+    <style>
+      /* Ensure web fallback theme is loaded */
+      @import url('/assets/style.css');
+
+      /* Additional web-specific styles */
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      }
+
+      /* Ensure proper theme variables are available */
+      :root {
+        --vscode-editor-background: #1e1e1e;
+        --vscode-editor-foreground: #d4d4d4;
+        --vscode-button-background: #0e639c;
+        --vscode-button-foreground: #ffffff;
+        --vscode-input-background: #3c3c3c;
+        --vscode-input-foreground: #cccccc;
+        --vscode-panel-border: #3c3c3c;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --vscode-editor-background: #ffffff;
+          --vscode-editor-foreground: #333333;
+          --vscode-button-background: #0078d4;
+          --vscode-button-foreground: #ffffff;
+          --vscode-input-background: #ffffff;
+          --vscode-input-foreground: #333333;
+          --vscode-panel-border: #e5e5e5;
+        }
+      }
+    </style>`;
+
+      content = content.replace('</head>', `${webEnhancements}\n  </head>`);
+
+      logger.info('Enhanced HTML for web browser context');
+    } else {
+      logger.info('Serving HTML for VSCode webview context');
+    }
+
+    return content;
   }
 
   /**

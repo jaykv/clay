@@ -1,3 +1,6 @@
+/* Import web fallback theme for standalone browser access */
+@import './styles/web-fallback-theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
