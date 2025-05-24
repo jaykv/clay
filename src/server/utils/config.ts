@@ -75,7 +75,7 @@ const defaultConfig: Config = {
       maxBodySize: 100 * 1024, // 100KB
       maxResponseSize: 100 * 1024, // 100KB
       maxStreamSize: 1 * 1024 * 1024, // 1MB
-      excludePaths: ['/api/', '/ws/', '/assets/', '/health', '/sse', '/'],
+      excludePaths: ['/api/traces', '/api/augment', '/ws/', '/assets/', '/health', '/sse'],
     },
   },
   mcp: {

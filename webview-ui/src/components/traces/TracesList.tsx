@@ -312,6 +312,14 @@ const SidebarTracesList: React.FC = () => {
           >
             Response
           </TabsTrigger>
+          {trace.llmMetrics && (
+            <TabsTrigger
+              value="llm"
+              className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
+            >
+              LLM
+            </TabsTrigger>
+          )}
           <TabsTrigger
             value="raw"
             className="text-xs py-1 px-2 data-[state=active]:bg-gray-200 data-[state=active]:dark:bg-gray-700"
@@ -382,6 +390,89 @@ const SidebarTracesList: React.FC = () => {
             {JSON.stringify(trace, null, 2)}
           </pre>
         </TabsContent>
+
+        {/* LLM Metrics Tab */}
+        {trace.llmMetrics && (
+          <TabsContent value="llm" className="flex-1 overflow-auto m-0">
+            <div className="space-y-3">
+              <div>
+                <h5 className="text-xs font-medium mb-2">Model Information</h5>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {trace.llmMetrics.model && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Model:</span>
+                      <span className="ml-1 font-mono">{trace.llmMetrics.model}</span>
+                    </div>
+                  )}
+                  {trace.llmMetrics.temperature !== undefined && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Temperature:</span>
+                      <span className="ml-1 font-mono">{trace.llmMetrics.temperature}</span>
+                    </div>
+                  )}
+                  {trace.llmMetrics.maxTokens && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Max Tokens:</span>
+                      <span className="ml-1 font-mono">{trace.llmMetrics.maxTokens}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h5 className="text-xs font-medium mb-2">Token Usage</h5>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {trace.llmMetrics.inputTokens && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Input Tokens:</span>
+                      <span className="ml-1 font-mono">{trace.llmMetrics.inputTokens}</span>
+                    </div>
+                  )}
+                  {trace.llmMetrics.outputTokens && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Output Tokens:</span>
+                      <span className="ml-1 font-mono">{trace.llmMetrics.outputTokens}</span>
+                    </div>
+                  )}
+                  {trace.llmMetrics.totalTokens && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Total Tokens:</span>
+                      <span className="ml-1 font-mono font-semibold">{trace.llmMetrics.totalTokens}</span>
+                    </div>
+                  )}
+                  {trace.llmMetrics.cost && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Estimated Cost:</span>
+                      <span className="ml-1 font-mono font-semibold text-green-600 dark:text-green-400">
+                        ${trace.llmMetrics.cost.toFixed(4)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {(trace.llmMetrics.promptLength || trace.llmMetrics.responseLength) && (
+                <div>
+                  <h5 className="text-xs font-medium mb-2">Content Length</h5>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {trace.llmMetrics.promptLength && (
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">Prompt Length:</span>
+                        <span className="ml-1 font-mono">{trace.llmMetrics.promptLength} chars</span>
+                      </div>
+                    )}
+                    {trace.llmMetrics.responseLength && (
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">Response Length:</span>
+                        <span className="ml-1 font-mono">{trace.llmMetrics.responseLength} chars</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
@@ -618,6 +709,26 @@ const SidebarTracesList: React.FC = () => {
                       <span>{formatDate(trace.startTime)}</span>
                       <span>{formatDuration(trace.duration || 0)}</span>
                     </div>
+                    {/* LLM metrics display */}
+                    {trace.llmMetrics && (
+                      <div className="mt-1 flex flex-wrap gap-1 text-xs">
+                        {trace.llmMetrics.model && (
+                          <span className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                            {trace.llmMetrics.model}
+                          </span>
+                        )}
+                        {trace.llmMetrics.totalTokens && (
+                          <span className="px-1 py-0.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">
+                            {trace.llmMetrics.totalTokens} tokens
+                          </span>
+                        )}
+                        {trace.llmMetrics.cost && (
+                          <span className="px-1 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded">
+                            ${trace.llmMetrics.cost.toFixed(4)}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

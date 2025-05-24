@@ -1,6 +1,19 @@
 // API client for the traces
 import { wsClient } from './websocket';
 
+// LLM-specific metrics interface
+export interface LLMMetrics {
+  model?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  cost?: number;
+  promptLength?: number;
+  responseLength?: number;
+  temperature?: number;
+  maxTokens?: number;
+}
+
 // OpenTelemetry span interface (simplified for our needs)
 export interface OtelSpan {
   spanContext?: () => {
@@ -40,6 +53,7 @@ export interface OtelSpan {
   response?: any;
   responseTruncated?: boolean;
   error?: Error;
+  llmMetrics?: LLMMetrics;
 }
 
 // Legacy TraceData interface for backward compatibility
@@ -58,6 +72,7 @@ export interface TraceData {
   response?: any;
   responseTruncated?: boolean;
   error?: Error;
+  llmMetrics?: LLMMetrics;
 }
 
 // Helper function to convert OpenTelemetry span to TraceData
@@ -80,6 +95,7 @@ export function otelSpanToTraceData(span: OtelSpan): TraceData {
       response: span.response,
       responseTruncated: span.responseTruncated,
       error: span.error,
+      llmMetrics: span.llmMetrics,
     } as TraceData;
   }
 
@@ -161,6 +177,15 @@ export interface TraceStats {
   truncated?: {
     bodies: number;
     responses: number;
+  };
+  llmStats: {
+    totalTokens: number;
+    totalCost: number;
+    avgTokensPerRequest: number;
+    avgCostPerRequest: number;
+    modelCounts: Record<string, number>;
+    avgInputTokens: number;
+    avgOutputTokens: number;
   };
 }
 
@@ -371,6 +396,15 @@ export async function getTraceStats(): Promise<TraceStats> {
           truncated: {
             bodies: 0,
             responses: 0,
+          },
+          llmStats: {
+            totalTokens: 0,
+            totalCost: 0,
+            avgTokensPerRequest: 0,
+            avgCostPerRequest: 0,
+            modelCounts: {},
+            avgInputTokens: 0,
+            avgOutputTokens: 0,
           },
         });
       }, 5000); // 5 second timeout

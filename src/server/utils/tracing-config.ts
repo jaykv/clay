@@ -153,13 +153,32 @@ export class TracingConfigManager extends EventEmitter {
   /**
    * Check if SSE response should have detailed tracing
    */
-  public shouldCaptureDetailedSSE(response: { headers: any }): boolean {
+  public shouldCaptureDetailedSSE(response: { headers: any; url?: string }): boolean {
     if (!this.isDetailedSSECaptureEnabled()) {
       return false;
     }
 
     const contentType = response.headers['content-type'] || '';
-    return contentType.includes('text/event-stream');
+
+    // Traditional SSE streams
+    if (contentType.includes('text/event-stream')) {
+      return true;
+    }
+
+    // LLM API streaming responses (often use application/json for streaming)
+    if (contentType.includes('application/json')) {
+      const url = response.url || '';
+      // Check if this is likely an LLM API endpoint
+      const isLLMEndpoint = url.includes('/proxy/gemini') ||
+                           url.includes('/proxy/openai') ||
+                           url.includes('/proxy/claude') ||
+                           url.includes('streamGenerateContent') ||
+                           url.includes('chat/completions') ||
+                           url.includes('stream');
+      return isLLMEndpoint;
+    }
+
+    return false;
   }
 
   /**
@@ -194,7 +213,7 @@ export class TracingConfigManager extends EventEmitter {
       maxBodySize: 100 * 1024,
       maxResponseSize: 100 * 1024,
       maxStreamSize: 1 * 1024 * 1024,
-      excludePaths: ['/api/', '/ws/', '/assets/', '/health', '/sse', '/'],
+      excludePaths: ['/api/traces', '/api/augment', '/ws/', '/assets/', '/health', '/sse'],
     };
 
     this.updateConfig(defaultConfig);

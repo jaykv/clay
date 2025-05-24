@@ -10,6 +10,7 @@ import {
   generateTraceId,
   addTrace,
   TraceData,
+  extractLLMMetrics,
 } from '../../utils/tracing';
 import { logger } from '../../utils/logger';
 import { broadcastNewTrace } from '../websocket';
@@ -27,6 +28,51 @@ declare module 'fastify' {
  */
 function shouldExcludePath(path: string): boolean {
   return tracingConfig.shouldExcludePath(path);
+}
+
+/**
+ * Check if a request looks like an LLM API call
+ */
+function isLLMRequest(path: string, body: any): boolean {
+  // Check common LLM API endpoints
+  const llmPaths = [
+    '/v1/chat/completions',
+    '/v1/completions',
+    '/chat/completions',
+    '/completions',
+    '/v1/messages',
+    '/messages',
+    // Gemini API endpoints
+    '/v1beta/models/',
+    '/v1/models/',
+    'generateContent',
+    'streamGenerateContent',
+    // Claude API endpoints
+    '/v1/messages',
+    // Other common patterns
+    '/proxy/gemini',
+    '/proxy/openai',
+    '/proxy/anthropic',
+    '/proxy/ai',
+  ];
+
+  if (llmPaths.some(p => path.includes(p))) {
+    return true;
+  }
+
+  // Check if body contains LLM-specific fields
+  if (body && typeof body === 'object') {
+    const llmFields = [
+      'model', 'messages', 'prompt', 'temperature', 'max_tokens', 'maxTokens',
+      // Gemini-specific fields
+      'contents', 'generationConfig', 'safetySettings',
+      // Claude-specific fields
+      'system', 'max_tokens_to_sample',
+    ];
+    return llmFields.some(field => field in body);
+  }
+
+  return false;
 }
 
 /**
@@ -50,7 +96,7 @@ function processRequestBody(body: any, request: FastifyRequest): { body: any; tr
     }
 
     // Check if detailed body capture is enabled
-    if (!tracingConfig.shouldCaptureDetailedBody(request)) {
+    if (!tracingConfig.isDetailedBodyCaptureEnabled()) {
       return { body: '[Body capture disabled - enable in traces dashboard]', truncated: false };
     }
 
@@ -200,7 +246,7 @@ async function processStreamData(
  * Process response payload for tracing
  * Handles different types of response content efficiently
  */
-function processResponsePayload(payload: any, reply: FastifyReply): {
+function processResponsePayload(payload: any, reply: FastifyReply, request?: FastifyRequest): {
   body: any;
   truncated: boolean;
   streamCloner?: { stream: Transform; dataPromise: Promise<{ data: Buffer; truncated: boolean }> };
@@ -213,7 +259,11 @@ function processResponsePayload(payload: any, reply: FastifyReply): {
     // Handle Node.js streams (like those from http-proxy)
     if (payload && typeof payload === 'object' && (payload as any)._readableState) {
       // Check if detailed SSE capture is enabled
-      if (!tracingConfig.shouldCaptureDetailedSSE(reply)) {
+      const responseInfo = {
+        headers: reply.getHeaders(),
+        url: request?.url || ''
+      };
+      if (!tracingConfig.shouldCaptureDetailedSSE(responseInfo)) {
         return {
           body: '[Stream capture disabled - enable in traces dashboard]',
           truncated: false,
@@ -338,18 +388,82 @@ const enhancedTracingPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
       request.trace = trace;
     });
 
-    // Capture the request body after it's been parsed
-    fastify.addHook('preHandler', async (request: FastifyRequest, _reply: FastifyReply) => {
+    // Capture the raw request body before it's consumed by the proxy
+    fastify.addHook('preParsing', async (request: FastifyRequest, _reply: FastifyReply, payload: any) => {
       if (!request.trace) {
-        return;
+        return payload;
       }
 
-      // Now that Fastify has parsed the body, we can capture it properly
-      if (request.body) {
-        const { body, truncated } = processRequestBody(request.body, request);
-        request.trace.body = body;
-        request.trace.bodyTruncated = truncated;
+      // Only capture body for detailed tracing
+      if (!tracingConfig.isDetailedBodyCaptureEnabled()) {
+        return payload;
       }
+
+      try {
+        // For proxy requests, we need to capture the raw body before it's consumed
+        if (payload && typeof payload.pipe === 'function') {
+          // It's a stream, we need to read it
+          const chunks: Buffer[] = [];
+          let totalSize = 0;
+          const maxSize = tracingConfig.getMaxBodySize();
+
+          // Create a new readable stream that we'll return
+          const { Readable } = await import('stream');
+          const clonedStream = new Readable({ read() {} });
+
+          payload.on('data', (chunk: Buffer) => {
+            // Store the chunk for our tracing
+            if (totalSize < maxSize) {
+              chunks.push(chunk);
+              totalSize += chunk.length;
+            }
+
+            // Pass the chunk to the cloned stream
+            clonedStream.push(chunk);
+          });
+
+          payload.on('end', () => {
+            // Parse the captured body
+            try {
+              const bodyBuffer = Buffer.concat(chunks);
+              const bodyStr = bodyBuffer.toString('utf-8');
+
+              // Try to parse as JSON
+              let parsedBody;
+              try {
+                parsedBody = JSON.parse(bodyStr);
+              } catch {
+                parsedBody = bodyStr;
+              }
+
+              // Store in trace (with null check)
+              if (request.trace) {
+                request.trace.body = parsedBody;
+                request.trace.bodyTruncated = totalSize >= maxSize;
+              }
+
+              logger.debug(`Captured body from stream: ${bodyStr.substring(0, 100)}...`);
+            } catch (error) {
+              logger.debug(`Error parsing captured body: ${error}`);
+              if (request.trace) {
+                request.trace.body = '[Error parsing body]';
+              }
+            }
+
+            clonedStream.push(null); // End the cloned stream
+          });
+
+          payload.on('error', (error: Error) => {
+            clonedStream.destroy(error);
+          });
+
+          return clonedStream;
+        }
+      } catch (error) {
+        logger.debug(`Error in preParsing hook: ${error}`);
+      }
+
+      return payload;
     });
 
     // Capture the response payload before it's sent
@@ -369,7 +483,7 @@ const enhancedTracingPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
         request.trace.responseHeaders = responseHeaders;
 
         // Process the payload to capture the response
-        const { body, truncated, streamCloner } = processResponsePayload(payload, reply);
+        const { body, truncated, streamCloner } = processResponsePayload(payload, reply, request);
         request.trace.response = body;
         request.trace.responseTruncated = truncated;
 
@@ -448,6 +562,11 @@ const enhancedTracingPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
             note: 'Stream content not captured',
           };
           request.trace.responseTruncated = true;
+        }
+
+        // Extract LLM metrics if this looks like an LLM API call
+        if (isLLMRequest(request.trace.path, request.trace.body)) {
+          request.trace.llmMetrics = extractLLMMetrics(request.trace.body, request.trace.response);
         }
 
         // Add the trace to storage

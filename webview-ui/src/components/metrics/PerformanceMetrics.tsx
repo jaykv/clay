@@ -12,6 +12,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  PieChart,
+  Pie,
 } from 'recharts';
 
 const PerformanceMetrics: React.FC = () => {
@@ -33,11 +35,43 @@ const PerformanceMetrics: React.FC = () => {
       }))
     : [];
 
+  // LLM-specific chart data
+  const modelChartData = stats?.llmStats
+    ? Object.entries(stats.llmStats.modelCounts).map(([model, count]) => ({
+        name: model,
+        value: count,
+      }))
+    : [];
+
+  const tokenMetricsData = stats?.llmStats
+    ? [
+        { name: 'Avg Input', value: Math.round(stats.llmStats.avgInputTokens) },
+        { name: 'Avg Output', value: Math.round(stats.llmStats.avgOutputTokens) },
+        { name: 'Avg Total', value: Math.round(stats.llmStats.avgTokensPerRequest) },
+      ]
+    : [];
+
   // Format duration in ms to a readable format
   const formatDuration = (ms: number) => {
     if (ms < 1) return '< 1ms';
     if (ms < 1000) return `${Math.round(ms)}ms`;
     return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 4,
+    }).format(amount);
+  };
+
+  // Format large numbers
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
   };
 
   // Handle manual WebSocket reconnection
@@ -273,12 +307,113 @@ const PerformanceMetrics: React.FC = () => {
             </div>
           </div>
 
+          {/* LLM-specific metrics */}
+          {stats.llmStats && Object.keys(stats.llmStats.modelCounts).length > 0 && (
+            <>
+              <div className="bg-vscode-input-bg text-vscode-input-fg p-4 rounded-lg border border-vscode-panel-border">
+                <h4 className="text-sm font-medium mb-3">LLM Analytics</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <p className="text-xs text-vscode-descriptionForeground">Total Tokens</p>
+                    <p className="text-xl font-semibold">{formatNumber(stats.llmStats.totalTokens)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-vscode-descriptionForeground">Total Cost</p>
+                    <p className="text-xl font-semibold">{formatCurrency(stats.llmStats.totalCost)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-vscode-descriptionForeground">Avg Tokens/Request</p>
+                    <p className="text-xl font-semibold">{Math.round(stats.llmStats.avgTokensPerRequest)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-vscode-descriptionForeground">Avg Cost/Request</p>
+                    <p className="text-xl font-semibold">{formatCurrency(stats.llmStats.avgCostPerRequest)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Model Distribution */}
+                <div className="bg-vscode-input-bg text-vscode-input-fg p-4 rounded-lg border border-vscode-panel-border">
+                  <h4 className="text-sm font-medium mb-3">Model Usage</h4>
+                  {modelChartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={modelChartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {modelChartData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 60%)`} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: '#fff',
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[200px] flex items-center justify-center text-vscode-descriptionForeground">
+                      No model data available
+                    </div>
+                  )}
+                </div>
+
+                {/* Token Metrics */}
+                <div className="bg-vscode-input-bg text-vscode-input-fg p-4 rounded-lg border border-vscode-panel-border">
+                  <h4 className="text-sm font-medium mb-3">Token Metrics</h4>
+                  {tokenMetricsData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart
+                        data={tokenMetricsData}
+                        margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                        <XAxis dataKey="name" tick={{ fill: '#888' }} />
+                        <YAxis tick={{ fill: '#888' }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: '#fff',
+                          }}
+                        />
+                        <Bar dataKey="value" fill="#82ca9d" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[200px] flex items-center justify-center text-vscode-descriptionForeground">
+                      No token data available
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Additional information */}
           <div className="text-xs text-vscode-descriptionForeground mt-4">
             <p>
               Metrics are updated automatically every 10 seconds when the WebSocket connection is
               active.
             </p>
+            {stats.llmStats && Object.keys(stats.llmStats.modelCounts).length > 0 && (
+              <p className="mt-1">
+                LLM metrics include token usage and cost estimates based on detected API calls.
+              </p>
+            )}
           </div>
         </div>
       )}
