@@ -24,11 +24,20 @@ export interface GatewayConfig {
   tracing: TracingConfig;
 }
 
-export interface MCPExtensionsConfig {
+export interface MCPServerConfig {
+  name: string;
+  type: 'module' | 'external' | 'builtin';
+  path?: string; // For module type
+  command?: string; // For external type
+  args?: string[]; // For external type
+  config?: Record<string, any>; // Server-specific configuration
+  enabled?: boolean; // Default true
+}
+
+export interface MCPServersConfig {
   enabled: boolean;
-  extensionsPath: string;
-  include: string[];
-  exclude: string[];
+  serversPath: string; // Directory containing MCP server modules
+  servers: MCPServerConfig[];
 }
 
 export interface MCPConfig {
@@ -37,7 +46,7 @@ export interface MCPConfig {
   name: string;
   version: string;
   autostart: boolean;
-  extensions: MCPExtensionsConfig;
+  servers: MCPServersConfig;
 }
 
 export interface RegistryConfig {
@@ -94,14 +103,27 @@ const defaultConfig: Config = {
   mcp: {
     port: 3001,
     host: 'localhost',
-    name: 'VSCode MCP Server',
+    name: 'Clay MCP Server',
     version: '1.0.0',
     autostart: true,
-    extensions: {
+    servers: {
       enabled: true,
-      extensionsPath: '.clay/mcp',
-      include: ['**/*.{js,ts,py}'],
-      exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'],
+      serversPath: '.clay/mcp-servers',
+      servers: [
+        {
+          name: 'augment',
+          type: 'builtin',
+          enabled: true,
+        },
+        // Example external server (commented out by default)
+        // {
+        //   name: 'filesystem',
+        //   type: 'external',
+        //   command: 'npx',
+        //   args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()],
+        //   enabled: false,
+        // },
+      ],
     },
   },
   registry: {

@@ -69,9 +69,44 @@ The MCP server is integrated into the proxy server and is available at `http://l
 
 You can also run the MCP server as a standalone service on `http://localhost:3001` if needed.
 
-#### Custom MCP Extensions
+#### MCP Servers
 
-The MCP server supports loading custom extensions from JavaScript, TypeScript, and Python files placed in the `.clay/mcp/` directory. These extensions can define tools, resources, and prompts that will be automatically registered with the MCP server.
+Clay now uses the standard MCP format for loading tools, resources, and prompts. This provides better compatibility with the MCP ecosystem and access to community servers.
+
+**Migration Notice**: The old custom extension format in `.clay/mcp` is deprecated. Please migrate to the new standard MCP format in `.clay/mcp-servers`. See the [Migration Guide](.clay/mcp-servers/README.md) for details.
+
+Clay supports three types of MCP servers:
+
+1. **Built-in Servers**: Built-in Clay servers like Augment Context Engine
+2. **Module Servers**: Standard MCP server modules (TypeScript/JavaScript)
+3. **External Servers**: External MCP servers (Python, etc.) via subprocess
+
+Configure MCP servers in your Clay configuration:
+
+```yaml
+mcp:
+  servers:
+    enabled: true
+    serversPath: '.clay/mcp-servers'
+    servers:
+      # Built-in Augment server
+      - name: 'augment'
+        type: 'builtin'
+        enabled: true
+
+      # Local module server
+      - name: 'calculator'
+        type: 'module'
+        path: './calculator.mjs'
+        enabled: true
+
+      # External community server
+      - name: 'filesystem'
+        type: 'external'
+        command: 'npx'
+        args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace']
+        enabled: false
+```
 
 ##### Python Extensions
 
@@ -166,12 +201,14 @@ npm run vsce:package
   - `/server` - Server implementations
     - `/gateway` - Fastify-based gateway server with tracing
     - `/mcp` - MCP server implementation
-      - `/extensions` - MCP extensions loader and handlers
+      - `/extensions` - MCP server loader (standard MCP format)
+      - `/servers` - MCP server loading utilities
     - `/augment` - Augment Context Engine implementation
   - `/utils` - Shared utilities
 - `/webview-ui` - Dashboard UI implementation
 - `/.clay` - Configuration and extensions directory
-  - `/mcp` - Custom MCP extensions
+  - `/mcp` - Custom MCP extensions (deprecated)
+  - `/mcp-servers` - Standard MCP servers
 
 ## License
 

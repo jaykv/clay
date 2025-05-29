@@ -1,28 +1,28 @@
-import { MCPExtensionsLoader } from './loader';
+import { MCPServerLoader } from '../servers/loader';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { logger } from '../../utils/logger';
 import { MCPToolInfo, MCPResourceInfo, MCPPromptInfo } from '../express-server';
 
 // Keep track of the loader instance
-let extensionsLoader: MCPExtensionsLoader | null = null;
+let serverLoader: MCPServerLoader | null = null;
 
 /**
- * Initialize the MCP extensions loader
+ * Initialize the MCP server loader
  * @param server The MCP server
  * @param workspaceRoot The workspace root path
  */
-export async function initializeMCPExtensions(
+export async function initializeMCPServers(
   server: McpServer,
   workspaceRoot: string
 ): Promise<void> {
   try {
     // Create the loader
-    extensionsLoader = new MCPExtensionsLoader(server, workspaceRoot);
-    
-    // Load extensions
-    await extensionsLoader.loadExtensions();
+    serverLoader = new MCPServerLoader(server, workspaceRoot);
+
+    // Load servers
+    await serverLoader.loadServers();
   } catch (error) {
-    logger.error('Failed to initialize MCP extensions:', error);
+    logger.error('Failed to initialize MCP servers:', error);
   }
 }
 
@@ -30,19 +30,29 @@ export async function initializeMCPExtensions(
  * Get the loaded tools
  */
 export function getLoadedTools(): MCPToolInfo[] {
-  return extensionsLoader ? extensionsLoader.getLoadedTools() : [];
+  return serverLoader ? serverLoader.getLoadedTools() : [];
 }
 
 /**
  * Get the loaded resources
  */
 export function getLoadedResources(): MCPResourceInfo[] {
-  return extensionsLoader ? extensionsLoader.getLoadedResources() : [];
+  return serverLoader ? serverLoader.getLoadedResources() : [];
 }
 
 /**
  * Get the loaded prompts
  */
 export function getLoadedPrompts(): MCPPromptInfo[] {
-  return extensionsLoader ? extensionsLoader.getLoadedPrompts() : [];
+  return serverLoader ? serverLoader.getLoadedPrompts() : [];
+}
+
+/**
+ * Cleanup MCP servers
+ */
+export async function cleanupMCPServers(): Promise<void> {
+  if (serverLoader) {
+    await serverLoader.cleanup();
+    serverLoader = null;
+  }
 }

@@ -15,8 +15,7 @@
 !dist/src/server/**/*.js
 !dist/src/server/**/*.js.map
 
-# Include Python files
-!dist/python/**/*.py
+# Note: Python files no longer needed (using standard MCP format)
 
 # Include webview UI build output
 !webview-ui/dist/**
@@ -44,13 +43,13 @@ webview-ui/**/node_modules/**
 **/.DS_Store
 .temp/**
 
-# Include only essential .clay files for MCP extensions
+# Include only essential .clay files for MCP servers
 !.clay/mcp/*.md
-!.clay/mcp/*.txt
-!.clay/mcp/*.py
-!.clay/mcp/*.js
-!.clay/mcp/*.ts
+!.clay/mcp-servers/*.md
+!.clay/mcp-servers/*.mjs
+!.clay/mcp-servers/*.js
+!.clay/mcp-servers/*.ts
 # Exclude heavy directories
-.clay/mcp/.venv/**
-.clay/mcp/__pycache__/**
-.clay/mcp/node_modules/**
+.clay/mcp-servers/.venv/**
+.clay/mcp-servers/__pycache__/**
+.clay/mcp-servers/node_modules/**

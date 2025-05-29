@@ -7,13 +7,14 @@ import { z } from 'zod';
 
 import { logger } from '../utils/logger';
 import { getConfig } from '../utils/config';
-import { registerAugmentMCP } from '../augment/mcp';
+// Note: registerAugmentMCP is now handled by the server loader
 import { workspaceRootPath } from '../utils/server-context';
 import {
-  initializeMCPExtensions,
+  initializeMCPServers,
   getLoadedTools,
   getLoadedResources,
   getLoadedPrompts,
+  cleanupMCPServers,
 } from './extensions';
 
 export interface MCPResourceInfo {
@@ -69,13 +70,7 @@ export class ExpressMCPServer {
     this.setupTools();
     this.setupPrompts();
 
-    // Register Augment Context Engine MCP components
-    try {
-      registerAugmentMCP(this.mcpServer);
-      logger.info('Augment Context Engine MCP components registered successfully');
-    } catch (error) {
-      logger.error('Failed to register Augment Context Engine MCP components:', error);
-    }
+    // Note: Augment MCP components are now registered via the server loader as a built-in server
 
     // Setup Express routes
     this.setupRoutes();
@@ -305,10 +300,10 @@ export class ExpressMCPServer {
         // This will be set by the VS Code extension or default to process.cwd()
         const workspaceRoot = workspaceRootPath;
 
-        // Initialize MCP extensions
-        if (this.config.extensions.enabled) {
-          logger.info('Loading MCP extensions...');
-          await initializeMCPExtensions(this.mcpServer, workspaceRoot);
+        // Initialize MCP servers
+        if (this.config.servers.enabled) {
+          logger.info('Loading MCP servers...');
+          await initializeMCPServers(this.mcpServer, workspaceRoot);
         }
 
         this.httpServer = this.app.listen(this.config.port, this.config.host, () => {
@@ -327,7 +322,7 @@ export class ExpressMCPServer {
   }
 
   public async stop(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!this.httpServer) {
         logger.warn('MCP server HTTP server is not running');
         resolve();
@@ -335,6 +330,9 @@ export class ExpressMCPServer {
       }
 
       try {
+        // Cleanup MCP servers
+        await cleanupMCPServers();
+
         // Close all open connections
         for (const sessionId in this.transports) {
           try {
