@@ -109,7 +109,12 @@ export class MCPServerLoader {
       try {
         await this.loadServer(serverConfig, serversPath);
       } catch (error) {
-        logger.error(`Failed to load MCP server ${serverConfig.name}:`, error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        logger.error(`Failed to load MCP server ${serverConfig.name}: ${errorMessage}`);
+        if (errorStack) {
+          logger.debug(`Stack trace for ${serverConfig.name}:`, errorStack);
+        }
       }
     }
 
@@ -185,7 +190,8 @@ export class MCPServerLoader {
       this.loadedServers.set(serverConfig.name, module);
       logger.info(`Loaded module server: ${serverConfig.name}`);
     } catch (error) {
-      throw new Error(`Failed to load module ${modulePath}: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to load module ${modulePath}: ${errorMessage}`);
     }
   }
 
@@ -231,7 +237,8 @@ export class MCPServerLoader {
 
       logger.info(`Connected to external MCP server: ${serverConfig.name}`);
     } catch (error) {
-      throw new Error(`Failed to connect to external server ${serverConfig.name}: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to connect to external server ${serverConfig.name}: ${errorMessage}`);
     }
   }
 
@@ -279,7 +286,8 @@ export class MCPServerLoader {
 
       logger.info(`Proxied ${tools.tools.length} tools from external server ${serverConfig.name}`);
     } catch (error) {
-      logger.error(`Failed to proxy capabilities from ${serverConfig.name}:`, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to proxy capabilities from ${serverConfig.name}: ${errorMessage}`);
     }
   }
 
@@ -448,7 +456,8 @@ mcp:
         }
         logger.info(`Cleaned up external server: ${name}`);
       } catch (error) {
-        logger.error(`Failed to cleanup external server ${name}:`, error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error(`Failed to cleanup external server ${name}: ${errorMessage}`);
       }
     }
     this.externalClients.clear();
