@@ -33,6 +33,9 @@
 # Include only essential node_modules
 !dist/node_modules/**
 
+# Include Phoenix bundle
+!dist/phoenix.pyz
+
 # Exclude node_modules that might be included by the above patterns
 webview-ui/**/node_modules/**
 

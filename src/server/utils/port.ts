@@ -109,6 +109,37 @@ export async function isGatewayServer(port: number, host: string = 'localhost'):
 }
 
 /**
+ * Check if a server running on a specific port is a Phoenix server
+ * @param port Port to check
+ * @param host Host to check
+ * @returns Promise that resolves to true if it's a Phoenix server, false otherwise
+ */
+export async function isPhoenixServer(port: number, host: string = 'localhost'): Promise<boolean> {
+  try {
+    // Try to access the root endpoint which should return Phoenix UI
+    const response = await fetch(`http://${host}:${port}/`, {
+      method: 'GET',
+      timeout: 2000, // 2 second timeout
+    });
+
+    if (response.ok) {
+      const text = await response.text();
+      // Check if the response contains Phoenix-specific content
+      if (text.includes('Phoenix') || text.includes('Arize')) {
+        logger.info(`Server on port ${port} appears to be a Phoenix server`);
+        return true;
+      }
+    }
+
+    logger.info(`Server on port ${port} does not appear to be a Phoenix server`);
+    return false;
+  } catch (error) {
+    logger.debug(`Error checking if server on port ${port} is a Phoenix server:`, error);
+    return false;
+  }
+}
+
+/**
  * Kill the process using a specific port, but only if it's a known server type
  * @param port Port to check
  * @param host Host to check
@@ -119,7 +150,7 @@ export async function isGatewayServer(port: number, host: string = 'localhost'):
 export async function killProcessByPort(
   port: number,
   host: string = 'localhost',
-  serverType: 'mcp' | 'gateway' | 'any' = 'any',
+  serverType: 'mcp' | 'gateway' | 'phoenix' | 'any' = 'any',
   forceKill: boolean = false
 ): Promise<boolean> {
   try {
@@ -146,6 +177,13 @@ export async function killProcessByPort(
         isKnownServer = await isGatewayServer(port, host);
         if (!isKnownServer) {
           logger.warn(`Process ${pid} on port ${port} is not a Gateway server. Not killing it.`);
+          return false;
+        }
+      } else if (serverType === 'phoenix') {
+        // Check if it's a Phoenix server
+        isKnownServer = await isPhoenixServer(port, host);
+        if (!isKnownServer) {
+          logger.warn(`Process ${pid} on port ${port} is not a Phoenix server. Not killing it.`);
           return false;
         }
       }

@@ -8,6 +8,7 @@
 export let gatewayServerInstance: any = null;
 export let mcpServerInstance: any = null;
 export let registryServerInstance: any = null;
+export let phoenixServerInstance: any = null;
 
 // Workspace root path (defaults to current working directory)
 export let workspaceRootPath: string = process.cwd();
@@ -34,6 +35,14 @@ export function setMCPServerInstance(instance: any): void {
  */
 export function setRegistryServerInstance(instance: any): void {
   registryServerInstance = instance;
+}
+
+/**
+ * Set the Phoenix server instance
+ * @param instance The Phoenix server instance
+ */
+export function setPhoenixServerInstance(instance: any): void {
+  phoenixServerInstance = instance;
 }
 
 /**

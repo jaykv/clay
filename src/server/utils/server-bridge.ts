@@ -1,6 +1,6 @@
 /**
  * Server Bridge Module
- * 
+ *
  * This module provides a bridge between the extension and server code,
  * allowing the extension to interact with server instances without
  * creating circular dependencies.
@@ -64,4 +64,20 @@ export function getRegistryServerInstance(): any {
  */
 export function setRegistryServerInstance(instance: any): void {
   serverContext.setRegistryServerInstance(instance);
+}
+
+/**
+ * Get the Phoenix server instance
+ * @returns The Phoenix server instance or null if not running
+ */
+export function getPhoenixServerInstance(): any {
+  return serverContext.phoenixServerInstance;
+}
+
+/**
+ * Set the Phoenix server instance
+ * @param instance The Phoenix server instance
+ */
+export function setPhoenixServerInstance(instance: any): void {
+  serverContext.setPhoenixServerInstance(instance);
 }

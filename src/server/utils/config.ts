@@ -54,11 +54,24 @@ export interface AugmentConfig {
   realtimeUpdates: boolean;
 }
 
+export interface PhoenixConfig {
+  port: number;
+  host: string;
+  enabled: boolean;
+  autostart: boolean;
+  pythonCommand?: string; // Optional override for Python command
+  workingDir?: string; // PHOENIX_WORKING_DIR - directory for data storage
+  grpcPort?: number; // PHOENIX_GRPC_PORT - gRPC trace collector port
+  databaseUrl?: string; // PHOENIX_SQL_DATABASE_URL - custom database URL
+  enablePrometheus?: boolean; // PHOENIX_ENABLE_PROMETHEUS - enable metrics
+}
+
 export interface Config {
   gateway: GatewayConfig;
   mcp: MCPConfig;
   registry: RegistryConfig;
   augment: AugmentConfig;
+  phoenix: PhoenixConfig;
 }
 
 const defaultConfig: Config = {
@@ -102,6 +115,17 @@ const defaultConfig: Config = {
     exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'],
     maxFileSize: 1000000, // 1MB
     realtimeUpdates: true,
+  },
+  phoenix: {
+    port: 6006,
+    host: 'localhost',
+    enabled: true,
+    autostart: false, // Don't autostart by default
+    pythonCommand: undefined, // Use system Python detection
+    workingDir: undefined, // Use default Phoenix working directory (~/.phoenix)
+    grpcPort: 4317, // Default gRPC port for trace collection
+    databaseUrl: undefined, // Use default SQLite database
+    enablePrometheus: false, // Disable Prometheus metrics by default
   },
 };
 
@@ -177,6 +201,10 @@ export function updateConfig(newConfig: Partial<Config>): void {
     augment: {
       ...config.augment,
       ...(newConfig.augment || {}),
+    },
+    phoenix: {
+      ...config.phoenix,
+      ...(newConfig.phoenix || {}),
     },
   };
 

@@ -39,6 +39,18 @@
         "title": "Clay: Stop MCP Server"
       },
       {
+        "command": "clay.startPhoenixServer",
+        "title": "Clay: Start Phoenix Server"
+      },
+      {
+        "command": "clay.stopPhoenixServer",
+        "title": "Clay: Stop Phoenix Server"
+      },
+      {
+        "command": "clay.openPhoenix",
+        "title": "Clay: Open Phoenix UI"
+      },
+      {
         "command": "clay.registerMCPServer",
         "title": "Clay: Register MCP Server"
       },
@@ -154,8 +166,9 @@
     "build-webview": "cd webview-ui && npm run build",
     "dev-webview": "cd webview-ui && npm run dev",
     "copy-mcp-inspector-ui": "node copy-mcp-inspector-ui.js",
-    "compile-all": "npm run compile:prod && npm run build-webview && npm run copy-mcp-inspector-ui",
-    "copy-deps": "node copy-dependencies.js && node copy-python-files.js",
+    "build-phoenix": "python scripts/build-phoenix-simple.py",
+    "compile-all": "npm run compile:prod && npm run build-webview && npm run copy-mcp-inspector-ui && npm run build-phoenix",
+    "copy-deps": "node copy-dependencies.js && node copy-python-files.js && node copy-phoenix.js",
     "vsce:package": "npm run copy-deps && npx @vscode/vsce package --no-dependencies",
     "vsce:publish": "npm run copy-deps && npx @vscode/vsce publish --no-dependencies",
     "format": "prettier --write .",

@@ -8,6 +8,7 @@ import { MCPInspectorWebviewProvider } from './webview/MCPInspectorWebviewProvid
 import { initializeAugmentContextEngineForVSCode } from './server/augment/vscode-extension';
 import { getConfig } from './server/utils/config';
 import { startMCPServer } from './server/mcp';
+import { startPhoenixServer, isPhoenixServerRunning } from './server/phoenix';
 import { logger } from './server/utils/logger';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -74,6 +75,28 @@ export async function activate(context: vscode.ExtensionContext) {
     logger.info(`Gateway server already running on port ${gatewayConfig.port}`);
     // Emit event for immediate UI update (faster than waiting for health checks)
     serverStatusEmitter.fire({ type: 'gateway', status: 'started' });
+  }
+
+  // Check Phoenix server
+  const phoenixConfig = getConfig().phoenix;
+  const phoenixRunning = await isPhoenixServerRunning();
+
+  if (phoenixConfig.autostart && phoenixConfig.enabled && !phoenixRunning) {
+    logger.info(`Autostarting Phoenix server on port ${phoenixConfig.port}...`);
+    try {
+      // The server implementation will set the global reference
+      await startPhoenixServer();
+      // Emit event for immediate UI update (faster than waiting for health checks)
+      serverStatusEmitter.fire({ type: 'phoenix', status: 'started' });
+      logger.info(`Phoenix server started on port ${phoenixConfig.port}`);
+    } catch (error) {
+      logger.error('Failed to autostart Phoenix server:', error);
+    }
+  } else if (phoenixRunning) {
+    // If the server is running but we don't have an instance, update the status
+    logger.info(`Phoenix server already running on port ${phoenixConfig.port}`);
+    // Emit event for immediate UI update (faster than waiting for health checks)
+    serverStatusEmitter.fire({ type: 'phoenix', status: 'started' });
   }
 
   // Register gateway provider

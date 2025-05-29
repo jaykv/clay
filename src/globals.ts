@@ -27,7 +27,7 @@ export let workspaceRootPath: string = process.cwd();
 
 // Define the event type for server status updates
 export type ServerStatusEvent = {
-  type: 'gateway' | 'mcp' | 'registry';
+  type: 'gateway' | 'mcp' | 'registry' | 'phoenix';
   status: 'started' | 'stopped';
 };
 
