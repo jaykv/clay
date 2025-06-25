@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { logger } from '../utils/logger';
 import { augmentEngine } from '../augment';
+import { registerPersonalIndexAPI } from '../augment/personal-index/api-routes';
 
 /**
  * Register the Augment Context Engine API with Fastify
@@ -258,6 +259,9 @@ export function registerAugmentAPI(fastify: FastifyInstance, options: any, done:
       return reply.status(500).send({ error: 'Failed to get languages' });
     }
   });
+
+  // Register personal index API routes
+  registerPersonalIndexAPI(fastify, options, () => {});
 
   done();
 }

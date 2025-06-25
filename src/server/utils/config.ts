@@ -54,6 +54,25 @@ export interface RegistryConfig {
   host: string;
 }
 
+export interface PersonalIndexConfig {
+  enabled: boolean;
+  embeddingModel: string;
+  chunkSize: number;
+  chunkOverlap: number;
+  vectorDatabase: string;
+  branchAware: boolean;
+  realTimeUpdateDelay: number;
+  codeSpecificChunking: boolean;
+  securityVerification: boolean;
+  ignorePatterns: string[];
+  supportedLanguages: {
+    [key: string]: {
+      extensions: string[];
+      parser: string;
+    };
+  };
+}
+
 export interface AugmentConfig {
   enabled: boolean;
   indexPath: string;
@@ -61,6 +80,7 @@ export interface AugmentConfig {
   exclude: string[];
   maxFileSize: number; // in bytes
   realtimeUpdates: boolean;
+  personalIndex: PersonalIndexConfig;
 }
 
 export interface PhoenixConfig {
@@ -137,6 +157,41 @@ const defaultConfig: Config = {
     exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'],
     maxFileSize: 1000000, // 1MB
     realtimeUpdates: true,
+    // Personal Index System (Augment-style)
+    personalIndex: {
+      enabled: true,
+      embeddingModel: 'Xenova/all-MiniLM-L6-v2', // Local transformers.js model
+      chunkSize: 1000,
+      chunkOverlap: 200,
+      vectorDatabase: 'hnswlib',
+      branchAware: true,
+      realTimeUpdateDelay: 1000, // 1 second (Augment-style fast updates)
+      codeSpecificChunking: true,
+      securityVerification: true,
+      ignorePatterns: [
+        'node_modules/**',
+        '.git/**',
+        'dist/**',
+        'build/**',
+        '.next/**',
+        '.vscode/**',
+        '*.log',
+        '.env*',
+        'coverage/**',
+        '.nyc_output/**',
+        '**/*.min.js',
+        '**/*.bundle.js',
+        '**/package-lock.json',
+        '**/yarn.lock',
+      ],
+      supportedLanguages: {
+        javascript: { extensions: ['.js', '.jsx'], parser: 'babel' },
+        typescript: { extensions: ['.ts', '.tsx'], parser: 'typescript' },
+        python: { extensions: ['.py'], parser: 'python' },
+        markdown: { extensions: ['.md', '.mdx'], parser: 'markdown' },
+        json: { extensions: ['.json'], parser: 'json' },
+      },
+    },
   },
   phoenix: {
     port: 6006,

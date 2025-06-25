@@ -31,6 +31,15 @@ const dependencies = [
   // MCP SDK only (inspector will be handled separately)
   '@modelcontextprotocol/sdk',
 
+  // Personal Index System dependencies
+  '@llm-tools/embedjs',
+  '@llm-tools/embedjs-hnswlib',
+  '@huggingface/transformers',
+  '@babel/parser',
+  '@babel/traverse',
+  '@babel/types',
+  'simple-git',
+
   // Other utilities
   'fast-json-stringify',
   'on-finished',

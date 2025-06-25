@@ -29,6 +29,21 @@ const config = {
     '@fastify/static': 'commonjs @fastify/static',
     '@fastify/websocket': 'commonjs @fastify/websocket',
     '@modelcontextprotocol/sdk': 'commonjs @modelcontextprotocol/sdk',
+    // Exclude transformers.js and related dependencies
+    '@huggingface/transformers': 'commonjs @huggingface/transformers',
+    'onnxruntime-node': 'commonjs onnxruntime-node',
+    'sharp': 'commonjs sharp',
+    // Exclude embedjs dependencies
+    '@llm-tools/embedjs': 'commonjs @llm-tools/embedjs',
+    '@llm-tools/embedjs-hnswlib': 'commonjs @llm-tools/embedjs-hnswlib',
+    // Exclude AST parsing dependencies
+    '@babel/parser': 'commonjs @babel/parser',
+    '@babel/traverse': 'commonjs @babel/traverse',
+    '@babel/types': 'commonjs @babel/types',
+    // Exclude git integration
+    'simple-git': 'commonjs simple-git',
+    // Exclude glob
+    'glob': 'commonjs glob',
   },
   resolve: {
     extensions: ['.ts', '.js'],
